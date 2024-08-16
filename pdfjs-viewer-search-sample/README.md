@@ -13,9 +13,11 @@ Once you have built the project using `gulp generic` (I used `npx gulp generic`)
 The project README mentions some issues compiling on Mac Silicon. In my experience I needed to do the following before the project would build:
 
 ```zsh
-brew install pkg-config cairo pango libpng jpeg giflib librsvg pixman python-setuptools
+brew install pkg-config python-setuptools pango
 npm install
 ```
+
+One colleague found it was necessary to `npm i canvas@next`
 
 Your mileage may vary.
 
