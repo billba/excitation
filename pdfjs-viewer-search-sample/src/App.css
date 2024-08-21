@@ -7,7 +7,7 @@
 
 #app {
   display: grid;
-  grid-template-columns: 1fr 3fr;
+  grid-template-columns: 1fr 2fr;
   grid-template-rows: 1;
   grid-auto-rows: 95vh;
   grid-auto-columns: 80% 20%;
@@ -21,16 +21,28 @@
 
 #sidebar {
   grid-column: 1;
-  background:#c9c;
-  }
+  overflow-y: auto;
+  border-right: solid thick black;
+  padding: 1em;
+  font-family: Arial;
+}
 
 #viewer {
   grid-column: 2;
-  background:#9c9;
-  }
-
+}
 
 #iframe {
   width: 100%;
   height: 100%;
+}
+
+#question,
+#answer,
+#referenceTitle {
+    font-weight: bold;
+}
+
+#question,
+#question-text {
+  display: inline;
 }

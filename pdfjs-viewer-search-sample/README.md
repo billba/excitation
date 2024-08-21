@@ -6,20 +6,22 @@ This sample embeds the default pdf.js web viewer application (as used in the Fir
 
 To use this sample you need to clone [pdf.js](https://github.com/mozilla/pdf.js) and build it, following the instructions in the project README.
 
-Once you have built the project using `gulp generic` (I used `npx gulp generic`), copy the contents of the `build\generic` folder of that repo into the `public\pdfjs` folder.
+```sh
+# Clone the repo and cd in
+git clone git@github.com:mozilla/pdf.js.git
+cd pdf.js
 
-### Note for Mac Silicon developers
+# Install canvas to prevent it from building the older version from source
+npm install canvas@next
 
-The project README mentions some issues compiling on Mac Silicon. In my experience I needed to do the following before the project would build:
-
-```zsh
-brew install pkg-config python-setuptools pango
+# Install all dependencies of pdf.js
 npm install
+
+# Bundle pdf.js
+npx gulp generic
 ```
 
-One colleague found it was necessary to `npm i canvas@next`
-
-Your mileage may vary.
+Once you have built the project using `gulp generic` (I used `npx gulp generic`), copy the contents of the `build\generic` folder of that repo into the `public\pdfjs` folder.
 
 ## Building and running this sample
 
