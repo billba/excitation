@@ -97,7 +97,7 @@ export interface docIntResponse {
   }
   
   interface Line {
-    content: striexng;
+    content: string;
     polygon: number[];
     spans: Span[];
   }
