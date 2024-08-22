@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+// import Canvas from "./canvas.tsx";
 import './App.css'
 import { QuestionAnswer } from './questions';
 
@@ -6,31 +7,10 @@ import { QuestionAnswer } from './questions';
 
 function App() {
   const [questionPage, setQuestionPage] = useState(1);
-  const [filePage, setFilePage] = useState(1);
+  const [filePage, setFilePage] = useState(0);
   // const [retry, setRetry] = useState(0);
   // const [textLayer, setTextLayer] = useState<HTMLDivElement | undefined>(undefined);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // useEffect(() => {
-  //   if (retry < 9) {
-  //     console.log("retry", retry);
-  //     setTimeout(() => {
-  //       console.log("iframeRef.current", iframeRef.current);
-  //       console.log("iframeRef.current?.contentDocument", iframeRef.current?.contentDocument);
-  //       const tc = iframeRef.current?.contentDocument?.getElementsByClassName('textLayer');
-  //       console.log("tc", tc);
-  //       if (tc?.length) {
-  //         const textLayer = tc[0] as HTMLDivElement;
-  //         if (textLayer) {
-  //           console.log("textLayer", textLayer.innerText);
-  //           setTextLayer(textLayer);
-  //           return;
-  //         }
-  //       }
-  //       setRetry(r => r + 1);
-  //     }, 1000);
-  //   }
-  // }, [retry]);
 
   const qA = [
     {
@@ -68,7 +48,7 @@ function App() {
     if (page === qA.length) { return; }
     else { setQuestionPage(page + 1); }
   }
-
+  const url = `./pdfjs/web/viewer.html?file=.%2Fcompressed.tracemonkey-pldi-09.pdf#page=${filePage}&zoom=page-width`;
   return (
     <div id="app">
       <div id="sidebar">
@@ -77,13 +57,12 @@ function App() {
         Page {questionPage}
         &nbsp;
         <button onClick={() => nextQuestion(questionPage)}>Next</button>
-        <QuestionAnswer qA={qA[questionPage - 1]} setFilePage={setFilePage}/>
+        <QuestionAnswer qA={qA[questionPage - 1]} setFilePage={setFilePage} iframeRef={iframeRef} />
       </div>
       <div id="viewer">
-        <iframe ref={iframeRef} src={`./pdfjs/web/viewer.html?file=.%2Fcompressed.tracemonkey-pldi-09.pdf#page=${filePage}&zoom=page-fit`} id="iframe"/>
-      </div>
-    </div>
+        <iframe ref={iframeRef} src={url} id="iframe" />
+      </div >
+    </div >
   )
 }
-
 export default App
