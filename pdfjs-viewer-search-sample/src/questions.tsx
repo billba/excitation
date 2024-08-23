@@ -20,7 +20,11 @@ const draw = (context: CanvasRenderingContext2D, scale: number = 1, polygons: nu
 
 const preDraw = (iframeRef: React.RefObject<HTMLIFrameElement>, pageNumber: number, polygons: number[]) => {
     const elements = iframeRef.current?.contentWindow?.document.querySelectorAll("div.canvasWrapper > canvas") as NodeList;
-    const element = elements[pageNumber - 1] as HTMLCanvasElement;
+
+    let element;
+    if (elements.length === 1) element = elements[0] as HTMLCanvasElement;
+    else element = elements[pageNumber - 1] as HTMLCanvasElement;
+
     if (element) {
         const highlightContext = element?.getContext('2d');
         const scale = parseFloat(iframeRef.current?.contentWindow?.getComputedStyle(element).getPropertyValue('--scale-factor') || '1');
