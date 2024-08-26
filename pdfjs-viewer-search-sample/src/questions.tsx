@@ -33,48 +33,49 @@ const preDraw = (iframeRef: React.RefObject<HTMLIFrameElement>, pageNumber: numb
         }
     }
 }
-const findReferences = ({ text, fileName }: { text: string, fileName: string }, setFilePage: (filePage: number) => void, iframeRef: React.RefObject<HTMLIFrameElement>) => {
-    // when you click on a specific citation
-    // this runs to find the relevant document, page, and bounding box data
-
-    // fetch DI response from a db
-    // actually for now, we just import the di.json file
-    const paragraphs = response.analyzeResult.paragraphs;
-
-    // loop through paragraphs object
-    // get relevant paragraph with matching text
-    let boundingRegions;
-    paragraphs.forEach((paragraph) => {
-        if (paragraph.content == text) {
-            boundingRegions = paragraph.boundingRegions;
-        }
-    })
-
-    // things we need:
-    // page number for the iframe
-    // bounding box
-    if (boundingRegions) {
-        const { pageNumber, polygon } = boundingRegions[0];
-        setFilePage(pageNumber);
-        preDraw(iframeRef, pageNumber, polygon);
-    }
-}
 
 const References = (props) => {
-    const { references, setFilePage, iframeRef } = props;
+    const { references, setFilePage, filePage, iframeRef } = props;
+
+    const findReference = (reference: { text: string, fileName: string }) => {
+        // when you click on a specific citation
+        // this runs to find the relevant document, page, and bounding box data
+
+        // fetch DI response from a db
+        // actually for now, we just import the di.json file
+        const paragraphs = response.analyzeResult.paragraphs;
+        // loop through paragraphs object
+        // get relevant paragraph with matching text
+        let boundingRegions;
+        paragraphs.forEach((paragraph) => {
+            if (paragraph.content == reference.text) {
+                boundingRegions = paragraph.boundingRegions;
+            }
+        })
+
+        // things we need:
+        // page number for the iframe
+        // bounding box
+        if (boundingRegions) {
+            const { pageNumber, polygon } = boundingRegions[0];
+            setFilePage(pageNumber);
+            preDraw(iframeRef, pageNumber, polygon);
+        }
+    }
+
     const returnArray = [];
     for (let index = 0; index < references.length; index++) {
         const reference = references[index];
         returnArray.push(
             <div key={"reference" + index}>
                 <p id="referenceContext">{reference.text}</p>
-                <button onClick={() => findReferences(reference, setFilePage, iframeRef)}>Display Document</button>
+                <button onClick={() => findReference(reference)}>Display Document</button>
             </div>
         )
     }
     return returnArray;
 }
-export function QuestionAnswer(props) {
+export const QuestionAnswer = (props) => {
     const { qA, ...otherProps } = props;
     return (
         <div id="question-container">
