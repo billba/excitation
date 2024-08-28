@@ -2,30 +2,32 @@ import { useEffect, useRef, useState } from 'react';
 import './App.css'
 import { QuestionAnswer } from './questions';
 import Canvas from './canvas';
+import { createPortal } from 'react-dom';
 
 // const searchString = "Each\ntree is associated with a loop header and type map, so there may be\nseveral trees for a given loop header.\nClosing the loop. Trace";
 
 function App() {
   const [questionPage, setQuestionPage] = useState(1);
   const [filePage, setFilePage] = useState(1);
-  const [renderCanvas, setRenderCanvas] = useState(false);
+  const [style, setStyle] = useState({ height: 0, width: 0, scale: 1 });
 
-  // const [retry, setRetry] = useState(0);
-  // const [textLayer, setTextLayer] = useState<HTMLDivElement | undefined>(undefined);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  useEffect(() => {
-    const elements = iframeRef.current?.contentWindow?.document.querySelectorAll("div.canvasWrapper > canvas") as NodeList;
+  // const iframeRef = useRef<HTMLIFrameElement>(null); // <<<-----
+  const [iframeRef, setRef] = useState(null);
 
-    let element;
-    if (elements.length === 1) element = elements[0] as HTMLCanvasElement;
-    else element = elements[filePage - 1] as HTMLCanvasElement;
-
-    if (element) {
-      console.log(getComputedStyle(element).getPropertyValue("width"));
-      console.log(getComputedStyle(element).getPropertyValue("height"));
-      console.log(getComputedStyle(element).getPropertyValue("--scale-factor"));
+  const draw = (context: CanvasRenderingContext2D, scale: number = style.scale, polygons: number[]) => {
+    const multiplier = 72 * (window.devicePixelRatio || 1) * scale;
+    context.fillStyle = 'rgba(252, 207, 8, 0.3)';
+    context.strokeStyle = '#fccf08';
+    context.lineWidth = 1;
+    context.beginPath();
+    context.moveTo(polygons[0] * multiplier, polygons[1] * multiplier);
+    for (let i = 2; i < polygons.length; i += 2) {
+      context.lineTo(polygons[i] * multiplier, polygons[i + 1] * multiplier);
     }
-  })
+    context.closePath();
+    context.fill();
+    context.stroke();
+  };
 
   const qA = [
     {
@@ -63,6 +65,21 @@ function App() {
     if (page === qA.length) { return; }
     else { setQuestionPage(page + 1); }
   }
+
+  // useEffect(() => {
+  //   const elements = iframeRef.current?.contentWindow?.document.querySelectorAll("div.canvasWrapper > canvas") as NodeList;
+
+  //   let element;
+  //   if (elements.length === 1) element = elements[0] as HTMLCanvasElement;
+  //   else element = elements[filePage - 1] as HTMLCanvasElement;
+
+  //   if (element) {
+  //     const height = getComputedStyle(element).height;
+  //     console.log(height);
+  //     const width = getComputedStyle(element).width;
+  //     console.log(width);
+  //   }
+  // }, [filePage])
   const url = `./pdfjs/web/viewer.html?file=.%2Fcompressed.tracemonkey-pldi-09.pdf#page=${filePage}&zoom=page-fit`;
   return (
     <div id="app">
@@ -72,14 +89,11 @@ function App() {
         Page {questionPage}
         &nbsp;
         <button onClick={() => nextQuestion(questionPage)}>Next</button>
-        <QuestionAnswer qA={qA[questionPage - 1]} setFilePage={setFilePage} filePage={filePage} iframeRef={iframeRef} />
+        <QuestionAnswer qA={qA[questionPage - 1]} setFilePage={setFilePage} filePage={filePage} iframeRef={iframeRef} setRef={setRef} />
       </div>
       <div id="viewer">
-        <iframe ref={iframeRef} src={url} id="iframe" />
-        {
-          renderCanvas &&
-          <Canvas id="highlight-canvas" setRenderCanvas={setRenderCanvas}, height = {} width={ } outputScale={ } />
-        }
+        <iframe ref={iframeRef => setRef(iframeRef)} src={url} id="iframe" />
+        <Canvas id="highlight-canvas" style={style} draw={draw} />
       </div >
     </div >
   )

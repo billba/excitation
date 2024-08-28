@@ -3,7 +3,11 @@ import di from "../../di.json"
 
 const response = di as docIntResponse;
 
-const draw = (context: CanvasRenderingContext2D, scale: number = 1, polygons: number[]) => {
+const draw = (
+    context: CanvasRenderingContext2D,
+    scale: number = 1,
+    polygons: number[]
+) => {
     const multiplier = 72 * (window.devicePixelRatio || 1) * scale;
     context.fillStyle = 'rgba(252, 207, 8, 0.3)';
     context.strokeStyle = '#fccf08';
@@ -18,50 +22,74 @@ const draw = (context: CanvasRenderingContext2D, scale: number = 1, polygons: nu
     context.stroke();
 };
 
-const preDraw = (iframeRef: React.RefObject<HTMLIFrameElement>, pageNumber: number, polygons: number[]) => {
-    const elements = iframeRef.current?.contentWindow?.document.querySelectorAll("div.canvasWrapper > canvas") as NodeList;
+const preDraw = (
+    document: Document | undefined,
+    pageNumber: number,
+    polygons: number[]
+) => {
 
-    let element;
-    if (elements.length === 1) element = elements[0] as HTMLCanvasElement;
-    else element = elements[pageNumber - 1] as HTMLCanvasElement;
+    const pages = document.getElementsByClassName("page") as HTMLCollection;
 
-    if (element) {
-        const highlightContext = element?.getContext('2d');
-        const scale = parseFloat(iframeRef.current?.contentWindow?.getComputedStyle(element).getPropertyValue('--scale-factor') || '1');
+    let canvas;
+    for (let index = 0; index < pages.length; index++) {
+        let page = pages[index] as HTMLElement;
+        let canvasPageNumber = Number(page.dataset.pageNumber);
+        if (canvasPageNumber == pageNumber) canvas = page.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
+    }
+    // const elements = document?.querySelectorAll("div.canvasWrapper > canvas") as NodeList;
+
+    // let element;
+    // if (elements.length === 1) element = elements[0] as HTMLCanvasElement;
+    // else element = elements[pageNumber - 1] as HTMLCanvasElement;
+
+    if (canvas) {
+        const highlightContext = canvas?.getContext('2d');
+        const scale = parseFloat(getComputedStyle(canvas).getPropertyValue('--scale-factor') || '1');
         if (highlightContext) {
             draw(highlightContext, scale, polygons);
         }
     }
 }
+const findReference = (
+    reference: { text: string, fileName: string },
+    filePage: number,
+    setFilePage: (pageNumber: number) => void,
+    iframeRef: React.RefObject<HTMLIFrameElement>,
+    setRef: (ref: React.RefObject<HTMLIFrameElement>) => void
+) => {
+    const internalDocument = iframeRef.contentDocument;
 
-const References = (props) => {
-    const { references, setFilePage, filePage, iframeRef } = props;
+    // const internalDocument = iframeRef.current?.contentWindow?.document;
+    // when you click on a specific citation
+    // this runs to find the relevant document, page, and bounding box data
 
-    const findReference = (reference: { text: string, fileName: string }) => {
-        // when you click on a specific citation
-        // this runs to find the relevant document, page, and bounding box data
-
-        // fetch DI response from a db
-        // actually for now, we just import the di.json file
-        const paragraphs = response.analyzeResult.paragraphs;
-        // loop through paragraphs object
-        // get relevant paragraph with matching text
-        let boundingRegions;
-        paragraphs.forEach((paragraph) => {
-            if (paragraph.content == reference.text) {
-                boundingRegions = paragraph.boundingRegions;
-            }
-        })
-
-        // things we need:
-        // page number for the iframe
-        // bounding box
-        if (boundingRegions) {
-            const { pageNumber, polygon } = boundingRegions[0];
-            setFilePage(pageNumber);
-            preDraw(iframeRef, pageNumber, polygon);
+    // fetch DI response from a db
+    // actually for now, we just import the di.json file
+    const paragraphs = response.analyzeResult.paragraphs;
+    // loop through paragraphs object
+    // get relevant paragraph with matching text
+    let boundingRegions;
+    paragraphs.forEach((paragraph) => {
+        if (paragraph.content == reference.text) {
+            boundingRegions = paragraph.boundingRegions;
         }
+    })
+
+    // things we need:
+    // page number for the iframe
+    // bounding box
+    if (boundingRegions) {
+        const { pageNumber, polygon } = boundingRegions[0];
+        preDraw(internalDocument, pageNumber, polygon);
+        setRef(iframeRef);
+        setFilePage(pageNumber);
     }
+}
+
+const References = (
+    props
+) => {
+    const { references, setFilePage, filePage, iframeRef, setRef } = props;
 
     const returnArray = [];
     for (let index = 0; index < references.length; index++) {
@@ -69,13 +97,15 @@ const References = (props) => {
         returnArray.push(
             <div key={"reference" + index}>
                 <p id="referenceContext">{reference.text}</p>
-                <button onClick={() => findReference(reference)}>Display Document</button>
+                <button onClick={() => findReference(reference, filePage, setFilePage, iframeRef, setRef)}>Display Document</button>
             </div>
         )
     }
     return returnArray;
 }
-export const QuestionAnswer = (props) => {
+export const QuestionAnswer = (
+    props
+) => {
     const { qA, ...otherProps } = props;
     return (
         <div id="question-container">

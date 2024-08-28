@@ -1,9 +1,9 @@
 // import React from 'react'
-import useCanvas from './useCanvas.tsx'
+import useCanvas from './useCanvas'
 
 const Canvas = (props) => {
-    const { draw, setRenderCanvas, height, width, outputScale, ...otherProps } = props
-    const ref = useCanvas(draw, setRenderCanvas, height, width, outputScale)
+    const { draw, style, ...otherProps } = props
+    const ref = useCanvas(draw, style)
 
     return <canvas ref={ref} {...otherProps} />
 }
