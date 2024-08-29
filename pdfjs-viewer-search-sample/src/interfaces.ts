@@ -72,7 +72,7 @@ export interface docIntResponse {
     kind?: string;
   }
   
-  interface BoundingRegion {
+  export interface BoundingRegion {
     pageNumber: number;
     polygon: number[];
   }

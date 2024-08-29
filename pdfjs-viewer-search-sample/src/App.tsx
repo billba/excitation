@@ -1,36 +1,10 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import './App.css'
 import { QuestionAnswer } from './questions';
 
-// const searchString = "Each\ntree is associated with a loop header and type map, so there may be\nseveral trees for a given loop header.\nClosing the loop. Trace";
-
 function App() {
   const [questionPage, setQuestionPage] = useState(1);
-  const [filePage, setFilePage] = useState(1);
-  // const [retry, setRetry] = useState(0);
-  // const [textLayer, setTextLayer] = useState<HTMLDivElement | undefined>(undefined);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // useEffect(() => {
-  //   if (retry < 9) {
-  //     console.log("retry", retry);
-  //     setTimeout(() => {
-  //       console.log("iframeRef.current", iframeRef.current);
-  //       console.log("iframeRef.current?.contentDocument", iframeRef.current?.contentDocument);
-  //       const tc = iframeRef.current?.contentDocument?.getElementsByClassName('textLayer');
-  //       console.log("tc", tc);
-  //       if (tc?.length) {
-  //         const textLayer = tc[0] as HTMLDivElement;
-  //         if (textLayer) {
-  //           console.log("textLayer", textLayer.innerText);
-  //           setTextLayer(textLayer);
-  //           return;
-  //         }
-  //       }
-  //       setRetry(r => r + 1);
-  //     }, 1000);
-  //   }
-  // }, [retry]);
+  const [style, setStyle] = useState({ height: 0, width: 0, scale: 1 });
 
   const qA = [
     {
@@ -43,7 +17,7 @@ function App() {
         },
         {
           text: "We solve the nested loop problem by recording nested trace trees. Our system traces the inner loop exactly as the naïve version. The system stops extending the inner tree when it reaches an outer loop, but then it starts a new trace at the outer loop header. When the outer loop reaches the inner loop header, the system tries to call the trace tree for the inner loop. If the call succeeds, the VM records the call to the inner tree as part of the outer trace and finishes the outer trace as normal. In this way, our system can trace any number of loops nested to any depth without causing excessive tail duplication.",
-          fileName: "compressed.tracemonkey-pldi-09.pdf"
+          fileName: "./compressed.tracemonkey-pldi-09.pdf"
         }
       ]
     },
@@ -53,7 +27,7 @@ function App() {
       references: [
         {
           text: "In this section, we describe traces, trace trees, and how they are formed at run time. Although our techniques apply to any dynamic language interpreter, we will describe them assuming a bytecode interpreter to keep the exposition simple.",
-          fileName: "compressed.tracemonkey-pldi-09.pdf"
+          fileName: "./compressed.tracemonkey-pldi-09.pdf"
         }
       ]
     }
@@ -69,6 +43,7 @@ function App() {
     else { setQuestionPage(page + 1); }
   }
 
+  const url = `./pdfjs/web/viewer.html?file=.%2Fcompressed.tracemonkey-pldi-09.pdf#page=1&zoom=page-fit`;
   return (
     <div id="app">
       <div id="sidebar">
@@ -77,13 +52,14 @@ function App() {
         Page {questionPage}
         &nbsp;
         <button onClick={() => nextQuestion(questionPage)}>Next</button>
-        <QuestionAnswer qA={qA[questionPage - 1]} setFilePage={setFilePage}/>
+        <div>
+          <QuestionAnswer qA={qA[questionPage - 1]} />
+        </div>
       </div>
       <div id="viewer">
-        <iframe ref={iframeRef} src={`./pdfjs/web/viewer.html?file=.%2Fcompressed.tracemonkey-pldi-09.pdf#page=${filePage}&zoom=page-fit`} id="iframe"/>
-      </div>
-    </div>
+        <iframe src={url} id="iframe" />
+      </div >
+    </div >
   )
 }
-
 export default App
