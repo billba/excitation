@@ -42,7 +42,7 @@ const Reference = (
 
     const showReference = () => {
         const iframe = document.getElementById("iframe") as HTMLIFrameElement;
-        const pdfViewer = iframe.contentWindow.PDFViewerApplication;
+        const pdfViewer = iframe.contentWindow?.PDFViewerApplication;
         console.log("pdfViewerApplication: ", pdfViewer);
         
         // when you click on a specific citation
@@ -54,7 +54,7 @@ const Reference = (
         if (!shown) {
             // now we want to draw on a canvas, so we'll find the right page to
             // grab the attached canvas
-            const pages = iframe.contentDocument.getElementsByClassName("page");
+            const pages = iframe.contentDocument?.getElementsByClassName("page") as HTMLCollectionOf<Element>;
             console.log("pages: ", pages);
 
             console.log("looking for canvas...");
@@ -64,6 +64,8 @@ const Reference = (
                 let canvasPageNumber = Number(page.dataset.pageNumber);
                 if (canvasPageNumber == pageNumber) canvas = page.getElementsByTagName("canvas")[0] as HTMLCanvasElement;
             }
+
+            console.log("canvas", canvas);
 
             if (canvas) {
                 console.log("canvas found!");
