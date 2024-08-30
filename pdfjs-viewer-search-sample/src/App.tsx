@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import './App.css'
 import { QuestionAnswer } from './questions';
 
 function App() {
   const [questionPage, setQuestionPage] = useState(1);
-  const [style, setStyle] = useState({ height: 0, width: 0, scale: 1 });
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const qA = [
     {
@@ -33,6 +33,16 @@ function App() {
     }
   ]
 
+  const unShown: boolean[][] = [];
+  for (let i = 0; i < qA.length; i++) {
+    unShown.push([]);
+    for (let j = 0; j < qA[i].references.length; j++) {
+      unShown[i].push(false);
+    }
+  }
+  
+  const [shown, setShown] = useState(unShown);
+
   const previousQuestion = (page: number) => {
     if (page === 1) { return; }
     else { setQuestionPage(page - 1); }
@@ -43,7 +53,7 @@ function App() {
     else { setQuestionPage(page + 1); }
   }
 
-  const url = `./pdfjs/web/viewer.html?file=.%2Fcompressed.tracemonkey-pldi-09.pdf#page=1&zoom=page-fit`;
+  const url = `./pdfjs/web/viewer.html?file=.%2Fcompressed.tracemonkey-pldi-09.pdf#&zoom=page-fit`;
   return (
     <div id="app">
       <div id="sidebar">
@@ -53,11 +63,11 @@ function App() {
         &nbsp;
         <button onClick={() => nextQuestion(questionPage)}>Next</button>
         <div>
-          <QuestionAnswer qA={qA[questionPage - 1]} />
+          <QuestionAnswer qA={qA[questionPage - 1]} questionIndex={questionPage - 1} iframeRef={iframeRef} shown={shown} setShown={setShown} />
         </div>
       </div>
       <div id="viewer">
-        <iframe src={url} id="iframe" />
+        <iframe ref={iframeRef} src={url} id="iframe" />
       </div >
     </div >
   )
