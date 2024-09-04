@@ -63,7 +63,7 @@ function App() {
         &nbsp;
         <button onClick={() => nextQuestion(questionPage)}>Next</button>
         <div>
-          <QuestionAnswer qA={qA[questionPage - 1]} questionIndex={questionPage - 1} iframeRef={iframeRef} shown={shown} setShown={setShown} />
+          <QuestionAnswer qA={qA[questionPage - 1]} iframeRef={iframeRef} shown={shown} setShown={setShown} questionIndex={questionPage - 1} />
         </div>
       </div>
       <div id="viewer">
