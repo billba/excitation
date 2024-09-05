@@ -84,7 +84,7 @@ export function QuestionAnswer(props) {
 
     // Match a subline to a line if at least 75% of its words/word fragments
     // are found in the line
-    const fuzzyMatch = (line: string, subline: string, threshold: number) => {
+    const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
         let words = subline.split(' ');
         let wordsMatched = 0;
 
@@ -92,7 +92,17 @@ export function QuestionAnswer(props) {
             if (line.includes(words[i])) wordsMatched++;
         }
 
-        if (wordsMatched / words.length >= threshold) return true;
+        const matchRate = wordsMatched / words.length;
+        if (matchRate >= threshold) {
+            console.log("matched DocInt line:\t", line,
+                        "\nto OCR subline:\t\t", subline,
+                        "\nwith match rate:", matchRate);
+            return true;
+        } if (matchRate > 0.4) {
+            console.log("did not match DocInt line:\t", line,
+                        "\nto OCR subline:\t\t", subline,
+                        "\nwith match rate:", matchRate);
+        }
         else return false;
     }
 
@@ -106,7 +116,7 @@ export function QuestionAnswer(props) {
         for (let i = 0; i < pages.length; i++) {
             const pageLines = pages[i].lines;
             for (let j = 0; j < pageLines.length; j++) {
-                if (fuzzyMatch(pageLines[j].content, lines[nextLine], .75)) {
+                if (fuzzyMatch(pageLines[j].content, lines[nextLine])) {
                     boundingRegions.push({
                         pageNumber: i + 1,
                         polygon: pageLines[j].polygon,
@@ -121,7 +131,7 @@ export function QuestionAnswer(props) {
     }
 
     // Rounds a number to the given precision
-    const round = (value: number, precision: number) => {
+    const round = (value: number, precision = 0) => {
         let multiplier = Math.pow(10, precision);
         return Math.round(value * multiplier) / multiplier;
     }
@@ -154,6 +164,7 @@ export function QuestionAnswer(props) {
     }
 
     // Combine two squared up polygons and return the combination
+    // if the two polygons are NOT adjacent you will get weird results!!!
     const combinePolygons = (poly0: number[], poly1: number[]) => {
        let x = [
             Math.min(poly0[0], poly1[0]),
@@ -182,6 +193,8 @@ export function QuestionAnswer(props) {
     // return the given boundingRegions combined into the minimum possible
     // number of boundingRegions
     const condenseRegions = (boundingRegions: BoundingRegion[]) => {
+        if (boundingRegions.length === 0) return boundingRegions;
+
         let condensedRegions: BoundingRegion[] = [
             {
                 pageNumber: boundingRegions[0].pageNumber,
@@ -189,51 +202,48 @@ export function QuestionAnswer(props) {
             }
         ]
 
-        for (let i = 1; i < boundingRegions.length; i++) {
-            for (let j = 0; j < condensedRegions.length; j++) {
-                boundingRegions[i].polygon = squareUp(boundingRegions[i].polygon);
+        let last = condensedRegions.length - 1;
+        for (let index = 1; index < boundingRegions.length; index++) {
+            boundingRegions[index].polygon = squareUp(boundingRegions[index].polygon);
 
-                if (condensedRegions[j].pageNumber === boundingRegions[i].pageNumber) {
-                    // Here, we are either:
-                    // - adding to an existing polygon, or
-                    // - moving to a new column or area on the same page
-                    if (adjacent(condensedRegions[j].polygon, boundingRegions[i].polygon)) {
-                        // adding to existing
-                        condensedRegions[j].polygon = combinePolygons(condensedRegions[j].polygon, boundingRegions[i].polygon);
-                    } else if (j === condensedRegions.length ||
-                               condensedRegions[j+1].pageNumber != boundingRegions[i].pageNumber){
-                        // if this is the last of the condensed regions, or
-                        // if this is the last condensed region on this page:
-                        // New column or similar
-                        condensedRegions.push(boundingRegions[i]);
-                    }
-                } else if (j === condensedRegions.length) {
-                    // if this is the last of the condensed regions:
-                    // new page
-                    condensedRegions.push(boundingRegions[i]);
+            if (condensedRegions[last].pageNumber === boundingRegions[index].pageNumber) {
+                if (adjacent(condensedRegions[last].polygon, boundingRegions[index].polygon)) {
+                    // adding to existing polygon
+                    condensedRegions[last].polygon = combinePolygons(condensedRegions[last].polygon, boundingRegions[index].polygon);
+                } else {
+                    // New column or similar
+                    condensedRegions.push(boundingRegions[index]);
+                    last++;
                 }
-
+            } else {
+                // new page
+                condensedRegions.push(boundingRegions[index]);
+                last++;
             }
         }
         return condensedRegions;
     }
 
     const createReferenceFromSelection = () => {
-        const selection = iframeRef.current?.contentWindow.getSelection()
+        const selection = iframeRef.current?.contentWindow.getSelection().toString()
         if (!selection) {
             console.log("No text selected");
             return;
         }
 
-        let lines = selection.toString().split('\n');
+        let lines = selection.split('\n');
         for (let i = 0; i < lines.length; i++) lines[i] = lines[i].trim();
 
         const boundingRegions = condenseRegions(findLinesBoundingRegions(lines));
-        if (!boundingRegions || boundingRegions.length === 0) {
+        if (boundingRegions.length === 0) {
             console.log("No match found for selected text");
             return;
         }
         console.log("boundingRegions:", boundingRegions);
+
+        // do a thing with the found boundingRegions
+
+        // save to references
     }
 
     let returnArray = [];
@@ -244,7 +254,7 @@ export function QuestionAnswer(props) {
         <label key="answer" id="answer">Answer: <input placeholder={qA.answer} /></label>
     );
     returnArray.push(
-        <p key="referenceTitle" id="referenceTitle">Reference contexts</p>
+        <h3 key="referenceTitle" id="referenceTitle">Reference contexts</h3>
     );
 
     for (let index = 0; index < qA.references.length; index++) {
@@ -253,6 +263,9 @@ export function QuestionAnswer(props) {
         )
     }
 
+    returnArray.push(
+        <h4 key="userAddedRefs" id="userAddedRefs">User contributions</h4>
+    )
     returnArray.push(
         <button key="addReference" className="addReference" onClick={() => createReferenceFromSelection()}>add selected text to references</button>
     );
