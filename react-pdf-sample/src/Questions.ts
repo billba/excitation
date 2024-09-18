@@ -1,6 +1,9 @@
 export const questions = [
-  "How much would could a wood chuck chuck if a wood chuck could chuck wood?",
-  "What is the airspeed velocity of an unladen swallow?",
-  "Why is a raven like a writing desk?",
-  "What is the answer to the ultimate question of life, the universe, and everything?",
+  "What was the company’s revenue for the third quarter of Fiscal Year 2024?",
+  "What are the earnings per share (EPS) for this quarter?",
+  "How much money did Microsoft return to shareholders in the form of share repurchases?",
+  "What are the total assets reported?",
+  "What are the total liabilities reported?",
+  "What is the net cash provided by operating activities?",
+  "What is the net cash used in financing activities?",
 ]
