@@ -23,7 +23,7 @@ export function Sidebar() {
   }, [questionIndex, setQuestionIndex, setCitationIndex]);
 
   const setCurrentCitation = useCallback((i: number) => () => setCitationIndex(i), [setCitationIndex]);
-
+// HIGHLIGHT THE SELECTED CITATION
   return (
     <div id="sidebar">
       <div className="sidebar-header">
@@ -35,8 +35,8 @@ export function Sidebar() {
       <div className='citation-header'>Citations:</div>
       <div>
         {citations[questionIndex].map(({ excerpt }, i) => (
-          <div className='citation' key={i} onClick={setCurrentCitation(i)}>
-            {i === citationIndex ? '*' : ''}{excerpt}
+          <div className={'citation' + (i === citationIndex ? ' selected' : '')} key={i} onClick={setCurrentCitation(i)}>
+            {excerpt}
           </div>
         ))}
       </div>

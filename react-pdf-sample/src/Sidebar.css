@@ -36,6 +36,11 @@
     background-color: white;
 }
 
+.selected {
+    background-color: yellow;
+    border-color: yellow;
+}
+
 .citation:hover {
     border: solid 1.5px gray;
     transition: border 0.25s;
