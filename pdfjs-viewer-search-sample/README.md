@@ -1,4 +1,4 @@
-# [excitation](../../) pdf.js viewer search sample
+# [excitation](../) pdf.js viewer search sample
 
 This sample embeds the default pdf.js web viewer application (as used in the Firefox browser) in an iframe, allowing users to work with excerpts within a powerful PDF reader that enables sophisticated searching.
 
