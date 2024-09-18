@@ -1,0 +1,42 @@
+#sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    border-right: skyblue solid 4px;
+    background-color: aliceblue;
+}
+
+.sidebar-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.q-number {
+    font-weight: bold;
+    font-size: larger;
+}
+
+.question {
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+.citation-header {
+    align-self: flex-start;
+    font-weight: 500;
+}
+
+.citation {
+    border: solid 1.5px white;
+    border-radius: 7px;
+    padding: 4px;
+    margin-top: 10px;
+    background-color: white;
+}
+
+.citation:hover {
+    border: solid 1.5px gray;
+    transition: border 0.25s;
+}

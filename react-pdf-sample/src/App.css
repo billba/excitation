@@ -13,10 +13,10 @@
   gap: 10px;
 }
 
-#sidebar {
+/* #sidebar {
   grid-column: 1;
   background:#c9c;
-}
+} */
 
 #viewer {
   grid-column: 2;
