@@ -21,10 +21,11 @@ export function Viewer() {
 
 
   return (
-    <Document file={doc.filename} onLoadSuccess={onDocumentLoadSuccess} >
-      <Page pageNumber={page} onRenderTextLayerSuccess={onRenderTextLayerSuccess} >
-      </Page>
-    </Document>
-
+    <div id="viewer">
+      <Document file={doc.filename} onLoadSuccess={onDocumentLoadSuccess} >
+        <Page pageNumber={page} onRenderTextLayerSuccess={onRenderTextLayerSuccess} >
+        </Page>
+      </Document>
+    </div>
   )
 }
