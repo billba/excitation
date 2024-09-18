@@ -62,7 +62,7 @@ export const mockCitations: Citation[][] = [
       page: 5,
       region: { top: 0, left: 0, width: 100, height: 100 },
     }
-  ]
+  ],
     // "What are the total liabilities reported?",
   [
     {
@@ -79,7 +79,7 @@ export const mockCitations: Citation[][] = [
       page: 5,
       region: { top: 0, left: 0, width: 100, height: 100 },
     }
-  ]
+  ],
     // "What is the net cash provided by operating activities?",
   [
     {
@@ -96,7 +96,7 @@ export const mockCitations: Citation[][] = [
       page: 6,
       region: { top: 0, left: 0, width: 100, height: 100 },
     }
-  ]
+  ],
      // "What is the net cash used in financing activities?",
   [
     {

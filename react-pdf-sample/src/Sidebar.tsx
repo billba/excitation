@@ -11,8 +11,15 @@ export function Sidebar() {
   const disablePrev = questionIndex === 0;
   const disableNext = questionIndex === questions.length - 1;
 
-  const prevQuestion = useCallback(() => setQuestionIndex(questionIndex - 1), [questionIndex, setQuestionIndex]);
-  const nextQuestion = useCallback(() => setQuestionIndex(questionIndex + 1), [questionIndex, setQuestionIndex]);
+  const prevQuestion = useCallback(() => {
+    setQuestionIndex(questionIndex - 1);
+    setCitationIndex(0);
+  }, [questionIndex, setQuestionIndex, setCitationIndex]);
+
+  const nextQuestion = useCallback(() => {
+    setQuestionIndex(questionIndex + 1);
+    setCitationIndex(0);
+  }, [questionIndex, setQuestionIndex, setCitationIndex]);
 
   const setCurrentCitation = useCallback((i: number) => () => setCitationIndex(i), [setCitationIndex]);
 
