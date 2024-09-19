@@ -114,7 +114,7 @@ export const mockCitations: Citation[][] = [
       region: { top: 0, left: 0, width: 100, height: 100 },
     }
   ],
-       // "Are there any ongoing legal proceedings mentioned in the document? Please quote the exact text that answers this question.",
+       // "Are there any ongoing legal proceedings?",
   [
     {
       excerpt: "Claims against us that may result in adverse outcomes in legal disputes.",

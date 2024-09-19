@@ -6,5 +6,5 @@ export const questions = [
   "What are the total liabilities reported?",
   "What is the net cash provided by operating activities?",
   "What is the net cash used in financing activities?",
-  "Are there any ongoing legal proceedings mentioned in the document? Please quote the exact text that answers this question.",
+  "Are there any ongoing legal proceedings?",
 ]
