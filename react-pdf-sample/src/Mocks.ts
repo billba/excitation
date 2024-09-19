@@ -113,7 +113,7 @@ export const mockCitations: Citation[][] = [
       page: 6,
       region: { top: 0, left: 0, width: 100, height: 100 },
     }
-  ]
+  ],
        // "Are there any ongoing legal proceedings mentioned in the document? Please quote the exact text that answers this question.",
   [
     {
@@ -124,15 +124,7 @@ export const mockCitations: Citation[][] = [
       region: { top: 0, left: 0, width: 100, height: 100 },
     },
     {
-      excerpt: "Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits
-filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused
-their brain tumors and other adverse health effects. We assumed responsibility for these claims in our agreement to acquire Nokia’s Devices
-and Services business and have been substituted for the Nokia defendants. Twelve of these cases were consolidated for certain pre-trial
-proceedings; the remaining cases are stayed. In a separate 2009 decision, the Court of Appeals for the District of Columbia held that adverse
-health effect claims arising from the use of cellular handsets that operate within the U.S. Federal Communications Commission radio
-frequency emission guidelines (“FCC Guidelines”) are pre-empted by federal law. The plaintiffs allege that their handsets either operated
-outside the FCC Guidelines or were manufactured before the FCC Guidelines went into effect. The lawsuits also allege an industry-wide
-conspiracy to manipulate the science and testing around emission guidelines.",
+      excerpt: "Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused their brain tumors and other adverse health effects. We assumed responsibility for these claims in our agreement to acquire Nokia’s Devices and Services business and have been substituted for the Nokia defendants. Twelve of these cases were consolidated for certain pre-trial proceedings; the remaining cases are stayed. In a separate 2009 decision, the Court of Appeals for the District of Columbia held that adverse health effect claims arising from the use of cellular handsets that operate within the U.S. Federal Communications Commission radio frequency emission guidelines (“FCC Guidelines”) are pre-empted by federal law. The plaintiffs allege that their handsets either operated outside the FCC Guidelines or were manufactured before the FCC Guidelines went into effect. The lawsuits also allege an industry-wide conspiracy to manipulate the science and testing around emission guidelines.",
       docIndex: 1,
       reviewStatus: ReviewStatus.Unreviewed,
       page: 25,
