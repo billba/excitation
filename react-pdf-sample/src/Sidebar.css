@@ -1,0 +1,74 @@
+#sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    border-right: skyblue solid 4px;
+    background-color: aliceblue;
+}
+
+.sidebar-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.q-number {
+    font-weight: bold;
+    font-size: larger;
+}
+
+.question {
+    margin-top: 40px;
+    margin-bottom: 20px;
+}
+
+.citation-header {
+    align-self: flex-start;
+    font-weight: 500;
+}
+
+.citation-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border: solid 1.5px white;
+    border-radius: 7px;
+    padding: 4px;
+    margin-top: 10px;
+    background-color: white;
+}
+
+.citation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 260px;
+}
+
+.selected {
+    background-color: yellow;
+    border-color: yellow;
+}
+
+.citation-row:hover {
+    border: solid 1.5px gray;
+    transition: border 0.25s;
+}
+
+.buttons {
+    width: 40px;
+}
+
+.cite-button {
+    width: 25px;
+    height: 25px;
+    margin: 2px;
+    padding: 0px;
+    opacity: 60%;
+}
+
+.cite-button:hover {
+    opacity: 100%;
+}

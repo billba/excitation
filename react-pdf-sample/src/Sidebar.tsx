@@ -2,6 +2,7 @@ import { useAtom } from 'jotai'
 import { citationsAtom, questionIndexAtom, citationIndexAtom } from "./State";
 import { questions } from "./Questions";
 import { useCallback } from 'react';
+import './Sidebar.css';
 
 export function Sidebar() {
   const [questionIndex, setQuestionIndex ] = useAtom(questionIndexAtom);
@@ -25,19 +26,38 @@ export function Sidebar() {
 
   return (
     <div id="sidebar">
-      <button disabled={disablePrev} onClick={prevQuestion}>&lt;</button>
-      &nbsp;
-      Question #{questionIndex}
-      &nbsp;
-      <button disabled={disableNext} onClick={nextQuestion}>&gt;</button>
-      <br />
-      {questions[questionIndex]}
-      <hr />
-      <ul>
+      <div className="sidebar-header">
+        <button disabled={disablePrev} onClick={prevQuestion}>&lt;</button>
+        <div className='q-number'>Question #{questionIndex+1}</div>
+        <button disabled={disableNext} onClick={nextQuestion}>&gt;</button>
+      </div>
+      <div className='question'>{questions[questionIndex]}</div>
+      <div className='citation-header'>Citations:</div>
+      <div>
         {citations[questionIndex].map(({ excerpt }, i) => (
-          <li key={i} onClick={setCurrentCitation(i)}>{i === citationIndex ? '*' : ''}{excerpt}</li>
+          <div
+            className={'citation-row' + (i === citationIndex ? ' selected' : '')}
+            key={i}
+            onClick={setCurrentCitation(i)}
+          >
+            <div className='citation'>{excerpt}</div>
+            <div className='buttons'>
+              <button
+                className='cite-button'
+                style={{'background-color': "palegreen"}}
+              >
+                Y
+              </button>
+              <button
+                className='cite-button'
+                style={{'background-color': "pink"}}
+              >
+                N
+              </button>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
