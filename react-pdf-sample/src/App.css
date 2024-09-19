@@ -1,8 +1,68 @@
-#root {
-  /* max-width: 1280px; */
-  /* margin: 0 auto; */
-  /* padding: 2rem; */
-  text-align: center;
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: rgba(135, 207, 235, 0.457);
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  background-color: skyblue;
+  transition: 0.25s;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+  a:hover {
+    color: #747bff;
+  }
 }
 
 #app {
@@ -13,12 +73,90 @@
   gap: 10px;
 }
 
-/* #sidebar {
+#sidebar {
   grid-column: 1;
-  background:#c9c;
-} */
+}
 
 #viewer {
   grid-column: 2;
-  background:#9c9;
+}
+
+#viewer-header {
+  background-color: skyblue;
+  grid-column: 2;
+}
+
+#sidebar {
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  border-right: skyblue solid 4px;
+  background-color: aliceblue;
+}
+
+.sidebar-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.q-number {
+  font-weight: bold;
+  font-size: larger;
+}
+
+.question {
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.citation-header {
+  align-self: flex-start;
+  font-weight: 500;
+}
+
+.citation-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border: solid 1.5px white;
+  border-radius: 7px;
+  padding: 4px;
+  margin-top: 10px;
+  background-color: white;
+}
+
+.citation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 260px;
+}
+
+.selected {
+  background-color: yellow;
+  border-color: yellow;
+}
+
+.citation-row:hover {
+  border: solid 1.5px gray;
+  transition: border 0.25s;
+}
+
+.buttons {
+  width: 40px;
+}
+
+.cite-button {
+  width: 25px;
+  height: 25px;
+  margin: 2px;
+  padding: 0px;
+  opacity: 60%;
+}
+
+.cite-button:hover {
+  opacity: 100%;
 }
