@@ -15,7 +15,7 @@ export function Viewer() {
   const doc = docs[docIndex];
   
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [renderCounter, setRenderCounter] = useState(0);
+  const [renderCounter, setRenderCounter] = useState(0); // this is how we make the highlight responsive to page renders
 
   const onDocumentLoadSuccess = useCallback(() => {
   }, []);
@@ -42,13 +42,13 @@ export function Viewer() {
     const context = highlightCanvas.getContext('2d')!;
     
     context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    context.fillStyle = 'rgba(255, 0, 0, 0.5)';
+    context.fillStyle = 'yellow';
     context.fillRect(200 + questionIndex * 25, 200 + citationIndex * 25, 200, 50);
   }, [renderCounter, page, docIndex, questionIndex, citationIndex]);
 
   return (
     <div id="viewer">
-      <p>{doc.filename} page {page}</p>
+      <div id="viewer-header">{doc.filename} page {page}</div>
       <div>
         <canvas ref={canvasRef} id="highlight-canvas" />
         <Document file={doc.filename} onLoadSuccess={onDocumentLoadSuccess} >

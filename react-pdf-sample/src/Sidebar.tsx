@@ -2,7 +2,6 @@ import { useAtom } from 'jotai'
 import { citationsAtom, questionIndexAtom, citationIndexAtom } from "./State";
 import { questions } from "./Questions";
 import { useCallback } from 'react';
-import './Sidebar.css';
 
 export function Sidebar() {
   const [questionIndex, setQuestionIndex ] = useAtom(questionIndexAtom);
@@ -44,13 +43,13 @@ export function Sidebar() {
             <div className='buttons'>
               <button
                 className='cite-button'
-                style={{'background-color': "palegreen"}}
+                style={{backgroundColor: "palegreen"}}
               >
                 Y
               </button>
               <button
                 className='cite-button'
-                style={{'background-color': "pink"}}
+                style={{backgroundColor: "pink"}}
               >
                 N
               </button>
