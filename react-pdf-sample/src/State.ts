@@ -1,8 +1,28 @@
 import { atom } from 'jotai';
 
+import { Doc } from './Types'
 import { mockCitations, mockDocs } from "./Mocks";
 
-export const docsAtom = atom(mockDocs)
-export const citationsAtom = atom(mockCitations);
+import { locateCitations } from './Utility';
+
+async function docsWithResponses(docs: Doc[]) {
+  return (await Promise.all(
+    docs.map(async (doc) => ({
+      ...doc,
+      response: await (await fetch(doc.filename + ".json")).json(),
+    }))
+  ));
+}
+
+const docs = await docsWithResponses(mockDocs);
+
+console.log(docs);
+
+const citations = locateCitations(docs, mockCitations);
+
+console.log(citations);
+
+export const docsAtom = atom(docs);
+export const citationsAtom = atom(citations);
 export const questionIndexAtom = atom<number>(0);
 export const citationIndexAtom = atom<number>(0);

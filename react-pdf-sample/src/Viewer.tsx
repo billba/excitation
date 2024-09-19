@@ -11,7 +11,12 @@ export function Viewer() {
   const [citationIndex] = useAtom(citationIndexAtom);
   const [citations] = useAtom(citationsAtom);
   
-  const { docIndex, page } = citations[questionIndex][citationIndex];
+  const { docIndex, boundingRegions } = citations[questionIndex][citationIndex];
+  let pageNumber: number | undefined = undefined;
+  if (boundingRegions && boundingRegions.length > 0) {
+    pageNumber = boundingRegions[0].pageNumber;
+  }
+
   const doc = docs[docIndex];
   
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -34,6 +39,7 @@ export function Viewer() {
     highlightCanvas.width = canvas.width;
     highlightCanvas.height = canvas.height;
     highlightCanvas.style.zIndex = '1000';
+    highlightCanvas.style.opacity = '0.5';
     setRenderCounter(c => c + 1);
   }, []);
 
@@ -42,18 +48,31 @@ export function Viewer() {
     const context = highlightCanvas.getContext('2d')!;
     
     context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    context.fillStyle = 'yellow';
-    context.fillRect(200 + questionIndex * 25, 200 + citationIndex * 25, 200, 50);
-  }, [renderCounter, page, docIndex, questionIndex, citationIndex]);
+
+    if (boundingRegions && boundingRegions.length > 0) {
+      for (const { polygon } of boundingRegions) {
+        console.log(polygon);
+        context.fillStyle = 'yellow';
+        context.beginPath();
+        context.moveTo(polygon[0] * 144, polygon[1] * 144);
+        context.lineTo(polygon[2] * 144, polygon[3] * 144);
+        context.lineTo(polygon[4] * 144, polygon[5] * 144);
+        context.lineTo(polygon[6] * 144, polygon[7] * 144);
+        context.closePath();
+        context.fill();
+      }
+    }
+  }, [renderCounter, boundingRegions, docIndex, questionIndex, citationIndex]);
+
+  console.log("rendering", doc.filename, pageNumber);
 
   return (
     <div id="viewer">
-      <div id="viewer-header">{doc.filename} page {page}</div>
+      <div id="viewer-header">{doc.filename} {pageNumber === undefined ? 'CITATION NOT FOUND' : (pageNumber).toString()}</div>
       <div>
         <canvas ref={canvasRef} id="highlight-canvas" />
         <Document file={doc.filename} onLoadSuccess={onDocumentLoadSuccess} >
-          <Page pageNumber={page} onRenderSuccess={onRenderSuccess} >
-          </Page>
+          { pageNumber === undefined ? null : <Page pageNumber={pageNumber} onRenderSuccess={onRenderSuccess} /> }
         </Document>
       </div>
     </div>
