@@ -24,5 +24,6 @@ console.log(citations);
 
 export const docsAtom = atom(docs);
 export const citationsAtom = atom(citations);
-export const questionIndexAtom = atom<number>(0);
-export const citationIndexAtom = atom<number>(0);
+export const questionIndexAtom = atom(0);
+export const citationIndexAtom = atom(0);
+export const newCitationAtom = atom(false);
