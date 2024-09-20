@@ -65,16 +65,14 @@ export function Sidebar() {
                   <button
                   className='cite-button'
                   style={{ backgroundColor: reviewStatus === ReviewStatus.Approved ? "palegreen" : 'grey' }}
-                  onClick={toggle(ReviewStatus.Approved)}
-                  disabled={i !== citationIndex}
+                  onClick={i === citationIndex ? toggle(ReviewStatus.Approved) : setCurrentCitation(i)}
                   >✓</button>
                 : null }
                 {i === citationIndex || reviewStatus === ReviewStatus.Rejected ?
                   <button
                   className='cite-button'
                   style={{ backgroundColor: reviewStatus === ReviewStatus.Rejected ? "lightcoral" : 'grey' }}
-                  onClick={toggle(ReviewStatus.Rejected)}
-                  disabled={i !== citationIndex}
+                  onClick={i === citationIndex ? toggle(ReviewStatus.Rejected) : setCurrentCitation(i)}
                   >𐄂</button>
                 : null }
               </div>
