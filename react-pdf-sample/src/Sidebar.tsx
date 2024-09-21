@@ -76,10 +76,7 @@ export function Sidebar() {
   );
 
   const setCurrentCitation = useCallback(
-    (citationIndex: number) => () => {
-      console.log("setting citation from onClick", citationIndex);
-      setCitationIndex(citationIndex);
-    },
+    (citationIndex: number) => () => setCitationIndex(citationIndex),
     [setCitationIndex]
   );
 
