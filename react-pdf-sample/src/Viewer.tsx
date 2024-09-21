@@ -17,10 +17,16 @@ export function Viewer() {
   const [citations] = useAtom(citationsAtom);
 
   const { docIndex, boundingRegions } = citations[questionIndex][citationIndex];
-  let pageNumber: number | undefined = undefined;
-  if (boundingRegions && boundingRegions.length > 0) {
-    pageNumber = boundingRegions[0].pageNumber;
-  }
+
+  const pageNumbers = [
+    ...new Set(boundingRegions?.map(({ pageNumber }) => pageNumber)),
+  ];
+
+  const polygons = pageNumbers.map((pageNumber) =>
+    boundingRegions
+      ?.filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)
+      .map(({ polygon }) => polygon)
+  );
 
   const doc = docs[docIndex];
 
@@ -29,7 +35,7 @@ export function Viewer() {
 
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
-  const onRenderSuccess = useCallback(() => {
+  const onRenderSuccess = useCallback((i: number) => {
     console.log("onRenderSuccess");
     const canvas = document.getElementsByClassName(
       "react-pdf__Page__canvas"
@@ -81,8 +87,8 @@ export function Viewer() {
       </div>
       <div>
         <Document file={doc.filename} onLoadSuccess={onDocumentLoadSuccess}>
-          {pageNumber && (
-            <Page pageNumber={pageNumber} onRenderSuccess={onRenderSuccess} />
+          {pageNumbers.map((pageNumber, i) => (
+            <Page pageNumber={pageNumber} onRenderSuccess={onRenderSuccess(i)} />
           )}
         </Document>
         <canvas
