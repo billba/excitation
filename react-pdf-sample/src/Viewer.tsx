@@ -28,18 +28,17 @@ export function Viewer() {
   const onRenderSuccess = useCallback(() => {
     console.log('onRenderSuccess');
     const canvas = document.getElementsByClassName('react-pdf__Page__canvas')[0] as HTMLCanvasElement;
-    const styles = window.getComputedStyle(canvas);
+    const rect = canvas.getBoundingClientRect();
+
     const highlightCanvas = canvasRef.current!;
 
-    highlightCanvas.style.position = 'absolute';
-    highlightCanvas.style.top = styles.top; 
-    highlightCanvas.style.left = styles.left;
-    highlightCanvas.style.width = styles.width;
-    highlightCanvas.style.height = styles.height;
+    highlightCanvas.style.top = rect.top.toString() + 'px';
+    highlightCanvas.style.left = rect.left.toString() + 'px';
+    highlightCanvas.style.width = rect.width.toString() + 'px';
+    highlightCanvas.style.height = rect.height.toString() + 'px';
+
     highlightCanvas.width = canvas.width;
     highlightCanvas.height = canvas.height;
-    highlightCanvas.style.zIndex = '1000';
-    highlightCanvas.style.opacity = '0.5';
     setRenderCounter(c => c + 1);
   }, []);
 
@@ -70,10 +69,10 @@ export function Viewer() {
     <div id="viewer">
       <div id="viewer-header">{doc.filename} {pageNumber === undefined ? 'CITATION NOT FOUND' : (pageNumber).toString()}</div>
       <div>
-        <canvas ref={canvasRef} id="highlight-canvas" />
         <Document file={doc.filename} onLoadSuccess={onDocumentLoadSuccess} >
-          { pageNumber === undefined ? null : <Page pageNumber={pageNumber} onRenderSuccess={onRenderSuccess} /> }
+          { pageNumber && <Page pageNumber={pageNumber} onRenderSuccess={onRenderSuccess} /> }
         </Document>
+        <canvas ref={canvasRef} id="highlight-canvas" style={{ position: 'absolute', zIndex: 1000, opacity: '0.5' }} />
       </div>
     </div>
   )
