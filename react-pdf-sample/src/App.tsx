@@ -5,8 +5,6 @@ import { pdfjs } from 'react-pdf';
 import { Sidebar } from './Sidebar';
 import { Viewer } from './Viewer';
 
-console.log(import.meta.url);
-
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.js',
   import.meta.url,
