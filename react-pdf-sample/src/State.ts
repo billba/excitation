@@ -1,17 +1,17 @@
-import { atom } from 'jotai';
+import { atom } from "jotai";
 
-import { Doc } from './Types'
+import { Doc } from "./Types";
 import { mockCitations, mockDocs } from "./Mocks";
 
-import { locateCitations } from './Utility';
+import { locateCitations } from "./Utility";
 
 async function docsWithResponses(docs: Doc[]) {
-  return (await Promise.all(
+  return await Promise.all(
     docs.map(async (doc) => ({
       ...doc,
       response: await (await fetch(doc.filename + ".json")).json(),
     }))
-  ));
+  );
 }
 
 const docs = await docsWithResponses(mockDocs);
@@ -30,26 +30,31 @@ export const newCitationAtom = atom(false);
 
 // derived atoms
 
-export const currentCitationAtom = atom((get) => get(citationsAtom)[get(questionIndexAtom)][get(citationIndexAtom)]);
+export const currentCitationAtom = atom(
+  (get) => get(citationsAtom)[get(questionIndexAtom)][get(citationIndexAtom)]
+);
 
 export const pageNumbersAtom = atom((get) => {
   const { boundingRegions } = get(currentCitationAtom);
 
-  return [
-    ...new Set(boundingRegions?.map(({ pageNumber }) => pageNumber)),
-  ];
+  return [...new Set(boundingRegions?.map(({ pageNumber }) => pageNumber))];
 });
 
-  // it would be nice if boundingRegions came in this convenient format
+// it would be nice if boundingRegions came in this convenient format
 
 export const highlightsForPageAtom = atom((get) => {
-  const { boundingRegions }  = get(currentCitationAtom);
+  const { boundingRegions } = get(currentCitationAtom);
 
-  return boundingRegions ? get(pageNumbersAtom).map((pageNumber) => {
-    return {
-      pageNumber, polygons: boundingRegions
-        .filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)
-        .map(({ polygon }) => polygon)
-    }
-  }) : [];
+  return boundingRegions
+    ? get(pageNumbersAtom).map((pageNumber) => {
+        return {
+          pageNumber,
+          polygons: boundingRegions
+            .filter(
+              (boundingRegion) => boundingRegion.pageNumber === pageNumber
+            )
+            .map(({ polygon }) => polygon),
+        };
+      })
+    : [];
 });
