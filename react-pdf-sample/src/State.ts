@@ -30,8 +30,11 @@ export const newCitationAtom = atom(false);
 
 // derived atoms
 
+export const currentCitationAtom = atom((get) => get(citationsAtom)[get(questionIndexAtom)][get(citationIndexAtom)]);
+
 export const pageNumbersAtom = atom((get) => {
-  const { boundingRegions } = get(citationsAtom)[get(questionIndexAtom)][get(citationIndexAtom)];
+  const { boundingRegions } = get(currentCitationAtom);
+
   return [
     ...new Set(boundingRegions?.map(({ pageNumber }) => pageNumber)),
   ];
@@ -40,9 +43,9 @@ export const pageNumbersAtom = atom((get) => {
   // it would be nice if boundingRegions came in this convenient format
 
 export const highlightsForPageAtom = atom((get) => {
-  const boundingRegions = get(citationsAtom)[get(questionIndexAtom)][get(citationIndexAtom)].boundingRegions;
-  const pageNumbers = get(pageNumbersAtom);
-  return boundingRegions ? pageNumbers.map((pageNumber) => {
+  const { boundingRegions }  = get(currentCitationAtom);
+
+  return boundingRegions ? get(pageNumbersAtom).map((pageNumber) => {
     return {
       pageNumber, polygons: boundingRegions
         .filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)

@@ -4,9 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 
 import {
-  questionIndexAtom,
-  citationIndexAtom,
-  citationsAtom,
+  currentCitationAtom,
   docsAtom,
   pageNumbersAtom,
   highlightsForPageAtom,
@@ -17,13 +15,11 @@ const pages = Array.from({ length: pageMax }, (e, i) => i);
 
 export function Viewer() {
   const [docs] = useAtom(docsAtom);
-  const [questionIndex] = useAtom(questionIndexAtom);
-  const [citationIndex] = useAtom(citationIndexAtom);
-  const [citations] = useAtom(citationsAtom);
+  const [citation] = useAtom(currentCitationAtom);
   const [pageNumbers] = useAtom(pageNumbersAtom);
   const [highlightsForPage] = useAtom(highlightsForPageAtom);
 
-  const { docIndex } = citations[questionIndex][citationIndex];
+  const { docIndex } = citation;
   const { filename } = docs[docIndex];
 
   console.assert(
@@ -100,8 +96,6 @@ export function Viewer() {
       renderCounter,
       highlights,
       docIndex,
-      questionIndex,
-      citationIndex,
     ]);
   }
 
