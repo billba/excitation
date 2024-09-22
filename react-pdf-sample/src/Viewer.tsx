@@ -40,10 +40,7 @@ export function Viewer() {
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
   const onRenderSuccess = useCallback(
-    (page: number) => () => {
-      console.log("onRenderSuccess for page", page);
-      setRenderCounter((c) => c + 1);
-    },
+    () => setRenderCounter((c) => c + 1),
     [setRenderCounter]
   );
 
@@ -51,19 +48,17 @@ export function Viewer() {
   // so we just resort to resizing, clearing, and rendering all the highlight canvases every time any page rerenders.
   // Sorry for burning a little more electricity than is probably necessary.
   useEffect(() => {
-    console.log("useEffect");
     for (const page of pages) {
       const canvas = canvasRefs[page].current;
       const highlightCanvas = highlightCanvasRefs[page].current;
       const highlights = highlightsForPage[page];
-      
+
       if (!canvas || !highlightCanvas || !highlights) return;
 
       const rect = canvas.getBoundingClientRect();
-      console.log(rect);
 
-      highlightCanvas.style.top = rect.top + "px";
-      highlightCanvas.style.left = rect.left + "px";
+      highlightCanvas.style.top = rect.top + window.scrollY + "px";
+      highlightCanvas.style.left = rect.left + window.scrollX + "px";
       highlightCanvas.style.width = rect.width + "px";
       highlightCanvas.style.height = rect.height + "px";
 
@@ -85,9 +80,13 @@ export function Viewer() {
         context.fill();
       }
     }
-  }, [canvasRefs, highlightCanvasRefs, renderCounter, highlightsForPage, docIndex]);
-
-  console.log("rendering", filename, pageNumbers);
+  }, [
+    canvasRefs,
+    highlightCanvasRefs,
+    renderCounter,
+    highlightsForPage,
+    docIndex,
+  ]);
 
   return (
     <div id="viewer">
@@ -107,7 +106,7 @@ export function Viewer() {
               key={page}
               canvasRef={canvasRefs[page]}
               pageNumber={pageNumber}
-              onRenderSuccess={onRenderSuccess(page)}
+              onRenderSuccess={onRenderSuccess}
             />
           ))}
         </Document>
@@ -116,7 +115,7 @@ export function Viewer() {
             key={page}
             ref={highlightCanvasRefs[page]}
             id="highlight-canvas"
-            style={{ position: "absolute", zIndex: 1000, opacity: "0.5" }}
+            style={{ position: "absolute", zIndex: 1000, opacity: 0.5 }}
           />
         ))}
       </div>
