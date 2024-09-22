@@ -8,62 +8,84 @@ import {
   citationIndexAtom,
   citationsAtom,
   docsAtom,
+  pageNumbersAtom,
+  highlightsForPageAtom,
 } from "./State";
+
+const pageMax = 3;
+const pages = Array.from({ length: pageMax }, (e, i) => i);
 
 export function Viewer() {
   const [docs] = useAtom(docsAtom);
   const [questionIndex] = useAtom(questionIndexAtom);
   const [citationIndex] = useAtom(citationIndexAtom);
   const [citations] = useAtom(citationsAtom);
+  const [pageNumbers] = useAtom(pageNumbersAtom);
+  const [highlightsForPage] = useAtom(highlightsForPageAtom);
 
-  const { docIndex, boundingRegions } = citations[questionIndex][citationIndex];
+  const { docIndex } = citations[questionIndex][citationIndex];
+  const { filename } = docs[docIndex];
 
-  const pageNumbers = [
-    ...new Set(boundingRegions?.map(({ pageNumber }) => pageNumber)),
-  ];
-
-  const polygons = pageNumbers.map((pageNumber) =>
-    boundingRegions
-      ?.filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)
-      .map(({ polygon }) => polygon)
+  console.assert(
+    pageNumbers.length < pageMax,
+    "Too many pages in the highlight"
   );
 
-  const doc = docs[docIndex];
+  // We bend the rules of hooks here a bit in order to display multiple pages.
+  // We call useRef, useState, useCallback, and useEffect inside loops.
+  // But it's okay because we always call them the same number of times.
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [renderCounter, setRenderCounter] = useState(0); // this is how we make the highlight responsive to page renders
+  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-unused-vars
+  const canvasRefs = pages.map((_) => useRef<HTMLCanvasElement>(null));
+  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-unused-vars
+  const renderCounters = pages.map((_) => useState(0)); // this is how we make highlighting responsive to page rendering
 
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
-  const onRenderSuccess = useCallback((i: number) => {
-    console.log("onRenderSuccess");
-    const canvas = document.getElementsByClassName(
-      "react-pdf__Page__canvas"
-    )[0] as HTMLCanvasElement;
-    const rect = canvas.getBoundingClientRect();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const onRenders = renderCounters.map(([_, setRenderCounter], page) => {
+    const canvasRef = canvasRefs[page];
 
-    const highlightCanvas = canvasRef.current!;
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useCallback(() => {
+      console.log("onRenderSuccess", page);
+      const canvas = document.getElementsByClassName(
+        "react-pdf__Page__canvas"
+      )[0] as HTMLCanvasElement;
+      const rect = canvas.getBoundingClientRect();
 
-    highlightCanvas.style.top = rect.top.toString() + "px";
-    highlightCanvas.style.left = rect.left.toString() + "px";
-    highlightCanvas.style.width = rect.width.toString() + "px";
-    highlightCanvas.style.height = rect.height.toString() + "px";
+      const highlightCanvas = canvasRef.current!;
 
-    highlightCanvas.width = canvas.width;
-    highlightCanvas.height = canvas.height;
-    setRenderCounter((c) => c + 1);
-  }, []);
+      highlightCanvas.style.top = rect.top.toString() + "px";
+      highlightCanvas.style.left = rect.left.toString() + "px";
+      highlightCanvas.style.width = rect.width.toString() + "px";
+      highlightCanvas.style.height = rect.height.toString() + "px";
 
-  useEffect(() => {
-    const highlightCanvas = canvasRef.current!;
-    const context = highlightCanvas.getContext("2d")!;
+      highlightCanvas.width = canvas.width;
+      highlightCanvas.height = canvas.height;
+      setRenderCounter((c) => c + 1);
+    }, [page, canvasRef, setRenderCounter]);
+  });
 
-    context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+  for (const page of pages) {
+    const [renderCounter] = renderCounters[page];
+    const canvasRef = canvasRefs[page];
+    const highlights = highlightsForPage[page];
 
-    if (boundingRegions && boundingRegions.length > 0) {
-      for (const { polygon } of boundingRegions) {
-        console.log(polygon);
-        context.fillStyle = "yellow";
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      console.log("useEffect for highlighting", page);
+
+      if (!highlights) return;
+
+      const { polygons } = highlights;
+      const highlightCanvas = canvasRef.current!;
+      const context = highlightCanvas.getContext("2d")!;
+
+      context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+      context.fillStyle = "yellow";
+
+      for (const polygon of polygons) {
         context.beginPath();
         context.moveTo(polygon[0] * 144, polygon[1] * 144);
         context.lineTo(polygon[2] * 144, polygon[3] * 144);
@@ -72,30 +94,33 @@ export function Viewer() {
         context.closePath();
         context.fill();
       }
-    }
-  }, [renderCounter, boundingRegions, docIndex, questionIndex, citationIndex]);
-
-  console.log("rendering", doc.filename, pageNumber);
+    }, [
+      page,
+      canvasRef,
+      renderCounter,
+      highlights,
+      docIndex,
+      questionIndex,
+      citationIndex,
+    ]);
+  }
 
   return (
     <div id="viewer">
-      <div id="viewer-header">
-        {doc.filename}{" "}
-        {pageNumber === undefined
-          ? "CITATION NOT FOUND"
-          : pageNumber.toString()}
-      </div>
+      <div id="viewer-header">{filename} </div>
       <div>
-        <Document file={doc.filename} onLoadSuccess={onDocumentLoadSuccess}>
-          {pageNumbers.map((pageNumber, i) => (
-            <Page pageNumber={pageNumber} onRenderSuccess={onRenderSuccess(i)} />
-          )}
+        <Document file={filename} onLoadSuccess={onDocumentLoadSuccess}>
+          {pageNumbers.map((pageNumber, page) => (
+            <Page pageNumber={pageNumber} onRenderSuccess={onRenders[page]} />
+          ))}
         </Document>
-        <canvas
-          ref={canvasRef}
-          id="highlight-canvas"
-          style={{ position: "absolute", zIndex: 1000, opacity: "0.5" }}
-        />
+        {pageNumbers.map((_, page) => (
+          <canvas
+            ref={canvasRefs[page]}
+            id="highlight-canvas"
+            style={{ position: "absolute", zIndex: 1000, opacity: "0.5" }}
+          />
+        ))}
       </div>
     </div>
   );

@@ -27,3 +27,26 @@ export const citationsAtom = atom(citations);
 export const questionIndexAtom = atom(0);
 export const citationIndexAtom = atom(0);
 export const newCitationAtom = atom(false);
+
+// derived atoms
+
+export const pageNumbersAtom = atom((get) => {
+  const { boundingRegions } = get(citationsAtom)[get(questionIndexAtom)][get(citationIndexAtom)];
+  return [
+    ...new Set(boundingRegions?.map(({ pageNumber }) => pageNumber)),
+  ];
+});
+
+  // it would be nice if boundingRegions came in this convenient format
+
+export const highlightsForPageAtom = atom((get) => {
+  const boundingRegions = get(citationsAtom)[get(questionIndexAtom)][get(citationIndexAtom)].boundingRegions;
+  const pageNumbers = get(pageNumbersAtom);
+  return boundingRegions ? pageNumbers.map((pageNumber) => {
+    return {
+      pageNumber, polygons: boundingRegions
+        .filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)
+        .map(({ polygon }) => polygon)
+    }
+  }) : [];
+});
