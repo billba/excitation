@@ -4,4 +4,5 @@ export const questions = [
   "How much money did Microsoft return to shareholders in the form of share repurchases?",
   "What are the total assets reported?",
   "Are there any ongoing legal proceedings?",
+  "What is an excerpt that spans two pages?",
 ]
