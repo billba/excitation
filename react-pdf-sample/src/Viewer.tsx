@@ -11,7 +11,7 @@ import {
 } from "./State";
 
 const pageMax = 3;
-const pages = Array.from({ length: pageMax }, (e, i) => i);
+const pages = Array.from({ length: pageMax }, (_, i) => i);
 
 export function Viewer() {
   const [docs] = useAtom(docsAtom);
@@ -28,60 +28,54 @@ export function Viewer() {
   );
 
   // We bend the rules of hooks here a bit in order to display multiple pages.
-  // We call useRef, useState, useCallback, and useEffect inside loops.
-  // But it's okay because we always call them the same number of times.
+  // We call useRef inside loops, but it's okay because we always call it the same number of times.
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-unused-vars
-  const canvasRefs = pages.map((_) => useRef<HTMLCanvasElement>(null));
-  // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-unused-vars
-  const renderCounters = pages.map((_) => useState(0)); // this is how we make highlighting responsive to page rendering
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const canvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const highlightCanvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
+
+  const [renderCounter, setRenderCounter] = useState(0); // this is how we make highlighting responsive to page rendering
 
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onRenders = renderCounters.map(([_, setRenderCounter], page) => {
-    const canvasRef = canvasRefs[page];
+  const onRenderSuccess = useCallback(
+    (page: number) => () => {
+      console.log("onRenderSuccess for page", page);
+      setRenderCounter((c) => c + 1);
+    },
+    [setRenderCounter]
+  );
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useCallback(() => {
-      console.log("onRenderSuccess", page);
-      const canvas = document.getElementsByClassName(
-        "react-pdf__Page__canvas"
-      )[0] as HTMLCanvasElement;
+  // For multiple pages, the canvases keep moving around. We don't really know when we're done rendering pages,
+  // so we just resort to resizing, clearing, and rendering all the highlight canvases every time any page rerenders.
+  // Sorry for burning a little more electricity than is probably necessary.
+  useEffect(() => {
+    console.log("useEffect");
+    for (const page of pages) {
+      const canvas = canvasRefs[page].current;
+      const highlightCanvas = highlightCanvasRefs[page].current;
+      const highlights = highlightsForPage[page];
+      
+      if (!canvas || !highlightCanvas || !highlights) return;
+
       const rect = canvas.getBoundingClientRect();
+      console.log(rect);
 
-      const highlightCanvas = canvasRef.current!;
-
-      highlightCanvas.style.top = rect.top.toString() + "px";
-      highlightCanvas.style.left = rect.left.toString() + "px";
-      highlightCanvas.style.width = rect.width.toString() + "px";
-      highlightCanvas.style.height = rect.height.toString() + "px";
+      highlightCanvas.style.top = rect.top + "px";
+      highlightCanvas.style.left = rect.left + "px";
+      highlightCanvas.style.width = rect.width + "px";
+      highlightCanvas.style.height = rect.height + "px";
 
       highlightCanvas.width = canvas.width;
       highlightCanvas.height = canvas.height;
-      setRenderCounter((c) => c + 1);
-    }, [page, canvasRef, setRenderCounter]);
-  });
 
-  for (const page of pages) {
-    const [renderCounter] = renderCounters[page];
-    const canvasRef = canvasRefs[page];
-    const highlights = highlightsForPage[page];
-
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    useEffect(() => {
-      console.log("useEffect for highlighting", page);
-
-      if (!highlights) return;
-
-      const { polygons } = highlights;
-      const highlightCanvas = canvasRef.current!;
       const context = highlightCanvas.getContext("2d")!;
 
       context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
       context.fillStyle = "yellow";
 
-      for (const polygon of polygons) {
+      for (const polygon of highlights.polygons) {
         context.beginPath();
         context.moveTo(polygon[0] * 144, polygon[1] * 144);
         context.lineTo(polygon[2] * 144, polygon[3] * 144);
@@ -90,27 +84,37 @@ export function Viewer() {
         context.closePath();
         context.fill();
       }
-    }, [
-      page,
-      canvasRef,
-      renderCounter,
-      highlights,
-      docIndex,
-    ]);
-  }
+    }
+  }, [canvasRefs, highlightCanvasRefs, renderCounter, highlightsForPage, docIndex]);
+
+  console.log("rendering", filename, pageNumbers);
 
   return (
     <div id="viewer">
-      <div id="viewer-header">{filename} </div>
+      <div id="viewer-header">
+        <b>{filename}</b>
+        &nbsp;
+        {pageNumbers.length === 1
+          ? `page ${pageNumbers[0]}`
+          : `pages ${pageNumbers[0]} - ${
+              pageNumbers[pageNumbers.length - 1]
+            }`}{" "}
+      </div>
       <div>
         <Document file={filename} onLoadSuccess={onDocumentLoadSuccess}>
           {pageNumbers.map((pageNumber, page) => (
-            <Page pageNumber={pageNumber} onRenderSuccess={onRenders[page]} />
+            <Page
+              key={page}
+              canvasRef={canvasRefs[page]}
+              pageNumber={pageNumber}
+              onRenderSuccess={onRenderSuccess(page)}
+            />
           ))}
         </Document>
         {pageNumbers.map((_, page) => (
           <canvas
-            ref={canvasRefs[page]}
+            key={page}
+            ref={highlightCanvasRefs[page]}
             id="highlight-canvas"
             style={{ position: "absolute", zIndex: 1000, opacity: "0.5" }}
           />
