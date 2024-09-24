@@ -172,6 +172,8 @@ const match = (
   return false;
 }
 
+// Given a docint response and reference text (array of words), find
+// the relevant BoundingRegions (per-word)
 const findBoundingRegions = (
   text: string[],
   response: DocumentIntelligenceResponse
