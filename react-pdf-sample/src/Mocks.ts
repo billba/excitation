@@ -69,7 +69,7 @@ export const mockCitations: Citation[][] = [
   // "What is a quote that spans two pages?"
   [
     {
-      excerpt: "Our revenue fluctuates quarterly and is generally higher in the second and fourth quarters of our fiscal year. Second quarter revenue is driven by corporate year-end spending trends in our major markets and holiday season spending by consumers, and fourth quarter revenue is driven by the volume of multi-year on-premises contracts executed during the period.\nReportable Segments",
+      excerpt: "Our revenue fluctuates quarterly and is generally higher in the second and fourth quarters of our fiscal year. Second quarter revenue is driven by corporate year-end spending trends in our major markets and holiday season spending by consumers, and fourth quarter revenue is driven by the volume of multi-year on-premises contracts executed during the period.",
       docIndex: 1,
       reviewStatus: 0,
     },
