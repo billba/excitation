@@ -142,13 +142,29 @@ const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
 };
 
 // Simple matching
-// only special case at current: it strips trailing periods
+// special cases:
+//  - case is irrelevant
+//  - strip trailing periods
+//  - strip dollar signs
 const match = (
   str0: string,
   str1: string
 ) => {
+  // lower case
+  str0 = str0.toLocaleLowerCase();
+  str1 = str1.toLocaleLowerCase();
+
+  // Strip trailing periods
   if (str0.slice(-1) == '.') str0 = str0.slice(0, -1);
   if (str1.slice(-1) == '.') str1 = str1.slice(0, -1);
+
+  // Strip trailing semicolons
+  if (str0.slice(-1) == ';') str0 = str0.slice(0, -1);
+  if (str1.slice(-1) == ';') str1 = str1.slice(0, -1);
+
+  // strip dollar signs
+  if (str0.slice(0,1) == '$') str0 = str0.slice(1);
+  if (str1.slice(0,1) == '$') str1 = str1.slice(1);
 
   if (str0 === str1) return true;
 
@@ -226,7 +242,7 @@ export const returnTextPolygonsFromDI = (
     console.log("NO MATCH:", words);
     return;
   }
-  console.log("MATCH:", words)
+  console.log("MATCH:", words);
   return boundingRegions;
   // what happens if we don't find any bounding regions?
   // The question exists, the reference exists, the document exists, Document Intelligence just didn't do its job
