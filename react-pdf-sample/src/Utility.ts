@@ -9,7 +9,7 @@ const round = (value: number, precision = 0) => {
 // Return true if polygons overlap (ncluding sharing borders); false otherwise
 // delta controls the amount of space that can be between polygons without them
 // being considered non-adjacent (i.e. accounts for spaces between words)
-const adjacent = (poly0: number[], poly1: number[], delta = 0.1) => {
+const adjacent = (poly0: number[], poly1: number[], delta = 0.2) => {
   const x0 = [round(poly0[0], 1), round(poly0[2], 1)];
   const y0 = [round(poly0[1], 1), round(poly0[5], 1)];
 
