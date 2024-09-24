@@ -7,7 +7,9 @@ const round = (value: number, precision = 0) => {
 };
 
 // Return true if polygons overlap (ncluding sharing borders); false otherwise
-const adjacent = (poly0: number[], poly1: number[]) => {
+// delta controls the amount of space that can be between polygons without them
+// being considered non-adjacent (i.e. accounts for spaces between words)
+const adjacent = (poly0: number[], poly1: number[], delta = 0.1) => {
   const x0 = [round(poly0[0], 1), round(poly0[2], 1)];
   const y0 = [round(poly0[1], 1), round(poly0[5], 1)];
 
@@ -17,7 +19,10 @@ const adjacent = (poly0: number[], poly1: number[]) => {
   // The rectangles don't overlap if one rectangle's minimum in some
   // dimension is greater than the other's maximum in that dimension
   const noOverlap =
-    x0[0] > x1[1] || x1[0] > x0[1] || y0[0] > y1[1] || y1[0] > y0[1];
+    x0[0] > x1[1] + delta ||
+    x1[0] > x0[1] + delta ||
+    y0[0] > y1[1] + delta ||
+    y1[0] > y0[1] + delta;
   return !noOverlap;
 };
 
@@ -136,6 +141,54 @@ const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
   } else return false;
 };
 
+// Simple matching
+// only special case at current: it strips trailing periods
+const match = (
+  str0: string,
+  str1: string
+) => {
+  if (str0.slice(-1) == '.') str0 = str0.slice(0, -1);
+  if (str1.slice(-1) == '.') str1 = str1.slice(0, -1);
+
+  if (str0 === str1) return true;
+
+  return false;
+}
+
+const findBoundingRegions = (
+  text: string[],
+  response: DocumentIntelligenceResponse
+) => {
+  const pages = response.analyzeResult.pages;
+  let boundingRegions: BoundingRegion[] = [];
+
+  let textIndex = 0;
+
+  for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+    const page = pages[pageIndex];
+    for (let wordIndex = 0; wordIndex < page.words.length; wordIndex++) {
+      const word = page.words[wordIndex];
+      if (match(word.content, text[textIndex])) {
+        textIndex++;
+        boundingRegions.push({
+          pageNumber: pageIndex + 1,
+          polygon: word.polygon
+        });
+        if (textIndex == text.length) return boundingRegions;
+      } else {
+        if (textIndex != 0) {
+          // If the word doesn't match, and we thought we had found
+          // some part of the sentence, reset to the beginning and
+          // clear stored region data
+          textIndex = 0;
+          boundingRegions = [] as BoundingRegion[];
+        }
+      }
+    }
+  }
+  return boundingRegions;
+}
+
 const findTextBoundingRegions = (
   text: string[],
   response: DocumentIntelligenceResponse
@@ -166,14 +219,14 @@ export const returnTextPolygonsFromDI = (
   text: string,
   response: DocumentIntelligenceResponse
 ) => {
-  const lines = text.split("\n");
-  for (let i = 0; i < lines.length; i++) lines[i] = lines[i].trim();
-  const foundBoundingRegions = findTextBoundingRegions(lines, response);
+  const words = text.split(/\s+/); // split on all space characters
+  const foundBoundingRegions = findBoundingRegions(words, response);
   const boundingRegions = condenseRegions(foundBoundingRegions);
   if (boundingRegions.length === 0) {
-    console.log("No match found for selected text");
+    console.log("NO MATCH:", words);
     return;
   }
+  console.log("MATCH:", words)
   return boundingRegions;
   // what happens if we don't find any bounding regions?
   // The question exists, the reference exists, the document exists, Document Intelligence just didn't do its job
