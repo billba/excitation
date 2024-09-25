@@ -19,30 +19,35 @@ export function Viewer() {
   const [pageNumbers] = useAtom(pageNumbersAtom);
   const [highlightsForPage] = useAtom(highlightsForPageAtom);
 
+  
   const { docIndex } = citation;
   const { filename } = docs[docIndex];
-
+  
   console.assert(
     pageNumbers.length < pageMax,
     "Too many pages in the highlight"
   );
-
+  
   // We bend the rules of hooks here a bit in order to display multiple pages.
   // We call useRef inside loops, but it's okay because we always call it the same number of times.
-
+  
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const canvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const highlightCanvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
-
-  const [renderCounter, setRenderCounter] = useState(0); // this is how we make highlighting responsive to page rendering
-
+  
   const onDocumentLoadSuccess = useCallback(() => {}, []);
-
+  
+  const [renderCounter, setRenderCounter] = useState(0); // make highlighting responsive to page rendering
   const onRenderSuccess = useCallback(
     () => setRenderCounter((c) => c + 1),
     [setRenderCounter]
   );
+
+  const [resizeCounter, setResizeCounter] = useState(0); // make highlighting responsive to window resizing
+  useEffect(() => {
+    window.addEventListener("resize", () => setResizeCounter((c) => c + 1));
+  }, [setResizeCounter]);
 
   // For multiple pages, the canvases keep moving around. We don't really know when we're done rendering pages,
   // so we just resort to resizing, clearing, and rendering all the highlight canvases every time any page rerenders.
@@ -83,9 +88,10 @@ export function Viewer() {
   }, [
     canvasRefs,
     highlightCanvasRefs,
-    renderCounter,
-    highlightsForPage,
-    docIndex,
+    renderCounter, // the underlying PDF page canvas has changed
+    resizeCounter, // the window has resized
+    highlightsForPage, // we are looking at different highlights on the page (or at a different page)
+    docIndex, // we are looking at a different document
   ]);
 
   return (
