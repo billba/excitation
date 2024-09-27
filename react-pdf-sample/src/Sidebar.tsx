@@ -1,4 +1,5 @@
 import { useAtom } from "jotai";
+import { create } from "mutative";
 import {
   citationsAtom,
   questionIndexAtom,
@@ -38,18 +39,10 @@ export function Sidebar() {
         const citation = questionCitations[targetCitationIndex];
         const updatedReviewStatus =
           citation.reviewStatus === target ? ReviewStatus.Unreviewed : target;
-        const updatedCitations = [
-          ...citations.slice(0, questionIndex),
-          [
-            ...questionCitations.slice(0, targetCitationIndex),
-            {
-              ...citation,
-              reviewStatus: updatedReviewStatus,
-            },
-            ...questionCitations.slice(targetCitationIndex + 1),
-          ],
-          ...citations.slice(questionIndex + 1),
-        ];
+        const updatedCitations = create(citations, (draft) => {
+          draft[questionIndex][targetCitationIndex].reviewStatus =
+            updatedReviewStatus;
+        });
 
         setCitations(updatedCitations);
 

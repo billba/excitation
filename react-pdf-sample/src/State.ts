@@ -1,4 +1,5 @@
 import { atom } from "jotai";
+import { create } from "mutative";
 
 import { Doc } from "./Types";
 import { mockCitations, mockDocs } from "./Mocks";
@@ -7,10 +8,11 @@ import { locateCitations } from "./Utility";
 
 async function docsWithResponses(docs: Doc[]) {
   return await Promise.all(
-    docs.map(async (doc) => ({
-      ...doc,
-      response: await (await fetch(doc.filename + ".json")).json(),
-    }))
+    docs.map(async (doc) =>
+      create(doc, async (draft) => {
+        draft.response = await (await fetch(doc.filename + ".json")).json();
+      })
+    )
   );
 }
 
