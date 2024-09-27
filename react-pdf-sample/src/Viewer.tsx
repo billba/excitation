@@ -121,7 +121,7 @@ export function Viewer() {
             key={page}
             ref={highlightCanvasRefs[page]}
             id="highlight-canvas"
-            style={{ position: "absolute", zIndex: 1000, opacity: 0.5 }}
+            style={{ position: "absolute", zIndex: 1, opacity: 0.5 }}
           />
         ))}
       </div>

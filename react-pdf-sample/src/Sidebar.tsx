@@ -4,17 +4,19 @@ import {
   citationsAtom,
   questionIndexAtom,
   citationIndexAtom,
-  newCitationAtom,
+  docsAtom,
 } from "./State";
 import { questions } from "./Questions";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ReviewStatus } from "./Types";
+import { returnTextPolygonsFromDI } from "./Utility";
 
 export function Sidebar() {
   const [questionIndex, setQuestionIndex] = useAtom(questionIndexAtom);
   const [citationIndex, setCitationIndex] = useAtom(citationIndexAtom);
   const [citations, setCitations] = useAtom(citationsAtom);
-  const [newCitation] = useAtom(newCitationAtom);
+  const [selection, setSelection] = useState('');
+  const [docs] = useAtom(docsAtom);
 
   const disablePrev = questionIndex === 0;
   const disableNext = questionIndex === questions.length - 1;
@@ -28,6 +30,27 @@ export function Sidebar() {
     setQuestionIndex(questionIndex + 1);
     setCitationIndex(0);
   }, [questionIndex, setQuestionIndex, setCitationIndex]);
+
+  useEffect(() => {
+    window.addEventListener("mouseup", () => {
+      setSelection(document.getSelection()!.toString());
+    });
+  }, [setSelection])
+
+  const addSelection = useCallback(() => {
+    const { docIndex } = citations[questionIndex][citationIndex];
+    setCitations(create(citations, (draft) => {
+      draft[questionIndex].push({
+        docIndex,
+        boundingRegions: returnTextPolygonsFromDI(
+          selection,
+          docs[docIndex].response!
+        ),
+        excerpt: selection,
+        reviewStatus: ReviewStatus.Approved,
+      });
+    }))
+  }, [selection, questionIndex, citationIndex, citations, setCitations, docs]);
 
   const toggle = useCallback(
     (
@@ -132,10 +155,10 @@ export function Sidebar() {
             </div>
           </div>
         ))}
-        {!newCitation && (
+        {selection != '' && (
           <>
             <br />
-            <button>+</button>
+            <button onClick={addSelection}>add selection</button>
           </>
         )}
       </div>

@@ -28,7 +28,6 @@ export const docsAtom = atom(docs);
 export const citationsAtom = atom(citations);
 export const questionIndexAtom = atom(0);
 export const citationIndexAtom = atom(0);
-export const newCitationAtom = atom(false);
 
 // derived atoms
 
