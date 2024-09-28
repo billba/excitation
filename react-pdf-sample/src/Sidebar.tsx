@@ -22,14 +22,14 @@ export function Sidebar() {
   const disableNext = questionIndex === questions.length - 1;
 
   const prevQuestion = useCallback(() => {
-    setQuestionIndex(questionIndex - 1);
+    setQuestionIndex(i => i - 1);
     setCitationIndex(0);
-  }, [questionIndex, setQuestionIndex, setCitationIndex]);
+  }, [setQuestionIndex, setCitationIndex]);
 
   const nextQuestion = useCallback(() => {
-    setQuestionIndex(questionIndex + 1);
+    setQuestionIndex(i => i + 1);
     setCitationIndex(0);
-  }, [questionIndex, setQuestionIndex, setCitationIndex]);
+  }, [setQuestionIndex, setCitationIndex]);
 
   useEffect(() => {
     window.addEventListener("mouseup", () => {
