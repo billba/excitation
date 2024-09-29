@@ -23,6 +23,11 @@ export function Sidebar() {
   const disablePrev = questionIndex === 0;
   const disableNext = questionIndex === questions.length - 1;
 
+  const addSelection = useCallback(() => {
+    _dispatch({ type: "addSelection" });
+    document.getSelection()?.empty();
+  }, [_dispatch]);
+
   const toggleReviewStatus = useCallback(
     (
         target: ReviewStatus.Approved | ReviewStatus.Rejected,
@@ -116,7 +121,7 @@ export function Sidebar() {
         {ux.newCitation ? (
           <>
             <button
-              onClick={dispatch({ type: "addSelection" })}
+              onClick={addSelection}
               disabled={ux.selectedText === ""}
             >
               add selection
