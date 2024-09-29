@@ -1,109 +1,58 @@
-import { useAtom } from "jotai";
-import { create } from "mutative";
+import { useAtomValue, useSetAtom } from "jotai";
 import {
   citationsAtom,
   questionIndexAtom,
-  citationIndexAtom,
-  docsAtom,
+  uxAtom,
+  dispatchAtom,
 } from "./State";
 import { questions } from "./Questions";
-import { useCallback, useEffect, useState } from "react";
-import { ReviewStatus } from "./Types";
-import { returnTextPolygonsFromDI } from "./Utility";
+import { useCallback } from "react";
+import { Action, ReviewStatus } from "./Types";
 
 export function Sidebar() {
-  const [questionIndex, setQuestionIndex] = useAtom(questionIndexAtom);
-  const [citationIndex, setCitationIndex] = useAtom(citationIndexAtom);
-  const [citations, setCitations] = useAtom(citationsAtom);
-  const [selection, setSelection] = useState('');
-  const [docs] = useAtom(docsAtom);
+  const questionIndex = useAtomValue(questionIndexAtom);
+  const citations = useAtomValue(citationsAtom);
+  const ux = useAtomValue(uxAtom);
+  const _dispatch = useSetAtom(dispatchAtom);
+
+  const dispatch = useCallback(
+    (action: Action) => () => _dispatch(action),
+    [_dispatch]
+  );
 
   const disablePrev = questionIndex === 0;
   const disableNext = questionIndex === questions.length - 1;
 
-  const prevQuestion = useCallback(() => {
-    setQuestionIndex(i => i - 1);
-    setCitationIndex(0);
-  }, [setQuestionIndex, setCitationIndex]);
-
-  const nextQuestion = useCallback(() => {
-    setQuestionIndex(i => i + 1);
-    setCitationIndex(0);
-  }, [setQuestionIndex, setCitationIndex]);
-
-  useEffect(() => {
-    window.addEventListener("mouseup", () => {
-      setSelection(document.getSelection()!.toString());
-    });
-  }, [setSelection])
-
-  const addSelection = useCallback(() => {
-    const { docIndex } = citations[questionIndex][citationIndex];
-    setCitations(create(citations, (draft) => {
-      draft[questionIndex].push({
-        docIndex,
-        boundingRegions: returnTextPolygonsFromDI(
-          selection,
-          docs[docIndex].response!
-        ),
-        excerpt: selection,
-        reviewStatus: ReviewStatus.Approved,
-      });
-    }))
-  }, [selection, questionIndex, citationIndex, citations, setCitations, docs]);
-
-  const toggle = useCallback(
+  const toggleReviewStatus = useCallback(
     (
         target: ReviewStatus.Approved | ReviewStatus.Rejected,
-        targetCitationIndex: number
+        citationIndex: number
       ) =>
       (event: React.MouseEvent<HTMLButtonElement>) => {
-        const questionCitations = citations[questionIndex];
-        const citation = questionCitations[targetCitationIndex];
-        const updatedReviewStatus =
-          citation.reviewStatus === target ? ReviewStatus.Unreviewed : target;
-        const updatedCitations = create(citations, (draft) => {
-          draft[questionIndex][targetCitationIndex].reviewStatus =
-            updatedReviewStatus;
+        _dispatch({
+          type: "toggleReviewStatus",
+          target,
+          citationIndex,
         });
-
-        setCitations(updatedCitations);
-
-        if (updatedReviewStatus === ReviewStatus.Unreviewed) {
-          if (targetCitationIndex !== citationIndex) {
-            // if the user "unreviewed" a citation that wasn't the current one, move to that one
-            setCitationIndex(targetCitationIndex);
-          }
-        } else {
-          const unreviewedCitationIndex = updatedCitations[
-            questionIndex
-          ].findIndex(
-            ({ reviewStatus }) => reviewStatus === ReviewStatus.Unreviewed
-          );
-          if (unreviewedCitationIndex !== -1) {
-            // if the user approved or rejected a citation, move to the next unreviewed one
-            setCitationIndex(unreviewedCitationIndex);
-          }
-        }
-
         event.stopPropagation();
       },
-    [citations, questionIndex, citationIndex, setCitations, setCitationIndex]
-  );
-
-  const setCurrentCitation = useCallback(
-    (citationIndex: number) => () => setCitationIndex(citationIndex),
-    [setCitationIndex]
+    [_dispatch]
   );
 
   return (
     <div id="sidebar">
       <div className="sidebar-header">
-        <button disabled={disablePrev} onClick={prevQuestion}>
+        <button
+          disabled={disablePrev}
+          onClick={dispatch({ type: "prevQuestion" })}
+        >
           &lt;
         </button>
         <div className="q-number">Question #{questionIndex + 1}</div>
-        <button disabled={disableNext} onClick={nextQuestion}>
+        <button
+          disabled={disableNext}
+          onClick={dispatch({ type: "nextQuestion" })}
+        >
           &gt;
         </button>
       </div>
@@ -113,15 +62,21 @@ export function Sidebar() {
         {citations[questionIndex].map(({ excerpt, reviewStatus }, i) => (
           <div
             className={
-              "citation-row" + (i === citationIndex ? " selected" : "")
+              "citation-row" +
+              (!ux.explore && i === ux.citationIndex ? " selected" : "")
             }
             key={i}
-            onClick={setCurrentCitation(i)}
+            onClick={
+              ux.explore
+                ? undefined
+                : dispatch({ type: "gotoCitation", citationIndex: i })
+            }
           >
             <div className="citation">{excerpt}</div>
             <div className="buttons">
               {reviewStatus === ReviewStatus.Approved ||
-              (i === citationIndex &&
+              (!ux.explore &&
+                i === ux.citationIndex &&
                 reviewStatus === ReviewStatus.Unreviewed) ? (
                 <button
                   className="cite-button"
@@ -131,13 +86,14 @@ export function Sidebar() {
                         ? "palegreen"
                         : "grey",
                   }}
-                  onClick={toggle(ReviewStatus.Approved, i)}
+                  onClick={toggleReviewStatus(ReviewStatus.Approved, i)}
                 >
                   ✓
                 </button>
               ) : null}
               {reviewStatus === ReviewStatus.Rejected ||
-              (i === citationIndex &&
+              (!ux.explore &&
+                i === ux.citationIndex &&
                 reviewStatus === ReviewStatus.Unreviewed) ? (
                 <button
                   className="cite-button"
@@ -147,7 +103,7 @@ export function Sidebar() {
                         ? "lightcoral"
                         : "grey",
                   }}
-                  onClick={toggle(ReviewStatus.Rejected, i)}
+                  onClick={toggleReviewStatus(ReviewStatus.Rejected, i)}
                 >
                   𐄂
                 </button>
@@ -155,11 +111,23 @@ export function Sidebar() {
             </div>
           </div>
         ))}
-        {selection != '' && (
+        <br />
+        &nbsp;
+        {ux.newCitation ? (
           <>
-            <br />
-            <button onClick={addSelection}>add selection</button>
+            <button
+              onClick={dispatch({ type: "addSelection" })}
+              disabled={ux.selectedText === ""}
+            >
+              add selection
+            </button>
+            &nbsp;
+            <button onClick={dispatch({ type: "endNewCitation" })}>done</button>
           </>
+        ) : (
+          <button onClick={dispatch({ type: "startNewCitation" })}>
+            new citation
+          </button>
         )}
       </div>
     </div>

@@ -1,43 +1,54 @@
-import { useAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Document, Page } from "react-pdf";
 
 import {
-  currentCitationAtom,
-  docsAtom,
-  pageNumbersAtom,
-  highlightsForPageAtom,
+  docs,
+  questionIndexAtom,
+  citationsAtom,
+  uxAtom,
+  dispatchAtom,
 } from "./State";
 
 const pageMax = 3;
 const pages = Array.from({ length: pageMax }, (_, i) => i);
 
 export function Viewer() {
-  const [docs] = useAtom(docsAtom);
-  const [citation] = useAtom(currentCitationAtom);
-  const [pageNumbers] = useAtom(pageNumbersAtom);
-  const [highlightsForPage] = useAtom(highlightsForPageAtom);
+  const questionIndex = useAtomValue(questionIndexAtom);
+  const citations = useAtomValue(citationsAtom);
+  const ux = useAtomValue(uxAtom);
+  const dispatch = useSetAtom(dispatchAtom);
+  
+  const viewerDocIndex = ux.explore ? ux.docIndex : citations[questionIndex][ux.citationIndex].docIndex;
+  const { filename } = docs[viewerDocIndex];
+  const viewerPageNumbers = ux.explore ? [ux.pageNumber] : ux.citationHighlights.map(({ pageNumber }) => pageNumber);
 
-  
-  const { docIndex } = citation;
-  const { filename } = docs[docIndex];
-  
   console.assert(
-    pageNumbers.length < pageMax,
+    viewerPageNumbers.length < pageMax,
     "Too many pages in the highlight"
   );
-  
+
+  const viewerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    document.addEventListener("selectionchange", () => {
+      const selection = document.getSelection();
+      const ancestor = selection?.getRangeAt(0).commonAncestorContainer;
+      dispatch({ type: 'setSelectedText', selectedText: ancestor && viewerRef.current!.contains(ancestor) ? selection.toString() : "" });
+    });
+  }, [dispatch]);
+
   // We bend the rules of hooks here a bit in order to display multiple pages.
   // We call useRef inside loops, but it's okay because we always call it the same number of times.
-  
+
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const canvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const highlightCanvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
-  
+
   const onDocumentLoadSuccess = useCallback(() => {}, []);
-  
+
   const [renderCounter, setRenderCounter] = useState(0); // make highlighting responsive to page rendering
   const onRenderSuccess = useCallback(
     () => setRenderCounter((c) => c + 1),
@@ -53,29 +64,30 @@ export function Viewer() {
   // so we just resort to resizing, clearing, and rendering all the highlight canvases every time any page rerenders.
   // Sorry for burning a little more electricity than is probably necessary.
   useEffect(() => {
-    for (const page of pages) {
+    if (ux.explore) return;
+
+    ux.citationHighlights.forEach((citationHighlight, page) => {
       const canvas = canvasRefs[page].current;
       const highlightCanvas = highlightCanvasRefs[page].current;
-      const highlights = highlightsForPage[page];
-
-      if (!canvas || !highlightCanvas || !highlights) return;
-
+      
+      if (!canvas || !highlightCanvas) return;
+      
       const rect = canvas.getBoundingClientRect();
-
+      
       highlightCanvas.style.top = rect.top + window.scrollY + "px";
       highlightCanvas.style.left = rect.left + window.scrollX + "px";
       highlightCanvas.style.width = rect.width + "px";
       highlightCanvas.style.height = rect.height + "px";
-
+      
       highlightCanvas.width = canvas.width;
       highlightCanvas.height = canvas.height;
-
+      
       const context = highlightCanvas.getContext("2d")!;
-
+      
       context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
       context.fillStyle = "yellow";
-
-      for (const polygon of highlights.polygons) {
+      
+      for (const polygon of citationHighlight.polygons) {
         context.beginPath();
         context.moveTo(polygon[0] * 144, polygon[1] * 144);
         context.lineTo(polygon[2] * 144, polygon[3] * 144);
@@ -84,30 +96,29 @@ export function Viewer() {
         context.closePath();
         context.fill();
       }
-    }
+    });
   }, [
     canvasRefs,
     highlightCanvasRefs,
+    ux,
     renderCounter, // the underlying PDF page canvas has changed
     resizeCounter, // the window has resized
-    highlightsForPage, // we are looking at different highlights on the page (or at a different page)
-    docIndex, // we are looking at a different document
   ]);
 
   return (
-    <div id="viewer">
+    <div id="viewer" ref={viewerRef}>
       <div id="viewer-header">
         <b>{filename}</b>
         &nbsp;
-        {pageNumbers.length === 1
-          ? `page ${pageNumbers[0]}`
-          : `pages ${pageNumbers[0]} - ${
-              pageNumbers[pageNumbers.length - 1]
+        {viewerPageNumbers.length === 1
+          ? `page ${viewerPageNumbers[0]}`
+          : `pages ${viewerPageNumbers[0]} - ${
+              viewerPageNumbers[viewerPageNumbers.length - 1]
             }`}{" "}
       </div>
       <div>
         <Document file={filename} onLoadSuccess={onDocumentLoadSuccess}>
-          {pageNumbers.map((pageNumber, page) => (
+          {viewerPageNumbers.map((pageNumber, page) => (
             <Page
               key={page}
               canvasRef={canvasRefs[page]}
@@ -116,14 +127,19 @@ export function Viewer() {
             />
           ))}
         </Document>
-        {pageNumbers.map((_, page) => (
-          <canvas
-            key={page}
-            ref={highlightCanvasRefs[page]}
-            id="highlight-canvas"
-            style={{ position: "absolute", zIndex: 1, opacity: 0.5 }}
-          />
-        ))}
+        {!ux.explore &&
+          viewerPageNumbers.map((_, page) => (
+            <canvas
+              key={page}
+              ref={highlightCanvasRefs[page]}
+              id="highlight-canvas"
+              style={{
+                position: "absolute",
+                zIndex: 1000,
+                opacity: 0.5,
+              }}
+            />
+          ))}
       </div>
     </div>
   );

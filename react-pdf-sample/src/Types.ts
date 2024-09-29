@@ -1,3 +1,82 @@
+export type Action =
+  | {
+      type: "startNewCitation";
+    }
+  | {
+      type: "endNewCitation";
+    }
+  | {
+      type: "gotoCitation";
+      citationIndex?: number; // if undefined, choose the first one with unreviewed status. If none, keep current citation.
+    }
+  | {
+      type: "prevQuestion";
+    }
+  | {
+      type: "nextQuestion";
+    }
+  | {
+      type: "prevPage";
+    }
+  | {
+      type: "nextPage";
+    }
+  | {
+      type: "gotoPage";
+      pageNumber: number;
+    }
+  | {
+      type: "selectDoc";
+      docIndex: number;
+    }
+  | {
+      type: "setSelectedText";
+      selectedText: string;
+    }
+  | {
+      type: "addSelection";
+    }
+  | {
+      type: "toggleReviewStatus";
+      citationIndex: number;
+      target: ReviewStatus.Approved | ReviewStatus.Rejected;
+    };
+
+interface ExploreState {
+  explore: true;
+  docIndex: number;
+  pageNumber: number;
+}
+
+export interface CitationHighlight {
+  pageNumber: number;
+  polygons: number[][];
+}
+
+export type NewCitationState = ExploreState & {
+  newCitation: true;
+  selectedText: string;
+}
+
+export type NoCitationsState = ExploreState & {
+  newCitation: false;
+  citationIndex: undefined;
+}
+
+export type UnlocatedCitationState = ExploreState & {
+  newCitation: false;
+  citationIndex: number;
+}
+
+export interface LocatedCitationState {
+  newCitation: false;
+  explore: false;
+  citationIndex: number;
+  citationHighlights: CitationHighlight[];
+};
+
+export type UXState = NewCitationState | NoCitationsState | UnlocatedCitationState | LocatedCitationState;
+
 export enum ReviewStatus {
   Unreviewed,
   Approved,
