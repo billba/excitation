@@ -63,11 +63,11 @@ export function Sidebar() {
           <div
             className={
               "citation-row" +
-              (!ux.explore && i === ux.citationIndex ? " selected" : "")
+              (!ux.newCitation && i === ux.citationIndex ? " selected" : "")
             }
             key={i}
             onClick={
-              ux.explore
+              ux.newCitation
                 ? undefined
                 : dispatch({ type: "gotoCitation", citationIndex: i })
             }
@@ -75,7 +75,7 @@ export function Sidebar() {
             <div className="citation">{excerpt}</div>
             <div className="buttons">
               {reviewStatus === ReviewStatus.Approved ||
-              (!ux.explore &&
+              (!ux.newCitation &&
                 i === ux.citationIndex &&
                 reviewStatus === ReviewStatus.Unreviewed) ? (
                 <button
@@ -92,7 +92,7 @@ export function Sidebar() {
                 </button>
               ) : null}
               {reviewStatus === ReviewStatus.Rejected ||
-              (!ux.explore &&
+              (!ux.newCitation &&
                 i === ux.citationIndex &&
                 reviewStatus === ReviewStatus.Unreviewed) ? (
                 <button

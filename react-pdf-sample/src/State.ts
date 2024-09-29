@@ -51,7 +51,7 @@ const selectedTextAtom = atom("");
 const docIndexAtom = atom<number>(0);
 const pageNumberAtom = atom<number>(0);
 
-const currentCitationAtom = atom<Citation | undefined>((get) => {
+export const currentCitationAtom = atom<Citation | undefined>((get) => {
   const questionCitations = get(questionCitationsAtom);
   const citationIndex = get(citationIndexAtom);
   return questionCitations.length > 0 && citationIndex !== undefined
@@ -181,7 +181,7 @@ export const dispatchAtom = atom(null, (get, set, action: Action) => {
       set(pageNumberAtom, action.pageNumber);
       break;
 
-    case "selectDoc":
+    case "gotoDoc":
       console.assert(ux.explore);
       set(docIndexAtom, action.docIndex);
       set(pageNumberAtom, 1);

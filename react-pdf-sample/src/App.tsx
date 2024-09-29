@@ -11,12 +11,16 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 import './App.css'
+import { NavBar } from './NavBar';
 
 function App() {
   return (
     <div id="app">
       <Sidebar />
-      <Viewer />
+      <div id="viewer">
+        <NavBar />
+        <Viewer />
+      </div>
     </div>
   )
 }

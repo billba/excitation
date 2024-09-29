@@ -26,7 +26,7 @@ export type Action =
       pageNumber: number;
     }
   | {
-      type: "selectDoc";
+      type: "gotoDoc";
       docIndex: number;
     }
   | {

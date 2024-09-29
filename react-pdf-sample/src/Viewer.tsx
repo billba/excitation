@@ -1,7 +1,8 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
-
 import { Document, Page } from "react-pdf";
+
+import { NavBar } from "./NavBar";
 
 import {
   docs,
@@ -19,10 +20,14 @@ export function Viewer() {
   const citations = useAtomValue(citationsAtom);
   const ux = useAtomValue(uxAtom);
   const dispatch = useSetAtom(dispatchAtom);
-  
-  const viewerDocIndex = ux.explore ? ux.docIndex : citations[questionIndex][ux.citationIndex].docIndex;
+
+  const viewerDocIndex = ux.explore
+    ? ux.docIndex
+    : citations[questionIndex][ux.citationIndex].docIndex;
   const { filename } = docs[viewerDocIndex];
-  const viewerPageNumbers = ux.explore ? [ux.pageNumber] : ux.citationHighlights.map(({ pageNumber }) => pageNumber);
+  const viewerPageNumbers = ux.explore
+    ? [ux.pageNumber]
+    : ux.citationHighlights.map(({ pageNumber }) => pageNumber);
 
   console.assert(
     viewerPageNumbers.length < pageMax,
@@ -35,7 +40,13 @@ export function Viewer() {
     document.addEventListener("selectionchange", () => {
       const selection = document.getSelection();
       const ancestor = selection?.getRangeAt(0).commonAncestorContainer;
-      dispatch({ type: 'setSelectedText', selectedText: ancestor && viewerRef.current!.contains(ancestor) ? selection.toString() : "" });
+      dispatch({
+        type: "setSelectedText",
+        selectedText:
+          ancestor && viewerRef.current!.contains(ancestor)
+            ? selection.toString()
+            : "",
+      });
     });
   }, [dispatch]);
 
@@ -69,24 +80,24 @@ export function Viewer() {
     ux.citationHighlights.forEach((citationHighlight, page) => {
       const canvas = canvasRefs[page].current;
       const highlightCanvas = highlightCanvasRefs[page].current;
-      
+
       if (!canvas || !highlightCanvas) return;
-      
+
       const rect = canvas.getBoundingClientRect();
-      
+
       highlightCanvas.style.top = rect.top + window.scrollY + "px";
       highlightCanvas.style.left = rect.left + window.scrollX + "px";
       highlightCanvas.style.width = rect.width + "px";
       highlightCanvas.style.height = rect.height + "px";
-      
+
       highlightCanvas.width = canvas.width;
       highlightCanvas.height = canvas.height;
-      
+
       const context = highlightCanvas.getContext("2d")!;
-      
+
       context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
       context.fillStyle = "yellow";
-      
+
       for (const polygon of citationHighlight.polygons) {
         context.beginPath();
         context.moveTo(polygon[0] * 144, polygon[1] * 144);
@@ -106,41 +117,30 @@ export function Viewer() {
   ]);
 
   return (
-    <div id="viewer" ref={viewerRef}>
-      <div id="viewer-header">
-        <b>{filename}</b>
-        &nbsp;
-        {viewerPageNumbers.length === 1
-          ? `page ${viewerPageNumbers[0]}`
-          : `pages ${viewerPageNumbers[0]} - ${
-              viewerPageNumbers[viewerPageNumbers.length - 1]
-            }`}{" "}
-      </div>
-      <div>
-        <Document file={filename} onLoadSuccess={onDocumentLoadSuccess}>
-          {viewerPageNumbers.map((pageNumber, page) => (
-            <Page
-              key={page}
-              canvasRef={canvasRefs[page]}
-              pageNumber={pageNumber}
-              onRenderSuccess={onRenderSuccess}
-            />
-          ))}
-        </Document>
-        {!ux.explore &&
-          viewerPageNumbers.map((_, page) => (
-            <canvas
-              key={page}
-              ref={highlightCanvasRefs[page]}
-              id="highlight-canvas"
-              style={{
-                position: "absolute",
-                zIndex: 1000,
-                opacity: 0.5,
-              }}
-            />
-          ))}
-      </div>
+    <div ref={viewerRef}>
+      <Document file={filename} onLoadSuccess={onDocumentLoadSuccess}>
+        {viewerPageNumbers.map((pageNumber, page) => (
+          <Page
+            key={page}
+            canvasRef={canvasRefs[page]}
+            pageNumber={pageNumber}
+            onRenderSuccess={onRenderSuccess}
+          />
+        ))}
+      </Document>
+      {!ux.explore &&
+        viewerPageNumbers.map((_, page) => (
+          <canvas
+            key={page}
+            ref={highlightCanvasRefs[page]}
+            id="highlight-canvas"
+            style={{
+              position: "absolute",
+              zIndex: 1000,
+              opacity: 0.5,
+            }}
+          />
+        ))}
     </div>
   );
 }
