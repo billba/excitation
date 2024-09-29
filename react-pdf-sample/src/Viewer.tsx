@@ -2,8 +2,6 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 
-import { NavBar } from "./NavBar";
-
 import {
   docs,
   questionIndexAtom,
