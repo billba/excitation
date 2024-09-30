@@ -95,12 +95,14 @@ export function Viewer() {
       context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
       context.fillStyle = "yellow";
 
+      const multiplier = 72 * (window.devicePixelRatio || 1);
+
       for (const polygon of citationHighlight.polygons) {
         context.beginPath();
-        context.moveTo(polygon[0] * 144, polygon[1] * 144);
-        context.lineTo(polygon[2] * 144, polygon[3] * 144);
-        context.lineTo(polygon[4] * 144, polygon[5] * 144);
-        context.lineTo(polygon[6] * 144, polygon[7] * 144);
+        context.moveTo(polygon[0] * multiplier, polygon[1] * multiplier);
+        context.lineTo(polygon[2] * multiplier, polygon[3] * multiplier);
+        context.lineTo(polygon[4] * multiplier, polygon[5] * multiplier);
+        context.lineTo(polygon[6] * multiplier, polygon[7] * multiplier);
         context.closePath();
         context.fill();
       }
