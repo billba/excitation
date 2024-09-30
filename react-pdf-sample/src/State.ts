@@ -73,7 +73,7 @@ function inferUXState(citations: Citation[][], questionIndex: number, citationIn
         questionIndex,
         newCitation: false,
         explore: true,
-        pageNumber: 0,
+        pageNumber: 1,
         docIndex: 0,
         citationIndex,
       }

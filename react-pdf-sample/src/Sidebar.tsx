@@ -1,14 +1,76 @@
 import { useAtomValue, useAtom } from "jotai";
-import { citationsAtom, uxAtom } from "./State";
+import { docs, citationsAtom, uxAtom } from "./State";
 import { questions } from "./Questions";
-import { useCallback } from "react";
-import { Action, ReviewStatus } from "./Types";
+import { useCallback, useMemo } from "react";
+import { Action, ReviewStatus, Citation } from "./Types";
+
+const maxPageNumber = 1000;
+const unlocatedPage = maxPageNumber;
+
+interface PageGroup {
+  firstPage: number;
+  lastPage: number;
+  citationIndices: number[];
+}
+
+const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
+  firstPage * maxPageNumber + lastPage;
+
+const groupCitations = (questionCitations: Citation[]) =>
+  [...new Set(questionCitations.map(({ docIndex }) => docIndex))]
+    .sort()
+    .map((docIndex) => ({
+      docIndex,
+      pageGroups: questionCitations
+        .map<[Citation, number[]]>((citation, citationIndex) => [
+          citation,
+          [citationIndex],
+        ])
+        .filter(([citation]) => citation.docIndex === docIndex)
+        .map(([citation, citationIndices]) => {
+          const pageNumbers = (
+            citation.boundingRegions ?? [{ pageNumber: unlocatedPage }]
+          )
+            .map(({ pageNumber }) => pageNumber)
+            .sort();
+          return {
+            firstPage: pageNumbers[0],
+            lastPage: pageNumbers[pageNumbers.length - 1],
+            citationIndices,
+          };
+        })
+        .reduce((pageGroups, pageGroup) => {
+          const matchingPageGroup = pageGroups.find(
+            ({ firstPage, lastPage }) =>
+              firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
+          );
+          if (matchingPageGroup) {
+            matchingPageGroup.citationIndices.push(
+              pageGroup.citationIndices[0]
+            );
+          } else {
+            pageGroups.push(pageGroup);
+          }
+          return pageGroups;
+        }, [] as PageGroup[])
+        .map(({ firstPage, lastPage, citationIndices }) => ({
+          firstPage,
+          lastPage,
+          citationIndices: citationIndices.sort(),
+        }))
+        .sort((a, b) => sortIndex(a) - sortIndex(b)),
+    }));
 
 export function Sidebar() {
   const citations = useAtomValue(citationsAtom);
   const [ux, _dispatch] = useAtom(uxAtom);
 
   const { questionIndex, newCitation } = ux;
+
+  const groupedCitations = useMemo(
+    () => groupCitations(citations[questionIndex]),
+    [citations, questionIndex]
+  );
 
   const dispatch = useCallback(
     (action: Action) => () => _dispatch(action),
@@ -57,66 +119,93 @@ export function Sidebar() {
         </button>
       </div>
       <div className="question">{questions[questionIndex]}</div>
-      <div className="citation-header">Citations:</div>
       <div>
-        {citations[questionIndex].map(({ excerpt, reviewStatus }, i) => (
-          <div
-            className={
-              "citation-row" +
-              (!newCitation && i === ux.citationIndex ? " selected" : "")
-            }
-            key={i}
-            onClick={
-              newCitation
-                ? undefined
-                : dispatch({ type: "gotoCitation", citationIndex: i })
-            }
-          >
-            <div className="citation">{excerpt}</div>
-            <div className="buttons">
-              {reviewStatus === ReviewStatus.Approved ||
-              (!newCitation &&
-                i === ux.citationIndex &&
-                reviewStatus === ReviewStatus.Unreviewed) ? (
-                <button
-                  className="cite-button"
-                  style={{
-                    backgroundColor:
-                      reviewStatus === ReviewStatus.Approved
-                        ? "palegreen"
-                        : "grey",
-                  }}
-                  onClick={
-                    newCitation || i !== ux.citationIndex
-                      ? undefined
-                      : toggleReviewStatus(ReviewStatus.Approved, i)
-                  }
-                >
-                  ✓
-                </button>
-              ) : null}
-              {reviewStatus === ReviewStatus.Rejected ||
-              (!newCitation &&
-                i === ux.citationIndex &&
-                reviewStatus === ReviewStatus.Unreviewed) ? (
-                <button
-                  className="cite-button"
-                  style={{
-                    backgroundColor:
-                      reviewStatus === ReviewStatus.Rejected
-                        ? "lightcoral"
-                        : "grey",
-                  }}
-                  onClick={
-                    newCitation || i !== ux.citationIndex
-                      ? undefined
-                      : toggleReviewStatus(ReviewStatus.Rejected, i)
-                  }
-                >
-                  𐄂
-                </button>
-              ) : null}
-            </div>
+        {groupedCitations.map(({ docIndex, pageGroups }) => (
+          <div id="document-group" key={docIndex}>
+            <div className="doc-header">{docs[docIndex].filename}</div>
+            {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
+              <div id="page-group" key={firstPage * maxPageNumber + lastPage}>
+                <div className="page-header">
+                  {firstPage === lastPage
+                    ? firstPage === unlocatedPage
+                      ? <span className="error">Unable to locate citation</span>
+                      : `Page ${firstPage}`
+                    : `Pages ${firstPage}-${lastPage}`}
+                </div>
+                {citationIndices.map((citationIndex) => {
+                  const { excerpt, reviewStatus } =
+                    citations[questionIndex][citationIndex];
+                  return (
+                    <div
+                      className={
+                        "citation-row" +
+                        (!newCitation && citationIndex === ux.citationIndex
+                          ? " selected"
+                          : "")
+                      }
+                      key={citationIndex}
+                      onClick={
+                        newCitation
+                          ? undefined
+                          : dispatch({ type: "gotoCitation", citationIndex })
+                      }
+                    >
+                      <div className="citation">{excerpt}</div>
+                      <div className="buttons">
+                        {reviewStatus === ReviewStatus.Approved ||
+                        (!newCitation &&
+                          citationIndex === ux.citationIndex &&
+                          reviewStatus === ReviewStatus.Unreviewed) ? (
+                          <button
+                            className="cite-button"
+                            style={{
+                              backgroundColor:
+                                reviewStatus === ReviewStatus.Approved
+                                  ? "palegreen"
+                                  : "grey",
+                            }}
+                            onClick={
+                              newCitation || citationIndex !== ux.citationIndex
+                                ? undefined
+                                : toggleReviewStatus(
+                                    ReviewStatus.Approved,
+                                    citationIndex
+                                  )
+                            }
+                          >
+                            ✓
+                          </button>
+                        ) : null}
+                        {reviewStatus === ReviewStatus.Rejected ||
+                        (!newCitation &&
+                          citationIndex === ux.citationIndex &&
+                          reviewStatus === ReviewStatus.Unreviewed) ? (
+                          <button
+                            className="cite-button"
+                            style={{
+                              backgroundColor:
+                                reviewStatus === ReviewStatus.Rejected
+                                  ? "lightcoral"
+                                  : "grey",
+                            }}
+                            onClick={
+                              newCitation || citationIndex !== ux.citationIndex
+                                ? undefined
+                                : toggleReviewStatus(
+                                    ReviewStatus.Rejected,
+                                    citationIndex
+                                  )
+                            }
+                          >
+                            𐄂
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         ))}
         <br />

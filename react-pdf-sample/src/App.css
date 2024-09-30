@@ -159,3 +159,16 @@ button:focus-visible {
 .cite-button:hover {
   opacity: 100%;
 }
+
+.doc-header {
+  margin-top: 10px;
+  font-weight: 600;
+}
+
+.page-header {
+  margin-top: 5px;
+}
+
+.error {
+  color: red;
+}
