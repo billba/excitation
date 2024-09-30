@@ -4,7 +4,6 @@ import { Document, Page } from "react-pdf";
 
 import {
   docs,
-  questionIndexAtom,
   citationsAtom,
   uxAtom,
 } from "./State";
@@ -13,15 +12,16 @@ const pageMax = 3;
 const pages = Array.from({ length: pageMax }, (_, i) => i);
 
 export function Viewer() {
-  const questionIndex = useAtomValue(questionIndexAtom);
   const citations = useAtomValue(citationsAtom);
   const [ux, dispatch] = useAtom(uxAtom);
 
-  const viewerDocIndex = ux.explore
+  const { questionIndex, explore } = ux;
+
+  const viewerDocIndex = explore
     ? ux.docIndex
     : citations[questionIndex][ux.citationIndex].docIndex;
   const { filename } = docs[viewerDocIndex];
-  const viewerPageNumbers = ux.explore
+  const viewerPageNumbers = explore
     ? [ux.pageNumber]
     : ux.citationHighlights.map(({ pageNumber }) => pageNumber);
 
@@ -35,7 +35,7 @@ export function Viewer() {
   useEffect(() => {
     document.addEventListener("selectionchange", () => {
       const selection = document.getSelection();
-      const ancestor = selection?.getRangeAt(0).commonAncestorContainer;
+      const ancestor = selection?.rangeCount && selection?.getRangeAt(0).commonAncestorContainer;
       dispatch({
         type: "setSelectedText",
         selectedText:
@@ -70,6 +70,7 @@ export function Viewer() {
   // For multiple pages, the canvases keep moving around. We don't really know when we're done rendering pages,
   // so we just resort to resizing, clearing, and rendering all the highlight canvases every time any page rerenders.
   // Sorry for burning a little more electricity than is probably necessary.
+
   useEffect(() => {
     if (ux.explore) return;
 
@@ -124,7 +125,7 @@ export function Viewer() {
           />
         ))}
       </Document>
-      {!ux.explore &&
+      {!explore &&
         viewerPageNumbers.map((_, page) => (
           <canvas
             key={page}

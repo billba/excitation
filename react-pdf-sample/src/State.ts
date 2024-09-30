@@ -1,6 +1,5 @@
 import { atom } from "jotai";
 import { create } from "mutative";
-
 import {
   Doc,
   Citation,
@@ -8,9 +7,10 @@ import {
   UXState,
   Action,
   ReviewStatus,
+  ExploreStates,
+  NewCitationState,
 } from "./Types";
 import { mockCitations, mockDocs } from "./Mocks";
-
 import { locateCitations, returnTextPolygonsFromDI } from "./Utility";
 
 async function docsWithResponses(docs: Doc[]) {
@@ -28,188 +28,171 @@ export const docs = await docsWithResponses(mockDocs); // not an atom because th
 const citations = locateCitations(docs, mockCitations);
 export const citationsAtom = atom(citations);
 
-const citationIndexAtom = atom(bestCitationIndex(citations[0]));
-
-// when questionIndex is updated we also want to automatically update citationIndex
-// so we essentially make _questionIndex private and add getter/setters
-const _questionIndexAtom = atom<number>(0);
-export const questionIndexAtom = atom<
-  number,
-  [number | ((i: number) => number)],
-  void
->(
-  (get) => get(_questionIndexAtom),
-  (get, set, questionIndex) => {
-    set(_questionIndexAtom, questionIndex);
-    set(citationIndexAtom, bestCitationIndex(get(questionCitationsAtom)));
-  }
-);
-
-export const questionCitationsAtom = atom(
-  (get) => get(citationsAtom)[get(_questionIndexAtom)]
-);
-
-const newCitationAtom = atom(false);
-const selectedTextAtom = atom("");
-
-const docIndexAtom = atom<number>(0);
-const pageNumberAtom = atom<number>(0);
-
 export const currentCitationAtom = atom<Citation | undefined>((get) => {
-  const questionCitations = get(questionCitationsAtom);
-  const citationIndex = get(citationIndexAtom);
-  return questionCitations.length > 0 && citationIndex !== undefined
-    ? questionCitations[citationIndex]
-    : undefined;
+  const ux = get(uxAtom);
+  if (ux.newCitation || ux.citationIndex == undefined) return undefined;
+  return get(citationsAtom)[ux.questionIndex][ux.citationIndex];
 });
 
-const citationHighlightsAtom = atom<CitationHighlight[]>((get) => {
-  const boundingRegions = get(currentCitationAtom)?.boundingRegions ?? [];
+const citationHighlightsFor = (citation?: Citation) => {
+  const boundingRegions = citation?.boundingRegions ?? [];
 
-  return [...new Set(boundingRegions.map(({ pageNumber }) => pageNumber))].map(
-    (pageNumber) => ({
-      pageNumber,
-      polygons: boundingRegions
-        .filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)
-        .map(({ polygon }) => polygon),
-    })
-  );
-});
+  return [
+    ...new Set(boundingRegions.map(({ pageNumber }) => pageNumber)),
+  ].map<CitationHighlight>((pageNumber) => ({
+    pageNumber,
+    polygons: boundingRegions
+      .filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)
+      .map(({ polygon }) => polygon),
+  }));
+};
 
-function bestCitationIndex(
-  citations: Citation[],
-  currentCitationIndex?: number
-) {
-  if (citations.length === 0) {
-    return undefined;
+// when citationIndex !== undefined && keepCurrentCitation == false, we keep citationIndex if there are no unreviewed citations
+// when citationIndex !== undefined && keepCurrentCitation == true, we keep citationIndex no matter what
+function inferUXState(citations: Citation[][], questionIndex: number, citationIndex?: number, keepCurrentCitation = false): UXState {
+  const questionCitations = citations[questionIndex];
+
+  if (!keepCurrentCitation) {
+    if (questionCitations.length === 0) {
+      citationIndex = undefined;
+    } else {
+      const index = questionCitations.findIndex(
+        (citation) => citation.reviewStatus === ReviewStatus.Unreviewed
+      );
+      citationIndex = index == -1 ? citationIndex ?? 0 : index;
+    }
   }
-  const index = citations.findIndex(
-    (citation) => citation.reviewStatus === ReviewStatus.Unreviewed
-  );
-  return index == -1 ? currentCitationIndex ?? 0 : index;
+
+  const citationHighlights =
+    citationIndex == undefined
+      ? []
+      : citationHighlightsFor(questionCitations[citationIndex]);
+
+  return citationIndex == undefined || citationHighlights.length === 0
+    ? {
+        questionIndex,
+        newCitation: false,
+        explore: true,
+        pageNumber: 0,
+        docIndex: 0,
+        citationIndex,
+      }
+    : {
+        questionIndex,
+        newCitation: false,
+        explore: false,
+        citationIndex,
+        citationHighlights,
+      };
 }
 
-export const uxAtom = atom<UXState, [Action], void>(
-  (get) => {
-    const newCitation = get(newCitationAtom);
+const _uxAtom = atom<UXState>(inferUXState(citations, 0));
 
-    if (newCitation) {
-      return {
-        explore: true,
-        pageNumber: get(pageNumberAtom)!,
-        docIndex: get(docIndexAtom)!,
-        newCitation,
-        selectedText: get(selectedTextAtom),
-      };
-    }
-  
-    const citationIndex = get(citationIndexAtom);
-  
-    if (citationIndex === undefined) {
-      // no citations for this question
-      return {
-        newCitation,
-        explore: true,
-        pageNumber: get(pageNumberAtom)!,
-        docIndex: get(docIndexAtom)!,
-        citationIndex,
-      };
-    }
-  
-    const citationHighlights = get(citationHighlightsAtom);
-  
-    if (citationHighlights.length === 0) {
-      // unlocated citation
-      return {
-        newCitation,
-        explore: true,
-        pageNumber: get(pageNumberAtom)!,
-        docIndex: get(docIndexAtom)!,
-        citationIndex,
-      };
-    }
-  
-    // located citation
-    console.assert(citationIndex !== undefined);
-    return {
-      newCitation,
-      explore: false,
-      citationIndex,
-      citationHighlights,
-    };
-  },
+export const uxAtom = atom<UXState, [Action], void>(
+  (get) => get(_uxAtom),
+
   (get, set, action: Action) => {
-    const ux = get(uxAtom);
+    const ux = get(_uxAtom);
 
     switch (action.type) {
       case "startNewCitation":
         console.assert(!ux.newCitation);
-        set(newCitationAtom, true);
-        set(selectedTextAtom, "");
-        if (!ux.explore) {
-          set(pageNumberAtom, ux.citationHighlights[0].pageNumber);
-          set(docIndexAtom, get(currentCitationAtom)!.docIndex);
-        }
+        set(_uxAtom, {
+          questionIndex: ux.questionIndex,
+          newCitation: true,
+          explore: true,
+          pageNumber: ux.explore
+            ? ux.pageNumber
+            : ux.citationHighlights[0].pageNumber,
+          docIndex: ux.explore
+            ? ux.docIndex
+            : get(citationsAtom)[ux.questionIndex][ux.citationIndex].docIndex,
+          selectedText: "",
+        });
         break;
 
       case "endNewCitation":
         console.assert(ux.newCitation && ux.explore);
-        set(newCitationAtom, false);
-        set(citationIndexAtom, bestCitationIndex(get(questionCitationsAtom)));
+        set(_uxAtom, inferUXState(get(citationsAtom), ux.questionIndex));
         break;
 
       case "gotoCitation":
-        set(citationIndexAtom, action.citationIndex);
+        set(_uxAtom, inferUXState(get(citationsAtom), ux.questionIndex, action.citationIndex, true));
         break;
 
       case "prevQuestion":
-        set(questionIndexAtom, (i) => i - 1);
+        set(_uxAtom, inferUXState(get(citationsAtom), ux.questionIndex - 1));
         break;
 
       case "nextQuestion":
-        set(questionIndexAtom, (i) => i + 1);
+        set(_uxAtom, inferUXState(get(citationsAtom), ux.questionIndex + 1));
         break;
 
       case "prevPage":
         console.assert(ux.explore);
-        set(pageNumberAtom, (n) => n! - 1);
+        set(
+          _uxAtom,
+          create(ux as ExploreStates, (draft) => {
+            draft.pageNumber--;
+          })
+        );
         break;
 
       case "nextPage":
         console.assert(ux.explore);
-        set(pageNumberAtom, (n) => n! + 1);
+        set(
+          _uxAtom,
+          create(ux, (draft) => {
+            (draft as ExploreStates).pageNumber++;
+          })
+        );
         break;
 
       case "gotoPage":
         console.assert(ux.explore);
-        set(pageNumberAtom, action.pageNumber);
+        set(
+          _uxAtom,
+          create(ux as ExploreStates, (draft) => {
+            draft.pageNumber = action.pageNumber;
+          })
+        );
         break;
 
       case "gotoDoc":
         console.assert(ux.explore);
-        set(docIndexAtom, action.docIndex);
-        set(pageNumberAtom, 1);
+        set(
+          _uxAtom,
+          create(ux as ExploreStates, (draft) => {
+            draft.docIndex = action.docIndex;
+            draft.pageNumber = 1;
+          })
+        );
         break;
 
       case "setSelectedText":
         if (ux.newCitation) {
-          set(selectedTextAtom, action.selectedText);
+          set(
+            _uxAtom,
+            create(ux as NewCitationState, (draft) => {
+              draft.selectedText = action.selectedText;
+            })
+          );
         }
         break;
 
       case "addSelection": {
         console.assert(ux.newCitation && ux.explore);
-        const docIndex = get(docIndexAtom)!;
+        const { docIndex, selectedText } = ux as NewCitationState;
         set(
           citationsAtom,
           create(get(citationsAtom), (draft) => {
-            draft[get(questionIndexAtom)].push({
+            draft[ux.questionIndex].push({
               docIndex,
               boundingRegions: returnTextPolygonsFromDI(
-                get(selectedTextAtom),
+                selectedText,
                 docs[docIndex].response!
               ),
-              excerpt: get(selectedTextAtom),
+              excerpt: selectedText,
               reviewStatus: ReviewStatus.Approved,
             });
           })
@@ -218,7 +201,7 @@ export const uxAtom = atom<UXState, [Action], void>(
       }
 
       case "toggleReviewStatus": {
-        const questionIndex = get(questionIndexAtom);
+        const { questionIndex } = ux;
         let updatedReviewStatus: ReviewStatus;
 
         const updatedCitations = create(get(citationsAtom), (draft) => {
@@ -232,19 +215,10 @@ export const uxAtom = atom<UXState, [Action], void>(
 
         set(citationsAtom, updatedCitations);
 
-        const citationIndex = get(citationIndexAtom);
-        if (updatedReviewStatus! === ReviewStatus.Unreviewed) {
-          if (action.citationIndex !== citationIndex) {
-            // if the user "unreviewed" a citation that wasn't the current one, move to that one
-            set(citationIndexAtom, action.citationIndex);
-          }
-        } else {
-          set(
-            citationIndexAtom,
-            bestCitationIndex(updatedCitations[questionIndex], citationIndex)
-          );
-        }
-
+        // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
+        if (updatedReviewStatus! != ReviewStatus.Unreviewed) {
+          set(_uxAtom, inferUXState(updatedCitations, questionIndex, action.citationIndex));
+        };
         break;
       }
 

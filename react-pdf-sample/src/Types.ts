@@ -42,40 +42,48 @@ export type Action =
       target: ReviewStatus.Approved | ReviewStatus.Rejected;
     };
 
-interface ExploreState {
-  explore: true;
-  docIndex: number;
-  pageNumber: number;
-}
-
 export interface CitationHighlight {
   pageNumber: number;
   polygons: number[][];
 }
 
-export type NewCitationState = ExploreState & {
+interface BaseState {
+  questionIndex: number;
+  explore: boolean;
+  newCitation: boolean;
+}
+
+interface ExploreState extends BaseState {
+  explore: true;
+  docIndex: number;
+  pageNumber: number;
+}
+
+export interface NewCitationState extends ExploreState {
   newCitation: true;
   selectedText: string;
 }
 
-export type NoCitationsState = ExploreState & {
+export interface NoCitationsState extends ExploreState {
   newCitation: false;
   citationIndex: undefined;
 }
 
-export type UnlocatedCitationState = ExploreState & {
+export interface UnlocatedCitationState extends ExploreState {
   newCitation: false;
   citationIndex: number;
 }
 
-export interface LocatedCitationState {
+export interface LocatedCitationState extends BaseState {
   newCitation: false;
   explore: false;
   citationIndex: number;
   citationHighlights: CitationHighlight[];
 };
 
-export type UXState = NewCitationState | NoCitationsState | UnlocatedCitationState | LocatedCitationState;
+export type ExploreStates = NewCitationState | NoCitationsState | UnlocatedCitationState;
+export type NotNewCitationStates = NoCitationsState | UnlocatedCitationState | LocatedCitationState;
+export type UXState = ExploreStates | LocatedCitationState;
 
 export enum ReviewStatus {
   Unreviewed,

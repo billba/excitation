@@ -1,17 +1,14 @@
 import { useAtomValue, useAtom } from "jotai";
-import {
-  citationsAtom,
-  questionIndexAtom,
-  uxAtom,
-} from "./State";
+import { citationsAtom, uxAtom } from "./State";
 import { questions } from "./Questions";
 import { useCallback } from "react";
 import { Action, ReviewStatus } from "./Types";
 
 export function Sidebar() {
-  const questionIndex = useAtomValue(questionIndexAtom);
   const citations = useAtomValue(citationsAtom);
   const [ux, _dispatch] = useAtom(uxAtom);
+
+  const { questionIndex, newCitation } = ux;
 
   const dispatch = useCallback(
     (action: Action) => () => _dispatch(action),
@@ -66,11 +63,11 @@ export function Sidebar() {
           <div
             className={
               "citation-row" +
-              (!ux.newCitation && i === ux.citationIndex ? " selected" : "")
+              (!newCitation && i === ux.citationIndex ? " selected" : "")
             }
             key={i}
             onClick={
-              ux.newCitation
+              newCitation
                 ? undefined
                 : dispatch({ type: "gotoCitation", citationIndex: i })
             }
@@ -78,7 +75,7 @@ export function Sidebar() {
             <div className="citation">{excerpt}</div>
             <div className="buttons">
               {reviewStatus === ReviewStatus.Approved ||
-              (!ux.newCitation &&
+              (!newCitation &&
                 i === ux.citationIndex &&
                 reviewStatus === ReviewStatus.Unreviewed) ? (
                 <button
@@ -89,13 +86,17 @@ export function Sidebar() {
                         ? "palegreen"
                         : "grey",
                   }}
-                  onClick={toggleReviewStatus(ReviewStatus.Approved, i)}
+                  onClick={
+                    newCitation || i !== ux.citationIndex
+                      ? undefined
+                      : toggleReviewStatus(ReviewStatus.Approved, i)
+                  }
                 >
                   ✓
                 </button>
               ) : null}
               {reviewStatus === ReviewStatus.Rejected ||
-              (!ux.newCitation &&
+              (!newCitation &&
                 i === ux.citationIndex &&
                 reviewStatus === ReviewStatus.Unreviewed) ? (
                 <button
@@ -106,7 +107,11 @@ export function Sidebar() {
                         ? "lightcoral"
                         : "grey",
                   }}
-                  onClick={toggleReviewStatus(ReviewStatus.Rejected, i)}
+                  onClick={
+                    newCitation || i !== ux.citationIndex
+                      ? undefined
+                      : toggleReviewStatus(ReviewStatus.Rejected, i)
+                  }
                 >
                   𐄂
                 </button>
@@ -116,12 +121,9 @@ export function Sidebar() {
         ))}
         <br />
         &nbsp;
-        {ux.newCitation ? (
+        {newCitation ? (
           <>
-            <button
-              onClick={addSelection}
-              disabled={ux.selectedText === ""}
-            >
+            <button onClick={addSelection} disabled={ux.selectedText === ""}>
               add selection
             </button>
             &nbsp;
