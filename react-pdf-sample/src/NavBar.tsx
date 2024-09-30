@@ -1,12 +1,11 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useAtom } from "jotai";
 import { Action } from "./Types";
-import { docs, uxAtom, dispatchAtom, currentCitationAtom } from "./State";
+import { docs, uxAtom, currentCitationAtom } from "./State";
 import { useCallback } from "react";
 
 export const NavBar = () => {
   const currentCitation = useAtomValue(currentCitationAtom);
-  const ux = useAtomValue(uxAtom);
-  const _dispatch = useSetAtom(dispatchAtom);
+  const [ux, _dispatch] = useAtom(uxAtom);
 
   const onChange = useCallback(
     (event: React.SyntheticEvent<HTMLSelectElement, Event>) => {

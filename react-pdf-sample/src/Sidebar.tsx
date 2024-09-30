@@ -1,9 +1,8 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useAtom } from "jotai";
 import {
   citationsAtom,
   questionIndexAtom,
   uxAtom,
-  dispatchAtom,
 } from "./State";
 import { questions } from "./Questions";
 import { useCallback } from "react";
@@ -12,8 +11,7 @@ import { Action, ReviewStatus } from "./Types";
 export function Sidebar() {
   const questionIndex = useAtomValue(questionIndexAtom);
   const citations = useAtomValue(citationsAtom);
-  const ux = useAtomValue(uxAtom);
-  const _dispatch = useSetAtom(dispatchAtom);
+  const [ux, _dispatch] = useAtom(uxAtom);
 
   const dispatch = useCallback(
     (action: Action) => () => _dispatch(action),

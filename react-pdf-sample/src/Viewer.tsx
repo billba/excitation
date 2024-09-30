@@ -1,4 +1,4 @@
-import { useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 
@@ -7,7 +7,6 @@ import {
   questionIndexAtom,
   citationsAtom,
   uxAtom,
-  dispatchAtom,
 } from "./State";
 
 const pageMax = 3;
@@ -16,8 +15,7 @@ const pages = Array.from({ length: pageMax }, (_, i) => i);
 export function Viewer() {
   const questionIndex = useAtomValue(questionIndexAtom);
   const citations = useAtomValue(citationsAtom);
-  const ux = useAtomValue(uxAtom);
-  const dispatch = useSetAtom(dispatchAtom);
+  const [ux, dispatch] = useAtom(uxAtom);
 
   const viewerDocIndex = ux.explore
     ? ux.docIndex
