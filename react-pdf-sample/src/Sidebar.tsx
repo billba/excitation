@@ -122,7 +122,7 @@ export function Sidebar() {
       <div>
         {groupedCitations.map(({ docIndex, pageGroups }) => (
           <div id="document-group" key={docIndex}>
-            <div className="doc-header">{docs[docIndex].filename}</div>
+            <div className="doc-header" onClick={docIndex == ux.docIndex ? undefined : dispatch({type: "gotoDoc", docIndex})}>{docs[docIndex].filename}</div>
             {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
               <div id="page-group" key={firstPage * maxPageNumber + lastPage}>
                 <div className="page-header">

@@ -1,11 +1,12 @@
-import { useAtomValue, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { Action } from "./Types";
-import { docs, uxAtom, currentCitationAtom } from "./State";
+import { docs, uxAtom } from "./State";
 import { useCallback } from "react";
 
 export const NavBar = () => {
-  const currentCitation = useAtomValue(currentCitationAtom);
   const [ux, _dispatch] = useAtom(uxAtom);
+
+  const { docIndex, pageNumber, newCitation } = ux;
 
   const onChange = useCallback(
     (event: React.SyntheticEvent<HTMLSelectElement, Event>) => {
@@ -22,37 +23,22 @@ export const NavBar = () => {
     [_dispatch]
   );
 
-  const docIndex = ux.explore ? ux.docIndex : currentCitation!.docIndex;
   const pages = docs[docIndex].pages;
+  const pageNumbers = newCitation || ux.citationIndex == undefined ? [] : ux.citationHighlights.map(({ pageNumber }) => pageNumber).sort();
 
-  const disablePrev = !ux.explore || ux.pageNumber === 0;
-  const disableNext = !ux.explore || ux.pageNumber === pages - 1;
+  const disablePrev = pageNumber === 1;
+  const disableNext = pageNumber === pages - 1;
 
   return (
     <div id="navbar">
-      &nbsp;
-      <select onChange={onChange} value={docIndex} disabled={!ux.explore}>
-        {docs.map(({ filename }, i) => (
-          <option key={i} value={i}>
-            {filename}
-          </option>
-        ))}
-      </select>
-      &nbsp;
-      <button onClick={dispatch({ type: "prevPage" })} disabled={disablePrev}>
+      <button onClick={dispatch({ type: "prevPage" })} disabled={disablePrev} className={pageNumbers.includes(pageNumber - 1) ? 'selected' : undefined}>
         &lt;
       </button>
-      {ux.explore
-        ? `${ux.pageNumber} / ${docs[docIndex].pages}`
-        : ux.citationHighlights.length === 1
-        ? `page ${ux.citationHighlights[0].pageNumber}`
-        : `pages ${ux.citationHighlights[0].pageNumber} - ${
-            ux.citationHighlights[ux.citationHighlights.length - 1].pageNumber
-          }`}
-      <button onClick={dispatch({ type: "nextPage" })} disabled={disableNext}>
+      <span className={pageNumbers.includes(pageNumber) ? 'selected' : undefined}>{pageNumber}</span> / {pages}
+      <button onClick={dispatch({ type: "nextPage" })} disabled={disableNext} className={pageNumbers.includes(pageNumber + 1) ? 'selected' : undefined}>
         &gt;
       </button>
-      {ux.explore && !ux.newCitation && ux.citationIndex !== undefined && (
+      {!newCitation && ux.citationIndex !== undefined && ux.citationHighlights.length == 0 && (
         <span className="selected">Unable to locate citation</span>
       )}
     </div>

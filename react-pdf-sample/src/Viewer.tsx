@@ -1,34 +1,18 @@
-import { useAtomValue, useAtom } from "jotai";
+import { useAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 
 import {
   docs,
-  citationsAtom,
   uxAtom,
 } from "./State";
 
-const pageMax = 3;
-const pages = Array.from({ length: pageMax }, (_, i) => i);
-
 export function Viewer() {
-  const citations = useAtomValue(citationsAtom);
   const [ux, dispatch] = useAtom(uxAtom);
 
-  const { questionIndex, explore } = ux;
+  const { newCitation, docIndex, pageNumber } = ux;
 
-  const viewerDocIndex = explore
-    ? ux.docIndex
-    : citations[questionIndex][ux.citationIndex].docIndex;
-  const { filename } = docs[viewerDocIndex];
-  const viewerPageNumbers = explore
-    ? [ux.pageNumber]
-    : ux.citationHighlights.map(({ pageNumber }) => pageNumber);
-
-  console.assert(
-    viewerPageNumbers.length < pageMax,
-    "Too many pages in the highlight"
-  );
+  const { filename } = docs[docIndex];
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -46,13 +30,8 @@ export function Viewer() {
     });
   }, [dispatch]);
 
-  // We bend the rules of hooks here a bit in order to display multiple pages.
-  // We call useRef inside loops, but it's okay because we always call it the same number of times.
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const canvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const highlightCanvasRefs = pages.map(() => useRef<HTMLCanvasElement>(null));
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const highlightCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
@@ -72,44 +51,44 @@ export function Viewer() {
   // Sorry for burning a little more electricity than is probably necessary.
 
   useEffect(() => {
-    if (ux.explore) return;
+    if (ux.newCitation || ux.citationIndex == undefined || ux.citationHighlights.length == 0) return;
 
-    ux.citationHighlights.forEach((citationHighlight, page) => {
-      const canvas = canvasRefs[page].current;
-      const highlightCanvas = highlightCanvasRefs[page].current;
+    const { polygons } = ux.citationHighlights.filter(({ pageNumber }) => pageNumber == ux.pageNumber)[0];
 
-      if (!canvas || !highlightCanvas) return;
+    const canvas = canvasRef.current;
+    const highlightCanvas = highlightCanvasRef.current;
 
-      const rect = canvas.getBoundingClientRect();
+    if (!canvas || !highlightCanvas) return;
 
-      highlightCanvas.style.top = rect.top + window.scrollY + "px";
-      highlightCanvas.style.left = rect.left + window.scrollX + "px";
-      highlightCanvas.style.width = rect.width + "px";
-      highlightCanvas.style.height = rect.height + "px";
+    const rect = canvas.getBoundingClientRect();
 
-      highlightCanvas.width = canvas.width;
-      highlightCanvas.height = canvas.height;
+    highlightCanvas.style.top = rect.top + window.scrollY + "px";
+    highlightCanvas.style.left = rect.left + window.scrollX + "px";
+    highlightCanvas.style.width = rect.width + "px";
+    highlightCanvas.style.height = rect.height + "px";
 
-      const context = highlightCanvas.getContext("2d")!;
+    highlightCanvas.width = canvas.width;
+    highlightCanvas.height = canvas.height;
 
-      context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-      context.fillStyle = "yellow";
+    const context = highlightCanvas.getContext("2d")!;
 
-      const multiplier = 72 * (window.devicePixelRatio || 1);
+    context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+    context.fillStyle = "yellow";
 
-      for (const polygon of citationHighlight.polygons) {
-        context.beginPath();
-        context.moveTo(polygon[0] * multiplier, polygon[1] * multiplier);
-        context.lineTo(polygon[2] * multiplier, polygon[3] * multiplier);
-        context.lineTo(polygon[4] * multiplier, polygon[5] * multiplier);
-        context.lineTo(polygon[6] * multiplier, polygon[7] * multiplier);
-        context.closePath();
-        context.fill();
-      }
-    });
+    const multiplier = 72 * (window.devicePixelRatio || 1);
+
+    for (const polygon of polygons) {
+      context.beginPath();
+      context.moveTo(polygon[0] * multiplier, polygon[1] * multiplier);
+      context.lineTo(polygon[2] * multiplier, polygon[3] * multiplier);
+      context.lineTo(polygon[4] * multiplier, polygon[5] * multiplier);
+      context.lineTo(polygon[6] * multiplier, polygon[7] * multiplier);
+      context.closePath();
+      context.fill();
+    }
   }, [
-    canvasRefs,
-    highlightCanvasRefs,
+    canvasRef,
+    highlightCanvasRef,
     ux,
     renderCounter, // the underlying PDF page canvas has changed
     resizeCounter, // the window has resized
@@ -118,28 +97,23 @@ export function Viewer() {
   return (
     <div ref={viewerRef}>
       <Document file={filename} onLoadSuccess={onDocumentLoadSuccess}>
-        {viewerPageNumbers.map((pageNumber, page) => (
-          <Page
-            key={page}
-            canvasRef={canvasRefs[page]}
-            pageNumber={pageNumber}
-            onRenderSuccess={onRenderSuccess}
-          />
-        ))}
+        <Page
+          canvasRef={canvasRef}
+          pageNumber={pageNumber}
+          onRenderSuccess={onRenderSuccess}
+        />
       </Document>
-      {!explore &&
-        viewerPageNumbers.map((_, page) => (
-          <canvas
-            key={page}
-            ref={highlightCanvasRefs[page]}
-            id="highlight-canvas"
-            style={{
-              position: "absolute",
-              zIndex: 1000,
-              opacity: 0.5,
-            }}
-          />
-        ))}
+      {!newCitation && ux.citationIndex != undefined && ux.citationHighlights.length &&
+        <canvas
+          ref={highlightCanvasRef}
+          id="highlight-canvas"
+          style={{
+            position: "absolute",
+            zIndex: 1000,
+            opacity: 0.5,
+          }}
+        />
+        }
     </div>
   );
 }

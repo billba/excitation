@@ -49,41 +49,29 @@ export interface CitationHighlight {
 
 interface BaseState {
   questionIndex: number;
-  explore: boolean;
   newCitation: boolean;
-}
-
-interface ExploreState extends BaseState {
-  explore: true;
   docIndex: number;
   pageNumber: number;
 }
 
-export interface NewCitationState extends ExploreState {
+export interface NewCitationState extends BaseState {
   newCitation: true;
   selectedText: string;
 }
 
-export interface NoCitationsState extends ExploreState {
+export interface NoCitationsState extends BaseState {
   newCitation: false;
   citationIndex: undefined;
 }
 
-export interface UnlocatedCitationState extends ExploreState {
+export interface CitationState extends BaseState {
   newCitation: false;
-  citationIndex: number;
-}
-
-export interface LocatedCitationState extends BaseState {
-  newCitation: false;
-  explore: false;
   citationIndex: number;
   citationHighlights: CitationHighlight[];
 };
 
-export type ExploreStates = NewCitationState | NoCitationsState | UnlocatedCitationState;
-export type NotNewCitationStates = NoCitationsState | UnlocatedCitationState | LocatedCitationState;
-export type UXState = ExploreStates | LocatedCitationState;
+export type NotNewCitationStates = NoCitationsState | CitationState;
+export type UXState = NewCitationState | NotNewCitationStates
 
 export enum ReviewStatus {
   Unreviewed,
