@@ -21,6 +21,8 @@ export const NavBar = () => {
 
   return (
     <div id="navbar">
+      &nbsp;
+      { docs[docIndex].filename }
       <button onClick={dispatch({ type: "prevPage" })} disabled={disablePrev} className={pageNumbers.includes(pageNumber - 1) ? 'selected' : undefined}>
         &lt;
       </button>
