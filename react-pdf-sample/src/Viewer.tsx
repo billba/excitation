@@ -46,10 +46,6 @@ export function Viewer() {
     window.addEventListener("resize", () => setResizeCounter((c) => c + 1));
   }, [setResizeCounter]);
 
-  // For multiple pages, the canvases keep moving around. We don't really know when we're done rendering pages,
-  // so we just resort to resizing, clearing, and rendering all the highlight canvases every time any page rerenders.
-  // Sorry for burning a little more electricity than is probably necessary.
-
   useEffect(() => {
     if (ux.newCitation || ux.citationIndex == undefined || ux.citationHighlights.length == 0) return;
 
