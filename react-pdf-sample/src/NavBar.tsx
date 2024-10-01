@@ -8,16 +8,6 @@ export const NavBar = () => {
 
   const { docIndex, pageNumber, newCitation } = ux;
 
-  const onChange = useCallback(
-    (event: React.SyntheticEvent<HTMLSelectElement, Event>) => {
-      _dispatch({
-        type: "gotoDoc",
-        docIndex: event.currentTarget.selectedIndex,
-      });
-    },
-    [_dispatch]
-  );
-
   const dispatch = useCallback(
     (action: Action) => () => _dispatch(action),
     [_dispatch]
