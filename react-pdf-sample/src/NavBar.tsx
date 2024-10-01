@@ -27,7 +27,7 @@ export const NavBar = () => {
 
   return (
     <div id="navbar">
-      <div className="navbar-filename">{docs[docIndex].filename}</div>
+      <div className="navbar-filename">{docs[docIndex].friendlyname ?? docs[docIndex].filename}</div>
       <div className="navbar-page">
         <div className="navbar-column">
           <span

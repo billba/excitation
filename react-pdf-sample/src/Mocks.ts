@@ -1,8 +1,8 @@
 import { Doc, Citation } from './Types'
 
 export const mockDocs: Doc[] = [
-  { filename: './PressReleaseFY24Q3.pdf', pages: 10 },
-  { filename: './Microsoft 10Q FY24Q3 1.pdf', pages: 73 },
+  { filename: './PressReleaseFY24Q3.pdf', friendlyname: 'Microsoft Press Release FY24Q3', pages: 10 },
+  { filename: './Microsoft 10Q FY24Q3 1.pdf', friendlyname: 'Microsoft Form 10Q FY24Q3', pages: 73 },
 ]
 
 export const mockCitations: Citation[][] = [

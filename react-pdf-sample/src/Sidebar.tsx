@@ -128,7 +128,7 @@ export function Sidebar() {
                   : dispatch({ type: "gotoDoc", docIndex })
               }
             >
-              {docs[docIndex].filename}
+              {docs[docIndex].friendlyname ?? docs[docIndex].filename}
             </div>
             {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
               <div id="page-group" key={firstPage * maxPageNumber + lastPage}>

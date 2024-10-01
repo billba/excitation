@@ -81,6 +81,7 @@ export enum ReviewStatus {
 
 export interface Doc {
   filename: string;
+  friendlyname?: string;
   pages: number;
   response?: DocumentIntelligenceResponse;
 }
