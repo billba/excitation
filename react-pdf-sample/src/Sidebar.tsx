@@ -17,49 +17,45 @@ const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
   firstPage * maxPageNumber + lastPage;
 
 const groupCitations = (questionCitations: Citation[]) =>
-  [...new Set(questionCitations.map(({ docIndex }) => docIndex))]
-    .sort()
-    .map((docIndex) => ({
-      docIndex,
-      pageGroups: questionCitations
-        .map<[Citation, number[]]>((citation, citationIndex) => [
-          citation,
-          [citationIndex],
-        ])
-        .filter(([citation]) => citation.docIndex === docIndex)
-        .map(([citation, citationIndices]) => {
-          const pageNumbers = (
-            citation.boundingRegions ?? [{ pageNumber: unlocatedPage }]
-          )
-            .map(({ pageNumber }) => pageNumber)
-            .sort();
-          return {
-            firstPage: pageNumbers[0],
-            lastPage: pageNumbers[pageNumbers.length - 1],
-            citationIndices,
-          };
-        })
-        .reduce((pageGroups, pageGroup) => {
-          const matchingPageGroup = pageGroups.find(
-            ({ firstPage, lastPage }) =>
-              firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
-          );
-          if (matchingPageGroup) {
-            matchingPageGroup.citationIndices.push(
-              pageGroup.citationIndices[0]
-            );
-          } else {
-            pageGroups.push(pageGroup);
-          }
-          return pageGroups;
-        }, [] as PageGroup[])
-        .map(({ firstPage, lastPage, citationIndices }) => ({
-          firstPage,
-          lastPage,
-          citationIndices: citationIndices.sort(),
-        }))
-        .sort((a, b) => sortIndex(a) - sortIndex(b)),
-    }));
+  docs.map((_, docIndex) => ({
+    docIndex,
+    pageGroups: questionCitations
+      .map<[Citation, number[]]>((citation, citationIndex) => [
+        citation,
+        [citationIndex],
+      ])
+      .filter(([citation]) => citation.docIndex === docIndex)
+      .map(([citation, citationIndices]) => {
+        const pageNumbers = (
+          citation.boundingRegions ?? [{ pageNumber: unlocatedPage }]
+        )
+          .map(({ pageNumber }) => pageNumber)
+          .sort();
+        return {
+          firstPage: pageNumbers[0],
+          lastPage: pageNumbers[pageNumbers.length - 1],
+          citationIndices,
+        };
+      })
+      .reduce((pageGroups, pageGroup) => {
+        const matchingPageGroup = pageGroups.find(
+          ({ firstPage, lastPage }) =>
+            firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
+        );
+        if (matchingPageGroup) {
+          matchingPageGroup.citationIndices.push(pageGroup.citationIndices[0]);
+        } else {
+          pageGroups.push(pageGroup);
+        }
+        return pageGroups;
+      }, [] as PageGroup[])
+      .map(({ firstPage, lastPage, citationIndices }) => ({
+        firstPage,
+        lastPage,
+        citationIndices: citationIndices.sort(),
+      }))
+      .sort((a, b) => sortIndex(a) - sortIndex(b)),
+  }));
 
 export function Sidebar() {
   const citations = useAtomValue(citationsAtom);
@@ -71,6 +67,8 @@ export function Sidebar() {
     () => groupCitations(citations[questionIndex]),
     [citations, questionIndex]
   );
+
+  console.log(groupedCitations);
 
   const dispatch = useCallback(
     (action: Action) => () => _dispatch(action),
@@ -122,15 +120,28 @@ export function Sidebar() {
       <div>
         {groupedCitations.map(({ docIndex, pageGroups }) => (
           <div id="document-group" key={docIndex}>
-            <div className="doc-header" onClick={docIndex == ux.docIndex ? undefined : dispatch({type: "gotoDoc", docIndex})}>{docs[docIndex].filename}</div>
+            <div
+              className="doc-header"
+              onClick={
+                docIndex == ux.docIndex
+                  ? undefined
+                  : dispatch({ type: "gotoDoc", docIndex })
+              }
+            >
+              {docs[docIndex].filename}
+            </div>
             {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
               <div id="page-group" key={firstPage * maxPageNumber + lastPage}>
                 <div className="page-header">
-                  {firstPage === lastPage
-                    ? firstPage === unlocatedPage
-                      ? <span className="error">Unable to locate citation</span>
-                      : `Page ${firstPage}`
-                    : `Pages ${firstPage}-${lastPage}`}
+                  {firstPage === lastPage ? (
+                    firstPage === unlocatedPage ? (
+                      <span className="error">Unable to locate citation</span>
+                    ) : (
+                      `Page ${firstPage}`
+                    )
+                  ) : (
+                    `Pages ${firstPage}-${lastPage}`
+                  )}
                 </div>
                 {citationIndices.map((citationIndex) => {
                   const { excerpt, reviewStatus } =
