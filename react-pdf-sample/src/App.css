@@ -141,6 +141,7 @@ button:focus-visible {
   border-radius: 7px;
   padding: 4px;
   margin-top: 10px;
+  margin-left: 20px;
   background-color: white;
 }
 
@@ -184,11 +185,11 @@ button:focus-visible {
 
 .doc-header {
   margin-top: 10px;
-  font-weight: 600;
 }
 
 .page-header {
   margin-top: 5px;
+  margin-left: 10px;
 }
 
 .error {

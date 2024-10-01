@@ -4,6 +4,15 @@ import { questions } from "./Questions";
 import { useCallback, useMemo } from "react";
 import { Action, ReviewStatus, Citation } from "./Types";
 
+import {
+  DocumentRegular,
+  DocumentOnePageRegular,
+  DocumentOnePageMultipleRegular,
+  CircleRegular,
+  CheckmarkCircleRegular,
+  DismissCircleRegular,
+} from "@fluentui/react-icons";
+
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
 
@@ -13,8 +22,7 @@ interface PageGroup {
   citationIndices: number[];
 }
 
-const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
-  firstPage * maxPageNumber + lastPage;
+const sortIndex = ({ firstPage, lastPage }: PageGroup) => firstPage * maxPageNumber + lastPage;
 
 const groupCitations = (questionCitations: Citation[]) =>
   docs.map((_, docIndex) => ({
@@ -128,6 +136,7 @@ export function Sidebar() {
                   : dispatch({ type: "gotoDoc", docIndex })
               }
             >
+              <DocumentRegular />
               {docs[docIndex].friendlyname ?? docs[docIndex].filename}
             </div>
             {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
@@ -137,10 +146,16 @@ export function Sidebar() {
                     firstPage === unlocatedPage ? (
                       <span className="error">Unable to locate citation</span>
                     ) : (
-                      `Page ${firstPage}`
+                      <>
+                        <DocumentOnePageRegular />
+                        Page {firstPage}
+                      </>
                     )
                   ) : (
-                    `Pages ${firstPage}-${lastPage}`
+                    <>
+                      <DocumentOnePageMultipleRegular />
+                      Pages ${firstPage}-${lastPage}
+                    </>
                   )}
                 </div>
                 {citationIndices.map((citationIndex) => {
@@ -161,7 +176,9 @@ export function Sidebar() {
                           : dispatch({ type: "gotoCitation", citationIndex })
                       }
                     >
-                      <div className="citation">{excerpt}</div>
+                      {reviewStatus === ReviewStatus.Unreviewed ? <CircleRegular /> : reviewStatus === ReviewStatus.Approved ? <CheckmarkCircleRegular /> : <DismissCircleRegular />} 
+                      {excerpt}
+                      {/* <div className="citation">{excerpt}</div>
                       <div className="buttons">
                         {reviewStatus === ReviewStatus.Approved ||
                         (!newCitation &&
@@ -210,8 +227,8 @@ export function Sidebar() {
                           >
                             𐄂
                           </button>
-                        ) : null}
-                      </div>
+                        ) : null} 
+                      </div> */}
                     </div>
                   );
                 })}

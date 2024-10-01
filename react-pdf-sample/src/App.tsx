@@ -1,5 +1,6 @@
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
+import { FluentProvider, webLightTheme, webDarkTheme } from "@fluentui/react-components";
 
 import { pdfjs } from 'react-pdf';
 import { Sidebar } from './Sidebar';
@@ -13,8 +14,11 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 import './App.css'
 import { NavBar } from './NavBar';
 
+const theme = matchMedia('(prefers-color-scheme: light)').matches ? webLightTheme : webDarkTheme;
+
 function App() {
   return (
+<FluentProvider theme={theme}>
     <div id="app">
       <Sidebar />
       <div id="viewer">
@@ -22,6 +26,7 @@ function App() {
         <Viewer />
       </div>
     </div>
+</FluentProvider>
   )
 }
 
