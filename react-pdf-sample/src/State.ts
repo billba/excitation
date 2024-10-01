@@ -130,6 +130,29 @@ export const uxAtom = atom<UXState, [Action], void>(
     const ux = get(_uxAtom);
     const { questionIndex } = ux;
 
+    const deselectCitation = (draft: UXState) => {
+      // because UXState is a discriminated union, the we have to brute-force update these properties
+      // in order to move the state from whatever it was to a NoCitationState
+      (draft as NoCitationsState).citationIndex = undefined;
+      delete (draft as Partial<CitationState>).citationHighlights;
+    }
+
+    const gotoPage = (draft: UXState, pageNumber: number, alwaysDeselectCitation = false) => {
+      draft.pageNumber = pageNumber;
+      // Deselect the current citation, unless moving to
+      // a different page of the same multi-page citation.
+      if (
+        alwaysDeselectCitation ||
+        draft.newCitation ||
+        draft.citationIndex == undefined ||
+        !draft.citationHighlights.find(
+          ({ pageNumber }) => pageNumber == draft.pageNumber
+        )
+      ) {
+        deselectCitation(draft);
+      }
+    };
+
     switch (action.type) {
       case "startNewCitation": {
         console.assert(!ux.newCitation);
@@ -173,17 +196,7 @@ export const uxAtom = atom<UXState, [Action], void>(
         set(
           _uxAtom,
           create(ux, (draft) => {
-            draft.pageNumber--;
-            if (draft.newCitation) return;
-            if (
-              draft.citationIndex != undefined &&
-              draft.citationHighlights.find(
-                ({ pageNumber }) => pageNumber == draft.pageNumber
-              )
-            )
-              return;
-            (draft as NoCitationsState).citationIndex = undefined;
-            delete (draft as Partial<CitationState>).citationHighlights;
+            gotoPage(draft, draft.pageNumber - 1);
           })
         );
         break;
@@ -192,17 +205,7 @@ export const uxAtom = atom<UXState, [Action], void>(
         set(
           _uxAtom,
           create(ux, (draft) => {
-            draft.pageNumber++;
-            if (draft.newCitation) return;
-            if (
-              draft.citationIndex != undefined &&
-              draft.citationHighlights.find(
-                ({ pageNumber }) => pageNumber == draft.pageNumber
-              )
-            )
-              return;
-            (draft as NoCitationsState).citationIndex = undefined;
-            delete (draft as Partial<CitationState>).citationHighlights;
+            gotoPage(draft, draft.pageNumber + 1);
           })
         );
         break;
@@ -211,17 +214,7 @@ export const uxAtom = atom<UXState, [Action], void>(
         set(
           _uxAtom,
           create(ux, (draft) => {
-            draft.pageNumber = action.pageNumber;
-            if (draft.newCitation) return;
-            if (
-              draft.citationIndex != undefined &&
-              draft.citationHighlights.find(
-                ({ pageNumber }) => pageNumber == draft.pageNumber
-              )
-            )
-              return;
-            (draft as NoCitationsState).citationIndex = undefined;
-            delete (draft as Partial<CitationState>).citationHighlights;
+            gotoPage(draft, action.pageNumber);
           })
         );
         break;
@@ -232,9 +225,7 @@ export const uxAtom = atom<UXState, [Action], void>(
           _uxAtom,
           create(ux, (draft) => {
             draft.docIndex = action.docIndex;
-            draft.pageNumber = 1;
-            (draft as NoCitationsState).citationIndex = undefined;
-            delete (draft as Partial<CitationState>).citationHighlights;
+            gotoPage(draft, 1, true);
           })
         );
         break;
