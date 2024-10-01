@@ -11,6 +11,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* --var-col: 1fr; */
 }
 
 a {
@@ -82,9 +84,23 @@ button:focus-visible {
 }
 
 #navbar {
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%;
   background-color: skyblue;
+}
+
+.navbar-filename {
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.navbar-page {
+  /* width: 100%; */
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.navbar-column {
+  margin: 0 auto;
 }
 
 #sidebar {
@@ -141,6 +157,10 @@ button:focus-visible {
   border-color: yellow;
 }
 
+.hidden {
+  display: none;
+}
+
 .citation-row:hover {
   border: solid 1.5px gray;
   transition: border 0.25s;
@@ -173,4 +193,8 @@ button:focus-visible {
 
 .error {
   color: red;
+}
+
+.clickable {
+  cursor: pointer;
 }
