@@ -3,14 +3,12 @@ import { docs, citationsAtom, uxAtom } from "./State";
 import { questions } from "./Questions";
 import { useCallback, useMemo } from "react";
 import { Action, ReviewStatus, Citation } from "./Types";
-
+import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
   DocumentOnePageRegular,
   DocumentOnePageMultipleRegular,
-  CircleRegular,
-  CheckmarkCircleRegular,
-  DismissCircleRegular,
+  DocumentOnePageAddRegular,
 } from "@fluentui/react-icons";
 
 const maxPageNumber = 1000;
@@ -22,7 +20,8 @@ interface PageGroup {
   citationIndices: number[];
 }
 
-const sortIndex = ({ firstPage, lastPage }: PageGroup) => firstPage * maxPageNumber + lastPage;
+const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
+  firstPage * maxPageNumber + lastPage;
 
 const groupCitations = (questionCitations: Citation[]) =>
   docs.map((_, docIndex) => ({
@@ -91,22 +90,6 @@ export function Sidebar() {
     document.getSelection()?.empty();
   }, [_dispatch]);
 
-  const toggleReviewStatus = useCallback(
-    (
-        target: ReviewStatus.Approved | ReviewStatus.Rejected,
-        citationIndex: number
-      ) =>
-      (event: React.MouseEvent<HTMLButtonElement>) => {
-        _dispatch({
-          type: "toggleReviewStatus",
-          target,
-          citationIndex,
-        });
-        event.stopPropagation();
-      },
-    [_dispatch]
-  );
-
   return (
     <div id="sidebar">
       <div className="sidebar-header">
@@ -136,101 +119,34 @@ export function Sidebar() {
                   : dispatch({ type: "gotoDoc", docIndex })
               }
             >
-              <DocumentRegular />
+              <DocumentRegular className="icon" />
               {docs[docIndex].friendlyname ?? docs[docIndex].filename}
             </div>
             {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
-              <div id="page-group" key={firstPage * maxPageNumber + lastPage}>
+              <div className="page-group" key={firstPage * maxPageNumber + lastPage}>
                 <div className="page-header">
-                  {firstPage === lastPage ? (
-                    firstPage === unlocatedPage ? (
-                      <span className="error">Unable to locate citation</span>
+                  {firstPage == lastPage ? (
+                    firstPage == unlocatedPage ? (
+                      <>
+                        <DocumentOnePageAddRegular className="icon" />
+                        Unable to locate citation
+                      </>
                     ) : (
                       <>
-                        <DocumentOnePageRegular />
+                        <DocumentOnePageRegular className="icon" />
                         Page {firstPage}
                       </>
                     )
                   ) : (
                     <>
-                      <DocumentOnePageMultipleRegular />
-                      Pages ${firstPage}-${lastPage}
+                      <DocumentOnePageMultipleRegular className="icon" />
+                      Pages {firstPage}-{lastPage}
                     </>
                   )}
                 </div>
                 {citationIndices.map((citationIndex) => {
-                  const { excerpt, reviewStatus } =
-                    citations[questionIndex][citationIndex];
-                  return (
-                    <div
-                      className={
-                        "citation-row" +
-                        (!newCitation && citationIndex === ux.citationIndex
-                          ? " selected"
-                          : "")
-                      }
-                      key={citationIndex}
-                      onClick={
-                        newCitation
-                          ? undefined
-                          : dispatch({ type: "gotoCitation", citationIndex })
-                      }
-                    >
-                      {reviewStatus === ReviewStatus.Unreviewed ? <CircleRegular /> : reviewStatus === ReviewStatus.Approved ? <CheckmarkCircleRegular /> : <DismissCircleRegular />} 
-                      {excerpt}
-                      {/* <div className="citation">{excerpt}</div>
-                      <div className="buttons">
-                        {reviewStatus === ReviewStatus.Approved ||
-                        (!newCitation &&
-                          citationIndex === ux.citationIndex &&
-                          reviewStatus === ReviewStatus.Unreviewed) ? (
-                          <button
-                            className="cite-button"
-                            style={{
-                              backgroundColor:
-                                reviewStatus === ReviewStatus.Approved
-                                  ? "palegreen"
-                                  : "grey",
-                            }}
-                            onClick={
-                              newCitation || citationIndex !== ux.citationIndex
-                                ? undefined
-                                : toggleReviewStatus(
-                                    ReviewStatus.Approved,
-                                    citationIndex
-                                  )
-                            }
-                          >
-                            ✓
-                          </button>
-                        ) : null}
-                        {reviewStatus === ReviewStatus.Rejected ||
-                        (!newCitation &&
-                          citationIndex === ux.citationIndex &&
-                          reviewStatus === ReviewStatus.Unreviewed) ? (
-                          <button
-                            className="cite-button"
-                            style={{
-                              backgroundColor:
-                                reviewStatus === ReviewStatus.Rejected
-                                  ? "lightcoral"
-                                  : "grey",
-                            }}
-                            onClick={
-                              newCitation || citationIndex !== ux.citationIndex
-                                ? undefined
-                                : toggleReviewStatus(
-                                    ReviewStatus.Rejected,
-                                    citationIndex
-                                  )
-                            }
-                          >
-                            𐄂
-                          </button>
-                        ) : null} 
-                      </div> */}
-                    </div>
-                  );
+                  const { excerpt, reviewStatus } = citations[questionIndex][citationIndex];
+                  return <CitationUX citationIndex={citationIndex} excerpt={excerpt} reviewStatus={reviewStatus} selected={!newCitation && citationIndex == ux.citationIndex} selectable={!newCitation} />
                 })}
               </div>
             ))}

@@ -129,33 +129,55 @@ button:focus-visible {
 }
 
 .citation-header {
-  align-self: flex-start;
-  font-weight: 500;
+  /* align-self: flex-start;
+  font-weight: 500; */
 }
 
 .citation-row {
-  display: flex;
+  /* display: flex;
   flex-direction: row;
   justify-content: space-between;
   border: solid 1.5px white;
   border-radius: 7px;
   padding: 4px;
   margin-top: 10px;
-  margin-left: 20px;
-  background-color: white;
+  background-color: white; */
+  margin-top: 5px;
+  margin-left: 10px;
+  display: grid;
+  grid-template-columns: 22px 300px;
 }
 
 .citation {
-  display: flex;
+  /* display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 260px;
+  width: 260px; */
+}
+
+.citation-short {
+  
+}
+
+.citation-full {
+}
+
+.citation-icon-approved {
+  color: palegreen;
+}
+
+.citation-icon-rejected {
+  color: lightcoral;
+}
+
+.citation-icon-unreviewed {
+  color: grey;
 }
 
 .selected {
-  background-color: yellow;
-  border-color: yellow;
+  /* background-color: yellow;
+  border-color: yellow; */
 }
 
 .hidden {
@@ -163,8 +185,8 @@ button:focus-visible {
 }
 
 .citation-row:hover {
-  border: solid 1.5px gray;
-  transition: border 0.25s;
+  /* border: solid 1.5px gray;
+  transition: border 0.25s; */
 }
 
 .buttons {
@@ -172,24 +194,35 @@ button:focus-visible {
 }
 
 .cite-button {
-  width: 25px;
+  /* width: 25px;
   height: 25px;
   margin: 2px;
   padding: 0px;
-  opacity: 60%;
+  opacity: 60%; */
 }
 
 .cite-button:hover {
-  opacity: 100%;
+  /* opacity: 100%; */
 }
 
 .doc-header {
   margin-top: 10px;
 }
 
-.page-header {
+.doc-header:hover {
+  /* cursor: pointer; */
+}
+
+.page-group {
   margin-top: 5px;
   margin-left: 10px;
+}
+
+.page-header {
+}
+
+.page-header:hover {
+  /* cursor: pointer; */
 }
 
 .error {
@@ -198,4 +231,10 @@ button:focus-visible {
 
 .clickable {
   cursor: pointer;
+}
+
+.icon {
+  margin-bottom: -3pt;
+  margin-right: 2pt;
+  font-size: 18pt;
 }
