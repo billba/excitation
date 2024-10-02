@@ -139,6 +139,7 @@ export const uxAtom = atom<UXState, [Action], void>(
 
     const gotoPage = (draft: UXState, pageNumber: number, alwaysDeselectCitation = false) => {
       draft.pageNumber = pageNumber;
+      (draft as NewCitationState).selectedText = "";
       // Deselect the current citation, unless moving to
       // a different page of the same multi-page citation.
       if (
