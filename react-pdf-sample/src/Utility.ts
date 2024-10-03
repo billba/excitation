@@ -167,6 +167,10 @@ const match = (
   if (str0.slice(0,1) == '$') str0 = str0.slice(1);
   if (str1.slice(0,1) == '$') str1 = str1.slice(1);
 
+  // strip leading quotes
+  if (str0.slice(0,1) == '"') str0 = str0.slice(1);
+  if (str1.slice(0,1) == '"') str1 = str1.slice(1);
+
   if (str0 === str1) return true;
 
   return false;
