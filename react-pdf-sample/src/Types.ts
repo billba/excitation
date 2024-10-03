@@ -39,7 +39,7 @@ export type Action =
   | {
       type: "toggleReviewStatus";
       citationIndex: number;
-      target: ReviewIcon;
+      target: ReviewStatus;
     };
 
 export interface CitationHighlight {
@@ -68,22 +68,16 @@ export interface CitationState extends BaseState {
   newCitation: false;
   citationIndex: number;
   citationHighlights: CitationHighlight[];
-};
+}
 
 export type NotNewCitationStates = NoCitationsState | CitationState;
-export type UXState = NewCitationState | NotNewCitationStates
+export type UXState = NewCitationState | NotNewCitationStates;
 
 export enum ReviewStatus {
   Unreviewed,
   Approved,
   Rejected,
 }
-
-// We kind of abuse the ReviewStatus enum here by overloading its values to refer both
-// to the type of the citation icon (approved, rejected) and to the status of
-// said citation, reflected in said icon.
-
-export type ReviewIcon = ReviewStatus.Approved | ReviewStatus.Rejected;
 
 export interface Doc {
   filename: string;

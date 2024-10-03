@@ -1,54 +1,33 @@
 import { useSetAtom } from "jotai";
-import { Action, ReviewStatus, ReviewIcon } from "./Types";
+import { Action, ReviewStatus } from "./Types";
 import { uxAtom } from "./State";
-
 import {
   CircleRegular,
-  CheckmarkCircleRegular,
   CheckmarkCircleFilled,
-  DismissCircleRegular,
   DismissCircleFilled,
-  bundleIcon,
-  type FluentIcon,
 } from "@fluentui/react-icons";
 import { useCallback } from "react";
 
 // not selected
-//    unreviewed      CircleRegular (no hover) - black
-//    approved        CheckmarkCircleFilled (no hover) - green
-//    rejected        DismissCircleFilled (no hover) - red
+//    unreviewed  CircleRegular (no hover) - grey
+//    approved    CheckmarkCircleFilled (no hover) - green
+//    rejected    DismissCircleFilled (no hover) - red
 // selected
-//    approve button
-//      unreviewed    CheckmarkCircleRegular (hover: CheckmarkCircleFilled) - green
-//      approved      CircleFilled(hover: CircleRegular) - green
-//    reject button
-//      unreviewed    DismissCircleRegular(hover: DismissCircleFilled) - red
-//      rejected      DismissCircleFilled (hover: CircleRegular) - red
+//    approved
+//      CheckmarkCircleFilled - green (hover: grey)
+//    rejected
+//      DismissCircleFilled - red (hover: grey)
+//    unreviewed
+//      approve button  CheckmarkCircleFilled - grey (hover: green)
+//      reject button   DismissCircleFilled - grey (hover: red)
 
-const reviewIcon: ReviewIcon[] = [ReviewStatus.Approved, ReviewStatus.Rejected];
+const reviewIcons = [ReviewStatus.Approved, ReviewStatus.Rejected];
 
-const citationClasses = {
-  [ReviewStatus.Unreviewed]: "citation-icon-unreviewed",
-  [ReviewStatus.Approved]: "citation-icon-approved",
-  [ReviewStatus.Rejected]: "citation-icon-rejected",
-};
-
-const unselectedIcons = {
-  [ReviewStatus.Unreviewed]: CircleRegular,
-  [ReviewStatus.Approved]: CheckmarkCircleFilled,
-  [ReviewStatus.Rejected]: DismissCircleFilled,
-};
-
-const selectedIcons = {
-  [ReviewStatus.Approved]: [
-    bundleIcon(CheckmarkCircleFilled, CheckmarkCircleRegular),
-    bundleIcon(CircleRegular, CheckmarkCircleFilled),
-  ],
-  [ReviewStatus.Rejected]: [
-    bundleIcon(DismissCircleFilled, DismissCircleRegular),
-    bundleIcon(CircleRegular, DismissCircleFilled),
-  ],
-};
+const citationIcons = {
+  [ReviewStatus.Unreviewed]: [CircleRegular, ["citation-icon-unreviewed", "citation-icon-unreviewed", "citation-icon-unreviewed"]],
+  [ReviewStatus.Approved]: [CheckmarkCircleFilled, ["citation-icon-approved", "citation-icon-approved-off", "citation-icon-approved-on"]],
+  [ReviewStatus.Rejected]: [DismissCircleFilled, ["citation-icon-rejected", "citation-icon-rejected-off", "citation-icon-rejected-on"]],
+} as const;
 
 interface Props {
   citationIndex: number; // the citation to render
@@ -73,7 +52,7 @@ export const CitationUX = ({
   );
 
   const toggleReviewStatus = useCallback(
-    (target: ReviewIcon, citationIndex: number) =>
+    (target: ReviewStatus, citationIndex: number) =>
       (event: React.MouseEvent<SVGElement>) => {
         _dispatch({
           type: "toggleReviewStatus",
@@ -85,18 +64,15 @@ export const CitationUX = ({
     [_dispatch]
   );
 
-  const reviewStatusIcons: [FluentIcon, string][] = selected
-    ? reviewIcon.map((reviewIcon) => [
-        selectedIcons[reviewIcon][Number(reviewStatus == reviewIcon)],
-        citationClasses[reviewIcon],
-      ])
-    : [[unselectedIcons[reviewStatus], citationClasses[reviewStatus]]];
-
-  console.log(citationIndex, selected, reviewStatus, reviewStatusIcons);
+  const reviewStatusIcons = (reviewStatus == ReviewStatus.Unreviewed && selected ? reviewIcons : [reviewStatus])
+    .map((rs) => {
+      const [icon, classNames] = citationIcons[rs];
+      return [rs, icon, classNames[Number(selected) * (Number(reviewStatus == rs) + 1)]] as const;
+    });
 
   return (
     <div
-      className="citation-row"
+      className={"citation-row " + (selected ? "selected" : "hoverable")} 
       key={citationIndex}
       onClick={
         selectable
@@ -105,15 +81,15 @@ export const CitationUX = ({
       }
     >
       <div>
-        {reviewStatusIcons.map(([Icon, className], i) => (
+        {reviewStatusIcons.map(([rs, Icon, className]) => (
           <Icon
-            key={i}
+            key={rs}
             className={"icon " + className}
             onClick={
               selected
-                ? toggleReviewStatus(ReviewStatus.Approved, citationIndex)
+                ? toggleReviewStatus(rs, citationIndex)
                 : undefined
-            }
+            } 
           />
         ))}
       </div>
@@ -124,58 +100,6 @@ export const CitationUX = ({
         <span className="citation-short">{excerpt.substring(0, 35)}...</span>
       )}
       </div>
-      {/*}
-      {/* <div className="citation">{excerpt}</div>
-      <div className="buttons">
-        {reviewStatus === ReviewStatus.Approved ||
-        (!newCitation &&
-          citationIndex === ux.citationIndex &&
-          reviewStatus === ReviewStatus.Unreviewed) ? (
-          <button
-            className="cite-button"
-            style={{
-              backgroundColor:
-                reviewStatus === ReviewStatus.Approved
-                  ? "palegreen"
-                  : "grey",
-            }}
-            onClick={
-              newCitation || citationIndex !== ux.citationIndex
-                ? undefined
-                : toggleReviewStatus(
-                    ReviewStatus.Approved,
-                    citationIndex
-                  )
-            }
-          >
-            ✓
-          </button>
-        ) : null}
-        {reviewStatus === ReviewStatus.Rejected ||
-        (!newCitation &&
-          citationIndex === ux.citationIndex &&
-          reviewStatus === ReviewStatus.Unreviewed) ? (
-          <button
-            className="cite-button"
-            style={{
-              backgroundColor:
-                reviewStatus === ReviewStatus.Rejected
-                  ? "lightcoral"
-                  : "grey",
-            }}
-            onClick={
-              newCitation || citationIndex !== ux.citationIndex
-                ? undefined
-                : toggleReviewStatus(
-                    ReviewStatus.Rejected,
-                    citationIndex
-                  )
-            }
-          >
-            𐄂
-          </button>
-        ) : null} 
-      </div> */}
     </div>
   );
 };

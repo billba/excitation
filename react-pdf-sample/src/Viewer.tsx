@@ -69,7 +69,9 @@ export function Viewer() {
     const context = highlightCanvas.getContext("2d")!;
 
     context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    context.fillStyle = "yellow";
+    // context.fillStyle = "red";
+    context.strokeStyle = "red";
+    context.lineWidth = 4;
 
     const multiplier = 72 * (window.devicePixelRatio || 1);
 
@@ -80,7 +82,7 @@ export function Viewer() {
       context.lineTo(polygon[4] * multiplier, polygon[5] * multiplier);
       context.lineTo(polygon[6] * multiplier, polygon[7] * multiplier);
       context.closePath();
-      context.fill();
+      context.stroke();
     }
   }, [
     canvasRef,
@@ -106,7 +108,7 @@ export function Viewer() {
           style={{
             position: "absolute",
             zIndex: 1000,
-            opacity: 0.5,
+            opacity: 1,
           }}
         />
         }

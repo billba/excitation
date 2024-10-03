@@ -148,6 +148,12 @@ button:focus-visible {
   grid-template-columns: 22px 300px;
 }
 
+.hoverable {
+  :hover {
+    cursor: pointer;
+  }
+}
+
 .citation {
   /* display: flex;
   flex-direction: column;
@@ -157,36 +163,65 @@ button:focus-visible {
 }
 
 .citation-short {
-  
 }
 
 .citation-full {
 }
 
 .citation-icon-approved {
-  color: palegreen;
+  color: rgb(0, 172, 0);
+  pointer-events: all;
+}
+
+.citation-icon-approved-on {
+  color: rgb(0, 172, 0);
+  pointer-events: all;
+  :hover {
+    color: grey;
+  }
+}
+
+.citation-icon-approved-off {
+  color: grey;
+  pointer-events: all;
+  :hover {
+    color: rgb(0, 172, 0);
+  }
 }
 
 .citation-icon-rejected {
   color: lightcoral;
+  pointer-events: all;
+}
+
+.citation-icon-rejected-on {
+  color: lightcoral;
+  pointer-events: all;
+  :hover {
+    color: grey;
+  }
+}
+
+.citation-icon-rejected-off {
+  color: grey;
+  pointer-events: all;
+  :hover {
+    color: lightcoral;
+  }
 }
 
 .citation-icon-unreviewed {
   color: grey;
+  pointer-events: all;
 }
 
 .selected {
-  /* background-color: yellow;
-  border-color: yellow; */
+  background-color: white;
+  border: red 2px solid;
 }
 
 .hidden {
   display: none;
-}
-
-.citation-row:hover {
-  /* border: solid 1.5px gray;
-  transition: border 0.25s; */
 }
 
 .buttons {
