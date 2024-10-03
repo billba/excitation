@@ -135,9 +135,13 @@ export const uxAtom = atom<UXState, [Action], void>(
       // in order to move the state from whatever it was to a NoCitationState
       (draft as NoCitationsState).citationIndex = undefined;
       delete (draft as Partial<CitationState>).citationHighlights;
-    }
+    };
 
-    const gotoPage = (draft: UXState, pageNumber: number, alwaysDeselectCitation = false) => {
+    const gotoPage = (
+      draft: UXState,
+      pageNumber: number,
+      alwaysDeselectCitation = false
+    ) => {
       draft.pageNumber = pageNumber;
       (draft as NewCitationState).selectedText = "";
       // Deselect the current citation, unless moving to
@@ -269,7 +273,7 @@ export const uxAtom = atom<UXState, [Action], void>(
         const updatedCitations = create(get(citationsAtom), (draft) => {
           const targetCitation = draft[questionIndex][action.citationIndex];
           updatedReviewStatus =
-            targetCitation.reviewStatus === action.target
+            targetCitation.reviewStatus == action.target
               ? ReviewStatus.Unreviewed
               : action.target;
           targetCitation.reviewStatus = updatedReviewStatus;
