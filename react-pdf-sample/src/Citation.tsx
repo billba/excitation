@@ -1,5 +1,5 @@
 import { useSetAtom } from "jotai";
-import { Action, ReviewStatus } from "./Types";
+import { Action, ReviewStatus, ReviewIcon } from "./Types";
 import { uxAtom } from "./State";
 
 import {
@@ -25,11 +25,6 @@ import { useCallback } from "react";
 //      unreviewed    DismissCircleRegular(hover: DismissCircleFilled) - red
 //      rejected      DismissCircleFilled (hover: CircleRegular) - red
 
-// We kind of abuse the ReviewStatus enum here by overloading its values to refer both
-// to the type of the citation icon (unreviewed, approved, rejected) and to the status of
-// said citation, reflected in said icon.
-
-type ReviewIcon = ReviewStatus.Approved | ReviewStatus.Rejected;
 const reviewIcon: ReviewIcon[] = [ReviewStatus.Approved, ReviewStatus.Rejected];
 
 const citationClasses = {
@@ -77,21 +72,18 @@ export const CitationUX = ({
     [_dispatch]
   );
 
-  // const toggleReviewStatus = useCallback(
-  //   (
-  //     target: ReviewStatus.Approved | ReviewStatus.Rejected,
-  //     citationIndex: number
-  //   ) =>
-  //     (event: React.MouseEvent<HTMLButtonElement>) => {
-  //       _dispatch({
-  //         type: "toggleReviewStatus",
-  //         target,
-  //         citationIndex,
-  //       });
-  //       event.stopPropagation();
-  //     },
-  //   [_dispatch]
-  // );
+  const toggleReviewStatus = useCallback(
+    (target: ReviewIcon, citationIndex: number) =>
+      (event: React.MouseEvent<SVGElement>) => {
+        _dispatch({
+          type: "toggleReviewStatus",
+          target,
+          citationIndex,
+        });
+        event.stopPropagation();
+      },
+    [_dispatch]
+  );
 
   const reviewStatusIcons: [FluentIcon, string][] = selected
     ? reviewIcon.map((reviewIcon) => [
@@ -101,7 +93,7 @@ export const CitationUX = ({
     : [[unselectedIcons[reviewStatus], citationClasses[reviewStatus]]];
 
   console.log(citationIndex, selected, reviewStatus, reviewStatusIcons);
-  
+
   return (
     <div
       className="citation-row"
@@ -114,18 +106,25 @@ export const CitationUX = ({
     >
       <div>
         {reviewStatusIcons.map(([Icon, className], i) => (
-          <Icon key={i} className={"icon " + className} />
+          <Icon
+            key={i}
+            className={"icon " + className}
+            onClick={
+              selected
+                ? toggleReviewStatus(ReviewStatus.Approved, citationIndex)
+                : undefined
+            }
+          />
         ))}
       </div>
       <div>
+      {selected ? (
+        <div className="citation-full">{excerpt}</div>
+      ) : (
         <span className="citation-short">{excerpt.substring(0, 35)}...</span>
+      )}
       </div>
       {/*}
-      {newCitation || citationIndex != ux.citationIndex ? (
-        <span className="citation-short">{excerpt.substring(0, 35)}...</span>
-      ) : (
-        <div className="citation-full">{excerpt}</div>
-      )} */}
       {/* <div className="citation">{excerpt}</div>
       <div className="buttons">
         {reviewStatus === ReviewStatus.Approved ||
