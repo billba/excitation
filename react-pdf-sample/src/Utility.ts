@@ -147,6 +147,7 @@ const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
 //  - strip trailing periods
 //  - strip trailing semicolons
 //  - strip dollar signs
+//  - strip leading quotes
 const match = (
   str0: string,
   str1: string
