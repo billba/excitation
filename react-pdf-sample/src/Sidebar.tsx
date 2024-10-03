@@ -2,7 +2,7 @@ import { useAtomValue, useAtom } from "jotai";
 import { docs, citationsAtom, uxAtom } from "./State";
 import { questions } from "./Questions";
 import { useCallback, useMemo } from "react";
-import { Action, ReviewStatus, Citation } from "./Types";
+import { Action, Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
@@ -22,6 +22,11 @@ interface PageGroup {
 
 const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
   firstPage * maxPageNumber + lastPage;
+
+const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
+  const { reviewStatus } = questionCitations[citationIndex];
+  return reviewStatus * 1000 + citationIndex;
+}
 
 const groupCitations = (questionCitations: Citation[]) =>
   docs.map((_, docIndex) => ({
@@ -59,7 +64,7 @@ const groupCitations = (questionCitations: Citation[]) =>
       .map(({ firstPage, lastPage, citationIndices }) => ({
         firstPage,
         lastPage,
-        citationIndices: citationIndices.sort(),
+        citationIndices: citationIndices.sort((a, b) => sortCitation(questionCitations, a) - sortCitation(questionCitations, b)),
       }))
       .sort((a, b) => sortIndex(a) - sortIndex(b)),
   }));
@@ -74,8 +79,6 @@ export function Sidebar() {
     () => groupCitations(citations[questionIndex]),
     [citations, questionIndex]
   );
-
-  console.log(groupedCitations);
 
   const dispatch = useCallback(
     (action: Action) => () => _dispatch(action),
@@ -146,7 +149,7 @@ export function Sidebar() {
                 </div>
                 {citationIndices.map((citationIndex) => {
                   const { excerpt, reviewStatus } = citations[questionIndex][citationIndex];
-                  return <CitationUX citationIndex={citationIndex} excerpt={excerpt} reviewStatus={reviewStatus} selected={!newCitation && citationIndex == ux.citationIndex} selectable={!newCitation} />
+                  return <CitationUX key={citationIndex} citationIndex={citationIndex} excerpt={excerpt} reviewStatus={reviewStatus} selected={!newCitation && citationIndex == ux.citationIndex} selectable={!newCitation} />
                 })}
               </div>
             ))}
