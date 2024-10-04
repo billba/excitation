@@ -20,6 +20,7 @@ export function Viewer() {
     document.addEventListener("selectionchange", () => {
       const selection = document.getSelection();
       const ancestor = selection?.rangeCount && selection?.getRangeAt(0).commonAncestorContainer;
+      console.assert(viewerRef.current != undefined);
       dispatch({
         type: "setSelectedText",
         selectedText:
@@ -70,7 +71,7 @@ export function Viewer() {
 
     context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
     // context.fillStyle = "red";
-    context.strokeStyle = "red";
+    context.strokeStyle = "blue";
     context.lineWidth = 4;
 
     const multiplier = 72 * (window.devicePixelRatio || 1);
