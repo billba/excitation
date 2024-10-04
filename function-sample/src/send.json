@@ -1,0 +1,64 @@
+[
+  {
+    "type": "addCitation",
+    "formId": 1,
+    "questionId": 1,
+    "documentId": 1,
+    "excerpt": "Microsoft Cloud revenue was $35.1 billion",
+    "bounds": [
+      {
+        "pageNumber": 1,
+        "polygon": [
+          1.7907,
+          3.8194,
+          4.4076,
+          3.8194,
+          4.4076,
+          3.9913,
+          1.7907,
+          3.9913
+        ]
+      }
+    ],
+    "review": "Approved",
+    "creator": "lee"
+  },
+  {
+    "type": "updateReview",
+    "citationId": 1,
+    "review": "Approved",
+    "creator": "lee"
+  },
+  {
+    "type": "updateReview",
+    "citationId": 2,
+    "review": "Rejected",
+    "creator": "lee"
+  },
+  {
+    "type": "updateReview",
+    "citationId": 2,
+    "review": "Unreviewed",
+    "creator": "lee"
+  },
+  {
+    "type": "updateBounds",
+    "citationId": 1,
+    "bounds": [
+      {
+        "pageNumber": 1,
+        "polygon": [
+          1.4851,
+          2.0052,
+          4.2691,
+          2.0052,
+          4.2691,
+          2.1628,
+          1.4851,
+          2.1628
+        ]
+      }
+    ],
+    "creator": "lee"
+  }
+]

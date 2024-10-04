@@ -217,13 +217,13 @@ export type Event =
     documentId: number;
     excerpt: string;
     bounds: BoundingRegion[];
-    review: Review;
+    review: ReviewStatus;
     creator: string;
   }
   | {
     type: "updateReview";
     citationId: number;
-    review: Review;
+    review: ReviewStatus;
     creator: string;
   }
   | {
