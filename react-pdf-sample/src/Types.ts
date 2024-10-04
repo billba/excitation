@@ -130,12 +130,6 @@ export interface Citation {
   boundingRegions?: BoundingRegion[];
 }
 
-export type Event = {
-  type: "mockEvent";
-  delay: number;
-  error?: string;
-};
-
 export interface DocumentIntelligenceResponse {
   status: string;
   createdDateTime: string;
@@ -254,24 +248,29 @@ interface Span {
 
 export type Event =
   | {
-    type: "addCitation";
-    formId: number;
-    questionId: number;
-    documentId: number;
-    excerpt: string;
-    bounds: BoundingRegion[];
-    review: ReviewStatus;
-    creator: string;
-  }
+      type: "mockEvent";
+      delay: number;
+      error?: string;
+    }
   | {
-    type: "updateReview";
-    citationId: number;
-    review: ReviewStatus;
-    creator: string;
-  }
+      type: "addCitation";
+      formId: number;
+      questionId: number;
+      documentId: number;
+      excerpt: string;
+      bounds: BoundingRegion[];
+      review: ReviewStatus;
+      creator: string;
+    }
   | {
-    type: "updateBounds";
-    citationId: number;
-    bounds: BoundingRegion[];
-    creator: string;
-  };
+      type: "updateReview";
+      citationId: number;
+      review: ReviewStatus;
+      creator: string;
+    }
+  | {
+      type: "updateBounds";
+      citationId: number;
+      bounds: BoundingRegion[];
+      creator: string;
+    };
