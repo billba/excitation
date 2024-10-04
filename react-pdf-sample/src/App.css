@@ -133,36 +133,36 @@ button:focus-visible {
   font-weight: 500; */
 }
 
-.citation-row {
-  /* display: flex;
+.citation-unselected {
+  display: flex;
   flex-direction: row;
   justify-content: space-between;
-  border: solid 1.5px white;
-  border-radius: 7px;
-  padding: 4px;
-  margin-top: 10px;
-  background-color: white; */
   margin-top: 5px;
   margin-left: 10px;
   display: grid;
   grid-template-columns: 22px 300px;
-}
-
-.hoverable {
   :hover {
     cursor: pointer;
   }
 }
 
-.citation {
-  /* display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 260px; */
+.citation-unselected:hover .citation-short{
+  border-radius: 7px;
+  border: blue 2px solid;
+}
+
+.citation-selected {
+  margin-top: 5px;
+  margin-left: 10px;  
+  border: solid 2px blue;
+  border-radius: 7px;
+  padding: 4px;
+  background-color: white;
 }
 
 .citation-short {
+  width: 260px;
+  border: transparent 2px solid;
 }
 
 .citation-full {
@@ -211,13 +211,13 @@ button:focus-visible {
 }
 
 .citation-icon-unreviewed {
-  color: grey;
+  color: blue;
   pointer-events: all;
 }
 
 .selected {
   background-color: white;
-  border: red 2px solid;
+  border: blue 2px solid;
 }
 
 .hidden {
@@ -272,4 +272,8 @@ button:focus-visible {
   margin-bottom: -3pt;
   margin-right: 2pt;
   font-size: 18pt;
+}
+
+.large-icon {
+  font-size: 36pt;
 }

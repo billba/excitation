@@ -24,9 +24,30 @@ import { useCallback } from "react";
 const reviewIcons = [ReviewStatus.Approved, ReviewStatus.Rejected];
 
 const citationIcons = {
-  [ReviewStatus.Unreviewed]: [CircleRegular, ["citation-icon-unreviewed", "citation-icon-unreviewed", "citation-icon-unreviewed"]],
-  [ReviewStatus.Approved]: [CheckmarkCircleFilled, ["citation-icon-approved", "citation-icon-approved-off", "citation-icon-approved-on"]],
-  [ReviewStatus.Rejected]: [DismissCircleFilled, ["citation-icon-rejected", "citation-icon-rejected-off", "citation-icon-rejected-on"]],
+  [ReviewStatus.Unreviewed]: [
+    CircleRegular,
+    [
+      "citation-icon-unreviewed",
+      "citation-icon-unreviewed",
+      "citation-icon-unreviewed",
+    ],
+  ],
+  [ReviewStatus.Approved]: [
+    CheckmarkCircleFilled,
+    [
+      "citation-icon-approved",
+      "citation-icon-approved-off",
+      "citation-icon-approved-on",
+    ],
+  ],
+  [ReviewStatus.Rejected]: [
+    DismissCircleFilled,
+    [
+      "citation-icon-rejected",
+      "citation-icon-rejected-off",
+      "citation-icon-rejected-on",
+    ],
+  ],
 } as const;
 
 interface Props {
@@ -64,15 +85,27 @@ export const CitationUX = ({
     [_dispatch]
   );
 
-  const reviewStatusIcons = (reviewStatus == ReviewStatus.Unreviewed && selected ? reviewIcons : [reviewStatus])
-    .map((rs) => {
-      const [icon, classNames] = citationIcons[rs];
-      return [rs, icon, classNames[Number(selected) * (Number(reviewStatus == rs) + 1)]] as const;
-    });
+  const reviewStatusIcons = (
+    reviewStatus == ReviewStatus.Unreviewed && selected
+      ? reviewIcons
+      : [reviewStatus]
+  ).map((rs) => {
+    const [Icon, classNames] = citationIcons[rs];
+    const className =
+      classNames[Number(selected) * (Number(reviewStatus == rs) + 1)];
+
+    return (
+      <Icon
+        key={rs}
+        className={className + (selected ? " large-icon" : " icon")}
+        onClick={selected ? toggleReviewStatus(rs, citationIndex) : undefined}
+      />
+    );
+  });
 
   return (
     <div
-      className={"citation-row " + (selected ? "selected" : "hoverable")} 
+      className={selected ? "citation-selected" : "citation-unselected"}
       key={citationIndex}
       onClick={
         selectable
@@ -80,26 +113,17 @@ export const CitationUX = ({
           : undefined
       }
     >
-      <div>
-        {reviewStatusIcons.map(([rs, Icon, className]) => (
-          <Icon
-            key={rs}
-            className={"icon " + className}
-            onClick={
-              selected
-                ? toggleReviewStatus(rs, citationIndex)
-                : undefined
-            } 
-          />
-        ))}
-      </div>
-      <div>
       {selected ? (
-        <div className="citation-full">{excerpt}</div>
+        <>
+          <div className="citation-full">{excerpt}</div>
+          {reviewStatusIcons}
+        </>
       ) : (
-        <span className="citation-short">{excerpt.substring(0, 35)}...</span>
+        <>
+          {reviewStatusIcons}
+          <div className="citation-short">{excerpt.substring(0, 35)}...</div>
+        </>
       )}
-      </div>
     </div>
   );
 };
