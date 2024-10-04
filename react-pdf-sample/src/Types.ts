@@ -37,9 +37,9 @@ export type Action =
       type: "addSelection";
     }
   | {
-      type: "toggleReviewStatus";
+      type: "toggleReview";
       citationIndex: number;
-      target: ReviewStatus.Approved | ReviewStatus.Rejected;
+      target: Review.Approved | Review.Rejected;
     };
 
 export interface CitationHighlight {
@@ -73,7 +73,7 @@ export interface CitationState extends BaseState {
 export type NotNewCitationStates = NoCitationsState | CitationState;
 export type UXState = NewCitationState | NotNewCitationStates
 
-export enum ReviewStatus {
+export enum Review {
   Unreviewed,
   Approved,
   Rejected,
@@ -89,7 +89,7 @@ export interface Doc {
 export interface Citation {
   excerpt: string;
   docIndex: number;
-  reviewStatus: ReviewStatus;
+  review: Review;
   boundingRegions?: BoundingRegion[];
 }
 
