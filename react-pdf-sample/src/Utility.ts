@@ -146,7 +146,6 @@ const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
 //  - case is irrelevant
 //  - strip trailing periods
 //  - strip trailing semicolons
-//  - strip trailing commas
 //  - strip dollar signs
 //  - strip leading quotes
 const match = (
@@ -164,10 +163,6 @@ const match = (
   // Strip trailing semicolons
   if (str0.slice(-1) == ';') str0 = str0.slice(0, -1);
   if (str1.slice(-1) == ';') str1 = str1.slice(0, -1);
-
-  // Strip trailing commas
-  if (str0.slice(-1) == ',') str0 = str0.slice(0, -1);
-  if (str1.slice(-1) == ',') str1 = str1.slice(0, -1);
 
   // strip dollar signs
   if (str0.slice(0,1) == '$') str0 = str0.slice(1);
