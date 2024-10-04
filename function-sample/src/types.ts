@@ -32,3 +32,23 @@ export type Event =
     bounds: BoundingRegion[];
     creator: string;
   };
+
+interface Document {
+  name: string;
+  pdfURL: string;
+  diURL: string;
+}
+
+interface Citation {
+  questionId: number;
+  documentId: number;
+  excerpt: string;
+  bounds: BoundingRegion[];
+}
+
+export interface Form {
+  formName: string;
+  questions: string[];
+  documents: Document[];
+  citations: Citation[];
+}

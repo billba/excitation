@@ -1,8 +1,8 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { drizzle } from 'drizzle-orm/postgres-js';
-import { eq, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
-import { documents, forms, questions, templates } from '../schema';
+import { citations, documents, forms, questions, templates } from '../schema';
 
 const queryClient = postgres(process.env.POSTGRES);
 const db = drizzle(queryClient);
@@ -39,7 +39,6 @@ async function getForm(formId: number) {
     formName,
     questionArray
   }
-
 }
 
 async function getDocuments(formId: number) {
@@ -54,11 +53,22 @@ async function getDocuments(formId: number) {
       name: documents.friendly_name,
       pdfUrl: documents.pdf_url,
       diUrl: documents.di_url
-    }).from(documents).where(eq(documents.id, docId))
+    }).from(documents).where(eq(documents.id, docId)).orderBy(documents.id);
     docArray.push(doc[0]);
   }
 
   return docArray;
+}
+
+async function getCitations(formId: number) {
+  let cits = await db.select({
+    questionId: citations.question_id,
+    documentId: citations.document_id,
+    excerpt: citations.excerpt,
+    bounds: citations.bounds
+  }).from(citations).where(eq(citations.form_id, formId)).orderBy(citations.id);
+
+  return cits;
 }
 
 // ============================================================================
@@ -78,12 +88,16 @@ export async function get(request: HttpRequest, context: InvocationContext): Pro
   let docArray = await getDocuments(formId);
   context.log("doc ids:", docArray);
 
+  let cits = await getCitations(formId);
+  context.log("citations:", cits);
+
   return {
     jsonBody: {
       formId: formId,
       formName: formName,
       questions: questionArray,
-      documents: docArray
+      documents: docArray,
+      citations: cits
     }
   };
 };
