@@ -19,14 +19,15 @@ export function Viewer() {
   useEffect(() => {
     document.addEventListener("selectionchange", () => {
       const selection = document.getSelection();
-      const ancestor = selection?.rangeCount && selection?.getRangeAt(0).commonAncestorContainer;
+      const range = selection?.rangeCount ? selection?.getRangeAt(0) : undefined;
+      const ancestor = range?.commonAncestorContainer;
       console.assert(viewerRef.current != undefined);
       dispatch({
         type: "setSelectedText",
-        selectedText:
+        range:
           ancestor && viewerRef.current!.contains(ancestor)
-            ? selection.toString()
-            : "",
+            ? range
+            : undefined,
       });
     });
   }, [dispatch]);

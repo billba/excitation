@@ -1,5 +1,5 @@
 import { useAtomValue, useAtom } from "jotai";
-import { docs, citationsAtom, uxAtom } from "./State";
+import { docs, citationsAtom, uxAtom, asyncAtom } from "./State";
 import { questions } from "./Questions";
 import { useCallback, useMemo } from "react";
 import { Action, Citation } from "./Types";
@@ -72,6 +72,7 @@ const groupCitations = (questionCitations: Citation[]) =>
 export function Sidebar() {
   const citations = useAtomValue(citationsAtom);
   const [ux, _dispatch] = useAtom(uxAtom);
+  const async = useAtomValue(asyncAtom);
 
   const { questionIndex, newCitation } = ux;
 
@@ -159,7 +160,7 @@ export function Sidebar() {
         &nbsp;
         {newCitation ? (
           <>
-            <button onClick={addSelection} disabled={ux.selectedText === ""}>
+            <button onClick={addSelection} disabled={async.status != "idle" || ux.range == undefined}>
               add selection
             </button>
             &nbsp;

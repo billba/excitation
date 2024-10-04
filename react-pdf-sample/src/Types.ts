@@ -7,7 +7,7 @@ export type Action =
     }
   | {
       type: "gotoCitation";
-      citationIndex?: number; // if undefined, choose the first one with unreviewed status. If none, keep current citation.
+      citationIndex: number;
     }
   | {
       type: "prevQuestion";
@@ -31,7 +31,7 @@ export type Action =
     }
   | {
       type: "setSelectedText";
-      selectedText: string;
+      range?: Range;
     }
   | {
       type: "addSelection";
@@ -40,6 +40,43 @@ export type Action =
       type: "toggleReviewStatus";
       citationIndex: number;
       target: ReviewStatus;
+    }
+  | {
+      type: "retryAddSelection";
+      docIndex: number;
+      questionIndex: number;
+      pageNumber: number;
+      range: Range;
+    }
+  | {
+      type: "revertAddSelection";
+      questionIndex: number;
+      citationIndex: number;
+    };
+
+export type AsyncState =
+  | {
+      status: "idle";
+    }
+  | {
+      status: "pending";
+      event: Event;
+      onRetry: Action;
+      onRevert: Action;
+    }
+  | {
+      status: "loading";
+      onRetry: Action;
+      onRevert: Action;
+    }
+  | {
+      status: "success";
+    }
+  | {
+      status: "error";
+      error: string;
+      onRetry: Action;
+      onRevert: Action;
     };
 
 export interface CitationHighlight {
@@ -56,7 +93,7 @@ interface BaseState {
 
 export interface NewCitationState extends BaseState {
   newCitation: true;
-  selectedText: string;
+  range?: Range;
 }
 
 export interface NoCitationsState extends BaseState {
@@ -92,6 +129,12 @@ export interface Citation {
   reviewStatus: ReviewStatus;
   boundingRegions?: BoundingRegion[];
 }
+
+export type Event = {
+  type: "mockEvent";
+  delay: number;
+  error?: string;
+};
 
 export interface DocumentIntelligenceResponse {
   status: string;

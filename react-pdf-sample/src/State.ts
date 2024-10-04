@@ -1,4 +1,5 @@
-import { atom } from "jotai";
+import { useEffect } from "react";
+import { atom, useAtom } from "jotai";
 import { create } from "mutative";
 import {
   Doc,
@@ -10,6 +11,8 @@ import {
   NewCitationState,
   CitationState,
   NoCitationsState,
+  AsyncState,
+  Event,
 } from "./Types";
 import { mockCitations, mockDocs } from "./Mocks";
 import { locateCitations, returnTextPolygonsFromDI } from "./Utility";
@@ -23,6 +26,8 @@ async function docsWithResponses(docs: Doc[]) {
     )
   );
 }
+
+export const asyncAtom = atom<AsyncState>({ status: "idle" });
 
 export const docs = await docsWithResponses(mockDocs); // not an atom because they never change
 
@@ -128,7 +133,14 @@ export const uxAtom = atom<UXState, [Action], void>(
 
   (get, set, action: Action) => {
     const ux = get(_uxAtom);
+    const createUx = (fn: (draft: UXState) => void) =>
+      create(ux, fn, {
+        mark: (target) => {
+          if (target instanceof Range) return () => target;
+        },
+      });
     const { questionIndex } = ux;
+    const async = get(asyncAtom);
 
     const deselectCitation = (draft: UXState) => {
       // because UXState is a discriminated union, the we have to brute-force update these properties
@@ -143,7 +155,7 @@ export const uxAtom = atom<UXState, [Action], void>(
       alwaysDeselectCitation = false
     ) => {
       draft.pageNumber = pageNumber;
-      (draft as NewCitationState).selectedText = "";
+      (draft as NewCitationState).range = undefined;
       // Deselect the current citation, unless moving to
       // a different page of the same multi-page citation.
       if (
@@ -167,7 +179,7 @@ export const uxAtom = atom<UXState, [Action], void>(
           newCitation: true,
           pageNumber,
           docIndex,
-          selectedText: "",
+          range: undefined,
         });
         break;
       }
@@ -200,7 +212,7 @@ export const uxAtom = atom<UXState, [Action], void>(
       case "prevPage":
         set(
           _uxAtom,
-          create(ux, (draft) => {
+          createUx((draft) => {
             gotoPage(draft, draft.pageNumber - 1);
           })
         );
@@ -209,7 +221,7 @@ export const uxAtom = atom<UXState, [Action], void>(
       case "nextPage":
         set(
           _uxAtom,
-          create(ux, (draft) => {
+          createUx((draft) => {
             gotoPage(draft, draft.pageNumber + 1);
           })
         );
@@ -218,7 +230,7 @@ export const uxAtom = atom<UXState, [Action], void>(
       case "gotoPage":
         set(
           _uxAtom,
-          create(ux, (draft) => {
+          createUx((draft) => {
             gotoPage(draft, action.pageNumber);
           })
         );
@@ -228,7 +240,7 @@ export const uxAtom = atom<UXState, [Action], void>(
         console.assert(ux.docIndex != action.docIndex);
         set(
           _uxAtom,
-          create(ux, (draft) => {
+          createUx((draft) => {
             draft.docIndex = action.docIndex;
             gotoPage(draft, 1, true);
           })
@@ -239,8 +251,8 @@ export const uxAtom = atom<UXState, [Action], void>(
         if (ux.newCitation) {
           set(
             _uxAtom,
-            create(ux, (draft) => {
-              draft.selectedText = action.selectedText;
+            createUx((draft) => {
+              (draft as NewCitationState).range = action.range;
             })
           );
         }
@@ -248,26 +260,52 @@ export const uxAtom = atom<UXState, [Action], void>(
 
       case "addSelection": {
         console.assert(ux.newCitation);
-        const { docIndex, selectedText } = ux as NewCitationState;
+        console.assert(async.status === "idle");
+        const { docIndex, range, pageNumber } = ux as NewCitationState;
+        console.assert(range !== undefined);
+        const excerpt = range!.toString();
+
+        console.log("addSelection", excerpt);
+
         set(
           citationsAtom,
           create(get(citationsAtom), (draft) => {
             draft[questionIndex].push({
               docIndex,
               boundingRegions: returnTextPolygonsFromDI(
-                selectedText,
+                excerpt,
                 docs[docIndex].response!
               ),
-              excerpt: selectedText,
+              excerpt,
               reviewStatus: ReviewStatus.Approved,
             });
           })
         );
+        set(asyncAtom, {
+          status: "pending",
+          event: {
+            type: "mockEvent",
+            delay: 0,
+          },
+          onRetry: {
+            type: "retryAddSelection",
+            docIndex,
+            questionIndex,
+            pageNumber: pageNumber,
+            range: range!,
+          },
+          onRevert: {
+            type: "revertAddSelection",
+            questionIndex,
+            citationIndex: get(citationsAtom)[questionIndex].length - 1,
+          },
+        });
         break;
       }
 
       case "toggleReviewStatus": {
         const { questionIndex } = ux;
+        console.assert(async.status === "idle");
         let updatedReviewStatus: ReviewStatus;
 
         const updatedCitations = create(get(citationsAtom), (draft) => {
@@ -296,3 +334,67 @@ export const uxAtom = atom<UXState, [Action], void>(
     }
   }
 );
+
+export const useAsyncStateMachine = () => {
+  const [async, setAsync] = useAtom(asyncAtom);
+
+  useEffect(() => {
+    switch (async.status) {
+      case "idle":
+        console.log("async idle");
+        break;
+
+      case "pending": {
+        console.log("async pending");
+        const { event, onRetry, onRevert } = async;
+        sendEvent(event,
+          () => setAsync({ status: "success"}),
+          (error) => setAsync({ status: "error", error, onRetry, onRevert })
+          );
+        setAsync({ status: "loading", onRetry, onRevert });
+        break;
+      }
+      
+      case "loading":
+        console.log("async loading...");
+        break;
+      
+      case "error": {
+        const { error, onRetry, onRevert } = async;
+        console.log("async error", error, onRetry, onRevert);
+        break;
+      }
+      
+      case "success":
+        console.log("async success");
+        // I can imagine the UX leveraging this, but I don't know what
+        // It would probably leverage an onSuccess callback?
+        setAsync({ status: "idle"});
+        break;
+    }
+  }, [async, setAsync]);
+};
+
+export const sendEvent = (
+  event: Event,
+  onSuccess: () => void,
+  onError: (error: string) => void
+) => {
+  switch (event.type) {
+    case "mockEvent":
+      console.log("mockEvent dispatched");
+      setTimeout(() => {
+        if (event.error) {
+          onError("mockEvent error");
+        } else {
+          console.log("mockEvent success");
+          onSuccess();
+        }
+      }, event.delay);
+      break;
+
+    default:
+      console.error("unexpected event type", event);
+      break;
+  }
+};

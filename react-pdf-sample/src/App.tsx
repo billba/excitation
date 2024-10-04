@@ -1,10 +1,10 @@
 import 'react-pdf/dist/Page/TextLayer.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import { FluentProvider, webLightTheme, webDarkTheme } from "@fluentui/react-components";
-
 import { pdfjs } from 'react-pdf';
 import { Sidebar } from './Sidebar';
 import { Viewer } from './Viewer';
+import { useAsyncStateMachine } from './State';
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   'pdfjs-dist/build/pdf.worker.min.js',
@@ -17,17 +17,19 @@ import { NavBar } from './NavBar';
 const theme = matchMedia('(prefers-color-scheme: light)').matches ? webLightTheme : webDarkTheme;
 
 function App() {
+  useAsyncStateMachine();
+  
   return (
-<FluentProvider theme={theme}>
-    <div id="app">
-      <Sidebar />
-      <div id="viewer">
-        <NavBar />
-        <Viewer />
+    <FluentProvider theme={theme}>
+      <div id="app">
+        <Sidebar />
+        <div id="viewer">
+          <NavBar />
+          <Viewer />
+        </div>
       </div>
-    </div>
-</FluentProvider>
-  )
+    </FluentProvider>
+  );
 }
 
 export default App
