@@ -43,7 +43,7 @@ async function updateCitationReview(citation_id: number, review: Review) {
 // Inserts into db events table
 async function insertAddEvent(form_id: number, question_id: number, document_id: number, citation_id: number, excerpt: string, bounds: BoundingRegion[], review: ReviewStatus, creator: string) {
   return db.insert(events).values({
-    type: 'add',
+    type: 'addCitation',
     form_id,
     question_id,
     document_id,
@@ -56,9 +56,9 @@ async function insertAddEvent(form_id: number, question_id: number, document_id:
 }
 
 // Inserts into db events table
-async function insertReviewEvent(citation_id: number, review: Review, creator: string) {
+async function insertUpdateReviewEvent(citation_id: number, review: Review, creator: string) {
   return db.insert(events).values({
-    type: 'review',
+    type: 'updateReview',
     citation_id,
     review,
     creator
@@ -66,9 +66,9 @@ async function insertReviewEvent(citation_id: number, review: Review, creator: s
 }
 
 // Inserts into db events table
-async function insertUpdateEvent(citation_id: number, bounds: BoundingRegion[], creator: string) {
+async function insertUpdateBoundsEvent(citation_id: number, bounds: BoundingRegion[], creator: string) {
   return db.insert(events).values({
-    type: 'update',
+    type: 'updateBounds',
     citation_id,
     bounds,
     creator
@@ -92,7 +92,7 @@ async function addCitation(context: InvocationContext, form_id: number, question
 async function addReview(context: InvocationContext, citation_id: number, review: Review, creator: string) {
   const citation = await updateCitationReview(citation_id, review);
   context.log("Updated citation:", citation);
-  const event = await insertReviewEvent(citation_id, review, creator);
+  const event = await insertUpdateReviewEvent(citation_id, review, creator);
   context.log("Created event:", event);
 }
 
@@ -100,7 +100,7 @@ async function addReview(context: InvocationContext, citation_id: number, review
 async function updateBounds(context: InvocationContext, citation_id: number, bounds: BoundingRegion[], creator: string) {
   let citation = await updateCitationBounds(citation_id, bounds);
   context.log("Updated citation:", citation);
-  let event = await insertUpdateEvent(citation_id, bounds, creator);
+  let event = await insertUpdateBoundsEvent(citation_id, bounds, creator);
   context.log("Created event:", event);
 }
 
