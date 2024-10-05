@@ -43,6 +43,16 @@ export function Viewer() {
     [setRenderCounter]
   );
 
+  const range = ux.newCitation && ux.range;
+
+  useEffect(() => {
+    if (!range) return;
+    console.log("highlighting", range);
+    const selection = document.getSelection();
+    selection?.empty();
+    selection?.addRange(range);
+  }, [renderCounter, range])
+
   const [resizeCounter, setResizeCounter] = useState(0); // make highlighting responsive to window resizing
   useEffect(() => {
     window.addEventListener("resize", () => setResizeCounter((c) => c + 1));

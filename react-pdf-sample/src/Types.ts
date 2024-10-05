@@ -1,3 +1,5 @@
+import { SerializedRange } from "./Range";
+
 export type Action =
   | {
       type: "startNewCitation";
@@ -43,15 +45,14 @@ export type Action =
     }
   | {
       type: "retryAddSelection";
-      docIndex: number;
       questionIndex: number;
-      pageNumber: number;
-      range: Range;
     }
   | {
       type: "revertAddSelection";
+      docIndex: number;
       questionIndex: number;
-      citationIndex: number;
+      pageNumber: number;
+      range?: SerializedRange;
     };
 
 export type AsyncState =
@@ -61,12 +62,12 @@ export type AsyncState =
   | {
       status: "pending";
       event: Event;
-      onRetry: Action;
+      onError: Action;
       onRevert: Action;
     }
   | {
       status: "loading";
-      onRetry: Action;
+      onError: Action;
       onRevert: Action;
     }
   | {
@@ -74,8 +75,8 @@ export type AsyncState =
     }
   | {
       status: "error";
+      event: Event;
       error: string;
-      onRetry: Action;
       onRevert: Action;
     };
 

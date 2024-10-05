@@ -26,7 +26,7 @@ const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
 const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
   const { reviewStatus } = questionCitations[citationIndex];
   return reviewStatus * 1000 + citationIndex;
-}
+};
 
 const groupCitations = (questionCitations: Citation[]) =>
   docs.map((_, docIndex) => ({
@@ -64,7 +64,11 @@ const groupCitations = (questionCitations: Citation[]) =>
       .map(({ firstPage, lastPage, citationIndices }) => ({
         firstPage,
         lastPage,
-        citationIndices: citationIndices.sort((a, b) => sortCitation(questionCitations, a) - sortCitation(questionCitations, b)),
+        citationIndices: citationIndices.sort(
+          (a, b) =>
+            sortCitation(questionCitations, a) -
+            sortCitation(questionCitations, b)
+        ),
       }))
       .sort((a, b) => sortIndex(a) - sortIndex(b)),
   }));
@@ -72,7 +76,7 @@ const groupCitations = (questionCitations: Citation[]) =>
 export function Sidebar() {
   const citations = useAtomValue(citationsAtom);
   const [ux, _dispatch] = useAtom(uxAtom);
-  const async = useAtomValue(asyncAtom);
+  const [asyncState, setAsyncState] = useAtom(asyncAtom);
 
   const { questionIndex, newCitation } = ux;
 
@@ -93,6 +97,19 @@ export function Sidebar() {
     _dispatch({ type: "addSelection" });
     document.getSelection()?.empty();
   }, [_dispatch]);
+
+  const endNewCitation = useCallback(() => {
+    _dispatch({ type: "endNewCitation" });
+    document.getSelection()?.empty();
+  }, [_dispatch]);
+
+  const revertAfterError = useCallback(() => {
+    if (asyncState.status == "error") {
+      console.log("dispatching onRevert")
+      _dispatch(asyncState.onRevert);
+      setAsyncState({ status: "idle" });
+    }
+  }, [asyncState, _dispatch, setAsyncState]);
 
   return (
     <div id="sidebar">
@@ -127,7 +144,10 @@ export function Sidebar() {
               {docs[docIndex].friendlyname ?? docs[docIndex].filename}
             </div>
             {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
-              <div className="page-group" key={firstPage * maxPageNumber + lastPage}>
+              <div
+                className="page-group"
+                key={firstPage * maxPageNumber + lastPage}
+              >
                 <div className="page-header">
                   {firstPage == lastPage ? (
                     firstPage == unlocatedPage ? (
@@ -149,8 +169,20 @@ export function Sidebar() {
                   )}
                 </div>
                 {citationIndices.map((citationIndex) => {
-                  const { excerpt, reviewStatus } = citations[questionIndex][citationIndex];
-                  return <CitationUX key={citationIndex} citationIndex={citationIndex} excerpt={excerpt} reviewStatus={reviewStatus} selected={!newCitation && citationIndex == ux.citationIndex} selectable={!newCitation} />
+                  const { excerpt, reviewStatus } =
+                    citations[questionIndex][citationIndex];
+                  return (
+                    <CitationUX
+                      key={citationIndex}
+                      citationIndex={citationIndex}
+                      excerpt={excerpt}
+                      reviewStatus={reviewStatus}
+                      selected={
+                        !newCitation && citationIndex == ux.citationIndex
+                      }
+                      selectable={!newCitation}
+                    />
+                  );
                 })}
               </div>
             ))}
@@ -160,16 +192,24 @@ export function Sidebar() {
         &nbsp;
         {newCitation ? (
           <>
-            <button onClick={addSelection} disabled={async.status != "idle" || ux.range == undefined}>
+            <button
+              onClick={addSelection}
+              disabled={asyncState.status != "idle" || ux.range == undefined}
+            >
               add selection
             </button>
             &nbsp;
-            <button onClick={dispatch({ type: "endNewCitation" })}>done</button>
+            <button onClick={endNewCitation}>done</button>
           </>
         ) : (
           <button onClick={dispatch({ type: "startNewCitation" })}>
             new citation
           </button>
+        )}
+        {asyncState.status == "error" && (
+          <div>
+            <button onClick={revertAfterError}>Revert</button>
+          </div>
         )}
       </div>
     </div>

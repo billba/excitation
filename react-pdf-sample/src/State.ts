@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { atom, useAtom } from "jotai";
+import { atom, useAtom, useSetAtom } from "jotai";
 import { create } from "mutative";
 import {
   Doc,
@@ -16,6 +16,7 @@ import {
 } from "./Types";
 import { mockCitations, mockDocs } from "./Mocks";
 import { locateCitations, returnTextPolygonsFromDI } from "./Utility";
+import { calculateRange, calculateSerializedRange } from "./Range";
 
 async function docsWithResponses(docs: Doc[]) {
   return await Promise.all(
@@ -133,12 +134,7 @@ export const uxAtom = atom<UXState, [Action], void>(
 
   (get, set, action: Action) => {
     const ux = get(_uxAtom);
-    const createUx = (fn: (draft: UXState) => void) =>
-      create(ux, fn, {
-        mark: (target) => {
-          if (target instanceof Range) return () => target;
-        },
-      });
+    const createUx = (fn: (draft: UXState) => void) => create(ux, fn);
     const { questionIndex } = ux;
     const asyncState = get(asyncAtom);
 
@@ -281,24 +277,55 @@ export const uxAtom = atom<UXState, [Action], void>(
             });
           })
         );
+
         set(asyncAtom, {
           status: "pending",
           event: {
             type: "mockEvent",
-            delay: 0,
+            delay: 3000,
+            error: "dang",
           },
-          onRetry: {
+          onError: {
             type: "retryAddSelection",
-            docIndex,
             questionIndex,
-            pageNumber: pageNumber,
-            range: range!,
           },
           onRevert: {
             type: "revertAddSelection",
+            docIndex,
             questionIndex,
-            citationIndex: get(citationsAtom)[questionIndex].length - 1,
+            pageNumber,
+            range: calculateSerializedRange(range),
           },
+        });
+        break;
+      }
+
+      case "retryAddSelection": {
+        const { questionIndex } = action;
+        const citations = get(citationsAtom);
+        set(
+          _uxAtom,
+          inferUXState(
+            citations,
+            questionIndex,
+            citations[questionIndex].length - 1,
+            true
+          )
+        );
+        break;
+      }
+
+      case "revertAddSelection": {
+        const { docIndex, questionIndex, pageNumber, range } = action;
+        set(citationsAtom, create(get(citationsAtom), (draft) => {
+          draft[questionIndex].pop();
+        }));
+        set(_uxAtom, {
+          docIndex,
+          questionIndex,
+          pageNumber,
+          newCitation: true,
+          range: calculateRange(range),
         });
         break;
       }
@@ -337,6 +364,7 @@ export const uxAtom = atom<UXState, [Action], void>(
 
 export const useAsyncStateMachine = () => {
   const [asyncState, setAsyncState] = useAtom(asyncAtom);
+  const dispatch = useSetAtom(uxAtom);
 
   useEffect(() => {
     // useEffect can't take an async function directly, so they suggest the following
@@ -348,18 +376,21 @@ export const useAsyncStateMachine = () => {
 
         case "pending": {
           console.log("async pending");
-          const { event, onRetry, onRevert } = asyncState;
-          setAsyncState({ status: "loading", onRetry, onRevert });
+          const { event, onError, onRevert } = asyncState;
+          setAsyncState({ status: "loading", onError, onRevert });
           try {
             await sendEvent(event);
             setAsyncState({ status: "success" });
           } catch (error) {
+            console.log("caught me an error", error);
             setAsyncState({
               status: "error",
+              event,
               error: error as string,
-              onRetry,
               onRevert,
             });
+            console.log("dispatching onError", onError);
+            dispatch(onError);
           }
           break;
         }
@@ -369,8 +400,8 @@ export const useAsyncStateMachine = () => {
           break;
 
         case "error": {
-          const { error, onRetry, onRevert } = asyncState;
-          console.log("async error", error, onRetry, onRevert);
+          const { error, onRevert } = asyncState;
+          console.log("async error", error, onRevert);
           break;
         }
 
@@ -382,7 +413,7 @@ export const useAsyncStateMachine = () => {
           break;
       }
     })();
-  }, [asyncState, setAsyncState]);
+  }, [asyncState, setAsyncState, dispatch]);
 };
 
 export const sendEvent = (event: Event) => {
@@ -395,7 +426,6 @@ export const sendEvent = (event: Event) => {
             console.log("mockEvent error");
             reject("mockEvent error");
           } else {
-            console.log("mockEvent success");
             console.log("mockEvent success");
             resolve();
           }
