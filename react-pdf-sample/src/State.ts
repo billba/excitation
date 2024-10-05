@@ -282,8 +282,7 @@ export const uxAtom = atom<UXState, [Action], void>(
           status: "pending",
           event: {
             type: "mockEvent",
-            delay: 3000,
-            error: "dang",
+            delay: 0,
           },
           onError: {
             type: "retryAddSelection",
