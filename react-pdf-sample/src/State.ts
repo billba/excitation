@@ -140,7 +140,7 @@ export const uxAtom = atom<UXState, [Action], void>(
         },
       });
     const { questionIndex } = ux;
-    const async = get(asyncAtom);
+    const asyncState = get(asyncAtom);
 
     const deselectCitation = (draft: UXState) => {
       // because UXState is a discriminated union, the we have to brute-force update these properties
@@ -260,7 +260,7 @@ export const uxAtom = atom<UXState, [Action], void>(
 
       case "addSelection": {
         console.assert(ux.newCitation);
-        console.assert(async.status === "idle");
+        console.assert(asyncState.status === "idle");
         const { docIndex, range, pageNumber } = ux as NewCitationState;
         console.assert(range !== undefined);
         const excerpt = range!.toString();
@@ -305,7 +305,7 @@ export const uxAtom = atom<UXState, [Action], void>(
 
       case "toggleReviewStatus": {
         const { questionIndex } = ux;
-        console.assert(async.status === "idle");
+        console.assert(asyncState.status === "idle");
         let updatedReviewStatus: ReviewStatus;
 
         const updatedCitations = create(get(citationsAtom), (draft) => {
@@ -336,65 +336,74 @@ export const uxAtom = atom<UXState, [Action], void>(
 );
 
 export const useAsyncStateMachine = () => {
-  const [async, setAsync] = useAtom(asyncAtom);
+  const [asyncState, setAsyncState] = useAtom(asyncAtom);
 
   useEffect(() => {
-    switch (async.status) {
-      case "idle":
-        console.log("async idle");
-        break;
+    // useEffect can't take an async function directly, so they suggest the following
+    (async () => {
+      switch (asyncState.status) {
+        case "idle":
+          console.log("async idle");
+          break;
 
-      case "pending": {
-        console.log("async pending");
-        const { event, onRetry, onRevert } = async;
-        sendEvent(event,
-          () => setAsync({ status: "success"}),
-          (error) => setAsync({ status: "error", error, onRetry, onRevert })
-          );
-        setAsync({ status: "loading", onRetry, onRevert });
-        break;
+        case "pending": {
+          console.log("async pending");
+          const { event, onRetry, onRevert } = asyncState;
+          setAsyncState({ status: "loading", onRetry, onRevert });
+          try {
+            await sendEvent(event);
+            setAsyncState({ status: "success" });
+          } catch (error) {
+            setAsyncState({
+              status: "error",
+              error: error as string,
+              onRetry,
+              onRevert,
+            });
+          }
+          break;
+        }
+
+        case "loading":
+          console.log("async loading...");
+          break;
+
+        case "error": {
+          const { error, onRetry, onRevert } = asyncState;
+          console.log("async error", error, onRetry, onRevert);
+          break;
+        }
+
+        case "success":
+          console.log("async success");
+          // I can imagine the UX leveraging this, but I don't know what
+          // It would probably leverage an onSuccess callback?
+          setAsyncState({ status: "idle" });
+          break;
       }
-      
-      case "loading":
-        console.log("async loading...");
-        break;
-      
-      case "error": {
-        const { error, onRetry, onRevert } = async;
-        console.log("async error", error, onRetry, onRevert);
-        break;
-      }
-      
-      case "success":
-        console.log("async success");
-        // I can imagine the UX leveraging this, but I don't know what
-        // It would probably leverage an onSuccess callback?
-        setAsync({ status: "idle"});
-        break;
-    }
-  }, [async, setAsync]);
+    })();
+  }, [asyncState, setAsyncState]);
 };
 
-export const sendEvent = (
-  event: Event,
-  onSuccess: () => void,
-  onError: (error: string) => void
-) => {
+export const sendEvent = (event: Event) => {
   switch (event.type) {
     case "mockEvent":
-      console.log("mockEvent dispatched");
-      setTimeout(() => {
-        if (event.error) {
-          onError("mockEvent error");
-        } else {
-          console.log("mockEvent success");
-          onSuccess();
-        }
-      }, event.delay);
-      break;
+      console.log("mockEvent loading");
+      return new Promise<void>((resolve, reject) =>
+        setTimeout(() => {
+          if (event.error) {
+            console.log("mockEvent error");
+            reject("mockEvent error");
+          } else {
+            console.log("mockEvent success");
+            console.log("mockEvent success");
+            resolve();
+          }
+        }, event.delay)
+      );
 
     default:
       console.error("unexpected event type", event);
-      break;
+      return new Promise<void>((_, reject) => reject("unexpected event type"));
   }
 };
