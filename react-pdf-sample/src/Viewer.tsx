@@ -6,6 +6,7 @@ import {
   docs,
   uxAtom,
 } from "./State";
+import { calculateRange, calculateSerializedRange, compareRanges } from "./Range";
 
 export function Viewer() {
   const [ux, dispatch] = useAtom(uxAtom);
@@ -20,13 +21,15 @@ export function Viewer() {
     document.addEventListener("selectionchange", () => {
       const selection = document.getSelection();
       const range = selection?.rangeCount ? selection?.getRangeAt(0) : undefined;
+      const serializedRange = calculateSerializedRange(range);
+      console.log("selectionchange", serializedRange);
       const ancestor = range?.commonAncestorContainer;
       console.assert(viewerRef.current != undefined);
       dispatch({
         type: "setSelectedText",
         range:
           ancestor && viewerRef.current!.contains(ancestor)
-            ? range
+            ? serializedRange
             : undefined,
       });
     });
@@ -43,14 +46,26 @@ export function Viewer() {
     [setRenderCounter]
   );
 
-  const range = ux.newCitation && ux.range;
+  const range = ux.newCitation ? ux.range : undefined;
 
   useEffect(() => {
     if (!range) return;
+
     console.log("highlighting", range);
-    const selection = document.getSelection();
-    selection?.empty();
-    selection?.addRange(range);
+
+    const selection = document.getSelection()!;
+    const currentRange = selection.rangeCount && selection.getRangeAt(0);
+
+    if (currentRange) {
+      if (compareRanges(currentRange, range)) return;
+      selection.empty();
+    }
+
+    const realRange = calculateRange(range);
+
+    if (!realRange) return;
+
+    selection.addRange(realRange);
   }, [renderCounter, range])
 
   const [resizeCounter, setResizeCounter] = useState(0); // make highlighting responsive to window resizing

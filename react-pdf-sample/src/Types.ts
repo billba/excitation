@@ -33,7 +33,7 @@ export type Action =
     }
   | {
       type: "setSelectedText";
-      range?: Range;
+      range?: SerializedRange;
     }
   | {
       type: "addSelection";
@@ -61,23 +61,37 @@ export type AsyncState =
     }
   | {
       status: "pending";
+      ux?: UXState;
       event: Event;
       onError: Action;
       onRevert: Action;
     }
   | {
       status: "loading";
+      ux?: UXState;
+      event: Event;
       onError: Action;
       onRevert: Action;
     }
   | {
       status: "success";
+      ux?: UXState;
     }
   | {
       status: "error";
+      ux?: UXState;
       event: Event;
-      error: string;
+      onError: Action;
       onRevert: Action;
+      error: string;
+    }
+  | {
+      status: "retryRevert";
+      ux: UXState;
+      event: Event;
+      onError: Action;
+      onRevert: Action;
+      error: string;
     };
 
 export interface CitationHighlight {
@@ -94,7 +108,7 @@ interface BaseState {
 
 export interface NewCitationState extends BaseState {
   newCitation: true;
-  range?: Range;
+  range?: SerializedRange;
 }
 
 export interface NoCitationsState extends BaseState {
@@ -251,7 +265,10 @@ export type Event =
   | {
       type: "mockEvent";
       delay: number;
-      error?: string;
+      error?: {
+        count: number;
+        description: string;
+      };
     }
   | {
       type: "addCitation";

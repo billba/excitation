@@ -103,8 +103,15 @@ export function Sidebar() {
     document.getSelection()?.empty();
   }, [_dispatch]);
 
+  const retryAfterError = useCallback(() => {
+    if (asyncState.status == "retryRevert") {
+      const { ux, event, onError, onRevert } = asyncState;
+      setAsyncState({ status: "pending", ux, event, onError, onRevert });
+    }
+  }, [asyncState, setAsyncState]);
+
   const revertAfterError = useCallback(() => {
-    if (asyncState.status == "error") {
+    if (asyncState.status == "retryRevert") {
       console.log("dispatching onRevert")
       _dispatch(asyncState.onRevert);
       setAsyncState({ status: "idle" });
@@ -206,8 +213,11 @@ export function Sidebar() {
             new citation
           </button>
         )}
-        {asyncState.status == "error" && (
+        {asyncState.status == "retryRevert" && (
           <div>
+            &nbsp;
+            <button onClick={retryAfterError}>Retry</button>
+            &nbsp;
             <button onClick={revertAfterError}>Revert</button>
           </div>
         )}

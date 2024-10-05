@@ -16,7 +16,7 @@ import {
 } from "./Types";
 import { mockCitations, mockDocs } from "./Mocks";
 import { locateCitations, returnTextPolygonsFromDI } from "./Utility";
-import { calculateRange, calculateSerializedRange } from "./Range";
+import { calculateRange, rangeToString } from "./Range";
 
 async function docsWithResponses(docs: Doc[]) {
   return await Promise.all(
@@ -259,9 +259,10 @@ export const uxAtom = atom<UXState, [Action], void>(
         console.assert(asyncState.status === "idle");
         const { docIndex, range, pageNumber } = ux as NewCitationState;
         console.assert(range !== undefined);
-        const excerpt = range!.toString();
-
-        console.log("addSelection", excerpt);
+        const realRange = calculateRange(range);
+        console.assert(realRange !== undefined);
+        const excerpt = rangeToString(realRange!);
+        console.log("addSelection", realRange?.toString(), excerpt);
 
         set(
           citationsAtom,
@@ -283,6 +284,11 @@ export const uxAtom = atom<UXState, [Action], void>(
           event: {
             type: "mockEvent",
             delay: 0,
+            // delay: 6000,
+            // error: {
+            //   count: 3,
+            //   description: "dang",
+            // },
           },
           onError: {
             type: "retryAddSelection",
@@ -293,7 +299,7 @@ export const uxAtom = atom<UXState, [Action], void>(
             docIndex,
             questionIndex,
             pageNumber,
-            range: calculateSerializedRange(range),
+            range,
           },
         });
         break;
@@ -315,16 +321,20 @@ export const uxAtom = atom<UXState, [Action], void>(
       }
 
       case "revertAddSelection": {
+        console.log("REVERTING");
         const { docIndex, questionIndex, pageNumber, range } = action;
-        set(citationsAtom, create(get(citationsAtom), (draft) => {
-          draft[questionIndex].pop();
-        }));
+        set(
+          citationsAtom,
+          create(get(citationsAtom), (draft) => {
+            draft[questionIndex].pop();
+          })
+        );
         set(_uxAtom, {
           docIndex,
           questionIndex,
           pageNumber,
           newCitation: true,
-          range: calculateRange(range),
+          range,
         });
         break;
       }
@@ -363,7 +373,8 @@ export const uxAtom = atom<UXState, [Action], void>(
 
 export const useAsyncStateMachine = () => {
   const [asyncState, setAsyncState] = useAtom(asyncAtom);
-  const dispatch = useSetAtom(uxAtom);
+  const setUx = useSetAtom(_uxAtom);
+  const [uxState, dispatch] = useAtom(uxAtom);
 
   useEffect(() => {
     // useEffect can't take an async function directly, so they suggest the following
@@ -375,21 +386,21 @@ export const useAsyncStateMachine = () => {
 
         case "pending": {
           console.log("async pending");
-          const { event, onError, onRevert } = asyncState;
-          setAsyncState({ status: "loading", onError, onRevert });
+          const { ux, event, onError, onRevert } = asyncState;
+          setAsyncState({ status: "loading", ux, event, onError, onRevert });
           try {
             await sendEvent(event);
-            setAsyncState({ status: "success" });
+            setAsyncState({ status: "success", ux });
           } catch (error) {
             console.log("caught me an error", error);
             setAsyncState({
               status: "error",
+              ux,
               event,
-              error: error as string,
+              onError,
               onRevert,
+              error: error as string,
             });
-            console.log("dispatching onError", onError);
-            dispatch(onError);
           }
           break;
         }
@@ -399,21 +410,41 @@ export const useAsyncStateMachine = () => {
           break;
 
         case "error": {
-          const { error, onRevert } = asyncState;
-          console.log("async error", error, onRevert);
+          console.log("async error");
+          const { ux, event, onError, onRevert } = asyncState;
+          setAsyncState({
+            status: "retryRevert",
+            ux: ux ?? uxState,
+            event,
+            onError,
+            onRevert,
+            error: asyncState.error,
+          });
+          console.log("dispatching onError", onError);
+          dispatch(onError);
+          break;
+        }
+        
+        case "retryRevert": {
+          console.log("async retryRevert");
           break;
         }
 
-        case "success":
+        case "success": {
           console.log("async success");
-          // I can imagine the UX leveraging this, but I don't know what
-          // It would probably leverage an onSuccess callback?
           setAsyncState({ status: "idle" });
+          const { ux } = asyncState;
+          if (ux) {
+            setUx(ux);
+          }
           break;
+        }
       }
     })();
-  }, [asyncState, setAsyncState, dispatch]);
+  }, [asyncState, setAsyncState, dispatch, uxState, setUx]);
 };
+
+let errorCount = 0;
 
 export const sendEvent = (event: Event) => {
   switch (event.type) {
@@ -421,11 +452,13 @@ export const sendEvent = (event: Event) => {
       console.log("mockEvent loading");
       return new Promise<void>((resolve, reject) =>
         setTimeout(() => {
-          if (event.error) {
+          console.log(errorCount, event.error?.count);
+          if (event.error && ++errorCount < event.error.count) {
             console.log("mockEvent error");
-            reject("mockEvent error");
+            reject(event.error.description);
           } else {
             console.log("mockEvent success");
+            errorCount = 0;
             resolve();
           }
         }, event.delay)
