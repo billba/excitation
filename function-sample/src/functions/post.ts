@@ -110,7 +110,9 @@ async function insertUpdateBoundsEvent(citation_id: number, bounds: BoundingRegi
 // event handling
 // ============================================================================
 
-// Adding a citation involves creating a new citation and a new event
+// Adding a citation involves:
+//  - creating a new citation
+//  - creating a new event
 async function addCitation(context: InvocationContext, form_id: number, question_id: number, document_id: number, excerpt: string, bounds: BoundingRegion[], review: Review, creator: string) {
   let citation = await insertCitation(form_id, question_id, document_id, excerpt, bounds, review, creator);
   context.log("Created citation:", citation);
@@ -119,7 +121,9 @@ async function addCitation(context: InvocationContext, form_id: number, question
   context.log("Created event:", event);
 }
 
-// Adding a review involves creating a new event
+// Adding a review involves:
+//  - updating an existing citation
+//  - creating a new event
 async function addReview(context: InvocationContext, citation_id: number, review: Review, creator: string) {
   const citation = await updateCitationReview(citation_id, review);
   context.log("Updated citation:", citation);
@@ -127,7 +131,9 @@ async function addReview(context: InvocationContext, citation_id: number, review
   context.log("Created event:", event);
 }
 
-// Updating bounds data involves updating an existing citation
+// Updating bounds data involves:
+//  - updating an existing citation
+//  - creating a new event
 async function updateBounds(context: InvocationContext, citation_id: number, bounds: BoundingRegion[], creator: string) {
   let citation = await updateCitationBounds(citation_id, bounds);
   context.log("Updated citation:", citation);
