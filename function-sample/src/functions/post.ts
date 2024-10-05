@@ -31,13 +31,21 @@ async function updateCitationBounds(citation_id: number, bounds: BoundingRegion[
   return db.update(citations).set({
     bounds,
     bounds_created_at: sql`now()`
-  }).where(eq(citations.id, citation_id)).returning();
+  }).where(eq(citations.id, citation_id)).returning({
+    id: citations.id,
+    excerpt: citations.excerpt,
+    bounds: citations.bounds
+  });
 }
 
 async function updateCitationReview(citation_id: number, review: Review) {
   return db.update(citations).set({
     review
-  }).where(eq(citations.id, citation_id)).returning();
+  }).where(eq(citations.id, citation_id)).returning({
+    id: citations.id,
+    excerpt: citations.excerpt,
+    review: citations.review
+  });
 }
 
 // Inserts into db events table
@@ -52,7 +60,18 @@ async function insertAddEvent(form_id: number, question_id: number, document_id:
     bounds,
     review,
     creator
-  }).returning();
+  }).returning({
+    type: events.type,
+    form_id: events.form_id,
+    question_id: events.question_id,
+    document_id: events.document_id,
+    citation_id: events.citation_id,
+    excerpt: events.excerpt,
+    bounds: events.bounds,
+    review: events.review,
+    creator: events.creator,
+    created_at: events.created_at
+  });
 }
 
 // Inserts into db events table
@@ -62,7 +81,13 @@ async function insertUpdateReviewEvent(citation_id: number, review: Review, crea
     citation_id,
     review,
     creator
-  }).returning();
+  }).returning({
+    type: events.type,
+    citation_id: events.citation_id,
+    review: events.review,
+    creator: events.creator,
+    created_at: events.created_at
+  });
 }
 
 // Inserts into db events table
@@ -72,7 +97,13 @@ async function insertUpdateBoundsEvent(citation_id: number, bounds: BoundingRegi
     citation_id,
     bounds,
     creator
-  }).returning();
+  }).returning({
+    type: events.type,
+    citation_id: events.citation_id,
+    bounds: events.bounds,
+    creator: events.creator,
+    created_at: events.created_at
+  });
 }
 
 // ============================================================================
