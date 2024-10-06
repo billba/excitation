@@ -1,5 +1,5 @@
 import { useSetAtom } from "jotai";
-import { Action, ReviewStatus } from "./Types";
+import { Action, Review } from "./Types";
 import { uxAtom } from "./State";
 import {
   CircleRegular,
@@ -21,10 +21,10 @@ import { useCallback } from "react";
 //      approve button  CheckmarkCircleFilled - grey (hover: green)
 //      reject button   DismissCircleFilled - grey (hover: red)
 
-const reviewIcons = [ReviewStatus.Approved, ReviewStatus.Rejected];
+const reviewIcons = [Review.Approved, Review.Rejected];
 
 const citationIcons = {
-  [ReviewStatus.Unreviewed]: [
+  [Review.Unreviewed]: [
     CircleRegular,
     [
       "citation-icon-unreviewed",
@@ -32,7 +32,7 @@ const citationIcons = {
       "citation-icon-unreviewed",
     ],
   ],
-  [ReviewStatus.Approved]: [
+  [Review.Approved]: [
     CheckmarkCircleFilled,
     [
       "citation-icon-approved",
@@ -40,7 +40,7 @@ const citationIcons = {
       "citation-icon-approved-on",
     ],
   ],
-  [ReviewStatus.Rejected]: [
+  [Review.Rejected]: [
     DismissCircleFilled,
     [
       "citation-icon-rejected",
@@ -53,7 +53,7 @@ const citationIcons = {
 interface Props {
   citationIndex: number; // the citation to render
   excerpt: string;
-  reviewStatus: ReviewStatus;
+  review: Review;
   selected: boolean; // is this citation currently selected?
   selectable: boolean; // can this citation be selected?
 }
@@ -61,7 +61,7 @@ interface Props {
 export const CitationUX = ({
   citationIndex,
   excerpt,
-  reviewStatus,
+  review,
   selected,
   selectable,
 }: Props) => {
@@ -72,11 +72,11 @@ export const CitationUX = ({
     [_dispatch]
   );
 
-  const toggleReviewStatus = useCallback(
-    (target: ReviewStatus, citationIndex: number) =>
+  const toggleReview = useCallback(
+    (target: Review, citationIndex: number) =>
       (event: React.MouseEvent<SVGElement>) => {
         _dispatch({
-          type: "toggleReviewStatus",
+          type: "toggleReview",
           target,
           citationIndex,
         });
@@ -85,20 +85,17 @@ export const CitationUX = ({
     [_dispatch]
   );
 
-  const reviewStatusIcons = (
-    reviewStatus == ReviewStatus.Unreviewed && selected
-      ? reviewIcons
-      : [reviewStatus]
-  ).map((rs) => {
-    const [Icon, classNames] = citationIcons[rs];
-    const className =
-      classNames[Number(selected) * (Number(reviewStatus == rs) + 1)];
+  const icons = (
+    review == Review.Unreviewed && selected ? reviewIcons : [review]
+  ).map((r) => {
+    const [Icon, classNames] = citationIcons[r];
+    const className = classNames[Number(selected) * (Number(review == r) + 1)];
 
     return (
       <Icon
-        key={rs}
+        key={r}
         className={className + (selected ? " large-icon" : " icon")}
-        onClick={selected ? toggleReviewStatus(rs, citationIndex) : undefined}
+        onClick={selected ? toggleReview(r, citationIndex) : undefined}
       />
     );
   });
@@ -116,11 +113,11 @@ export const CitationUX = ({
       {selected ? (
         <>
           <div className="citation-full">{excerpt}</div>
-          {reviewStatusIcons}
+          {icons}
         </>
       ) : (
         <>
-          {reviewStatusIcons}
+          {icons}
           <div className="citation-short">{excerpt.substring(0, 35)}...</div>
         </>
       )}

@@ -7,7 +7,7 @@ import {
   CitationHighlight,
   UXState,
   Action,
-  ReviewStatus,
+  Review,
   NewCitationState,
   CitationState,
   NoCitationsState,
@@ -69,7 +69,7 @@ function inferUXState(
       citationIndex = undefined;
     } else {
       const index = questionCitations.findIndex(
-        (citation) => citation.reviewStatus === ReviewStatus.Unreviewed
+        (citation) => citation.review === Review.Unreviewed
       );
       citationIndex = index == -1 ? citationIndex ?? 0 : index;
     }
@@ -274,7 +274,7 @@ export const uxAtom = atom<UXState, [Action], void>(
                 docs[docIndex].response!
               ),
               excerpt,
-              reviewStatus: ReviewStatus.Approved,
+              review: Review.Approved,
             });
           })
         );
@@ -339,24 +339,24 @@ export const uxAtom = atom<UXState, [Action], void>(
         break;
       }
 
-      case "toggleReviewStatus": {
+      case "toggleReview": {
         const { questionIndex } = ux;
         console.assert(asyncState.status === "idle");
-        let updatedReviewStatus: ReviewStatus;
+        let updatedReview: Review;
 
         const updatedCitations = create(get(citationsAtom), (draft) => {
           const targetCitation = draft[questionIndex][action.citationIndex];
-          updatedReviewStatus =
-            targetCitation.reviewStatus == action.target
-              ? ReviewStatus.Unreviewed
+          updatedReview =
+            targetCitation.review == action.target
+              ? Review.Unreviewed
               : action.target;
-          targetCitation.reviewStatus = updatedReviewStatus;
+          targetCitation.review = updatedReview;
         });
 
         set(citationsAtom, updatedCitations);
 
         // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
-        if (updatedReviewStatus! != ReviewStatus.Unreviewed) {
+        if (updatedReview! != Review.Unreviewed) {
           set(
             _uxAtom,
             inferUXState(updatedCitations, questionIndex, action.citationIndex)

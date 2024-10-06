@@ -11,12 +11,12 @@ export const mockCitations: Citation[][] = [
     {
       excerpt: "Revenue was $61.9 billion and increased 17%.",
       docIndex: 0,
-      reviewStatus: 0,
+      review: 0,
     },
     {
       excerpt: "61,858",
       docIndex: 1,
-      reviewStatus: 0,
+      review: 0,
     },
   ],
 
@@ -25,7 +25,7 @@ export const mockCitations: Citation[][] = [
     {
       excerpt: "$2.94",
       docIndex: 0,
-      reviewStatus: 0,
+      review: 0,
     },
   ],
 
@@ -34,7 +34,7 @@ export const mockCitations: Citation[][] = [
     {
       excerpt: "Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third quarter of fiscal year 2024.",
       docIndex: 0,
-      reviewStatus: 0,
+      review: 0,
     },
   ],
 
@@ -43,12 +43,12 @@ export const mockCitations: Citation[][] = [
     {
       excerpt: "484,275",
       docIndex: 0,
-      reviewStatus: 0,
+      review: 0,
     },
     {
       excerpt: "484,275",
       docIndex: 1,
-      reviewStatus: 0,
+      review: 0,
     }
   ],
 
@@ -57,12 +57,12 @@ export const mockCitations: Citation[][] = [
     {
       excerpt: "Claims against us that may result in adverse outcomes in legal disputes.",
       docIndex: 0,
-      reviewStatus: 0,
+      review: 0,
     },
     {
       excerpt: "Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused their brain tumors and other adverse health effects.",
       docIndex: 1,
-      reviewStatus: 0,
+      review: 0,
     }
   ],
 
@@ -71,7 +71,7 @@ export const mockCitations: Citation[][] = [
     {
       excerpt: "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage;\n· claims against us that may result in adverse outcomes in legal disputes;",
       docIndex: 0,
-      reviewStatus: 0,
+      review: 0,
     },
   ],
 ]

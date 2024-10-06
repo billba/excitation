@@ -24,8 +24,8 @@ const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
   firstPage * maxPageNumber + lastPage;
 
 const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
-  const { reviewStatus } = questionCitations[citationIndex];
-  return reviewStatus * 1000 + citationIndex;
+  const { review } = questionCitations[citationIndex];
+  return review * 1000 + citationIndex;
 };
 
 const groupCitations = (questionCitations: Citation[]) =>
@@ -176,14 +176,14 @@ export function Sidebar() {
                   )}
                 </div>
                 {citationIndices.map((citationIndex) => {
-                  const { excerpt, reviewStatus } =
+                  const { excerpt, review } =
                     citations[questionIndex][citationIndex];
                   return (
                     <CitationUX
                       key={citationIndex}
                       citationIndex={citationIndex}
                       excerpt={excerpt}
-                      reviewStatus={reviewStatus}
+                      review={review}
                       selected={
                         !newCitation && citationIndex == ux.citationIndex
                       }
