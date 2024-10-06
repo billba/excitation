@@ -1,6 +1,6 @@
 import { useSetAtom } from "jotai";
 import { Action, Review } from "./Types";
-import { uxAtom } from "./State";
+import { stateAtom } from "./State";
 import {
   CircleRegular,
   CheckmarkCircleFilled,
@@ -65,7 +65,7 @@ export const CitationUX = ({
   selected,
   selectable,
 }: Props) => {
-  const _dispatch = useSetAtom(uxAtom);
+  const _dispatch = useSetAtom(stateAtom);
 
   const dispatch = useCallback(
     (action: Action) => () => _dispatch(action),

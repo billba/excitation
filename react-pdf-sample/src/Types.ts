@@ -44,55 +44,65 @@ export type Action =
       target: Review;
     }
   | {
-      type: "retryAddSelection";
+      type: "errorAddSelection";
       questionIndex: number;
     }
   | {
-      type: "revertAddSelection";
-      docIndex: number;
-      questionIndex: number;
-      pageNumber: number;
-      range?: SerializedRange;
+      type: "asyncLoading";
+    }
+  | {
+      type: "asyncSuccess";
+    }
+  | {
+      type: "asyncError";
+      error: string;
+    }
+  | {
+      type: "asyncRetry";
+    }
+  | {
+      type: "asyncRevert";
     };
 
+export type AsyncIdleState = {
+  status: "idle";
+};
+
+export type AsyncPendingState = {
+  status: "pending";
+  prevState: State;
+  event: Event;
+  onError: Action;
+  uxAtError?: UXState;
+};
+
+export type AsyncLoadingState = {
+  status: "loading";
+  prevState: State;
+  event: Event;
+  onError: Action;
+  uxAtError?: UXState;
+};
+
+export type AsyncSuccessState = {
+  status: "success";
+  uxAtError?: UXState;
+};
+
+export type AsyncErrorState = {
+  status: "error";
+  prevState: State;
+  event: Event;
+  onError: Action;
+  error: string;
+  uxAtError: UXState;
+};
+
 export type AsyncState =
-  | {
-      status: "idle";
-    }
-  | {
-      status: "pending";
-      ux?: UXState;
-      event: Event;
-      onError: Action;
-      onRevert: Action;
-    }
-  | {
-      status: "loading";
-      ux?: UXState;
-      event: Event;
-      onError: Action;
-      onRevert: Action;
-    }
-  | {
-      status: "success";
-      ux?: UXState;
-    }
-  | {
-      status: "error";
-      ux?: UXState;
-      event: Event;
-      onError: Action;
-      onRevert: Action;
-      error: string;
-    }
-  | {
-      status: "retryRevert";
-      ux: UXState;
-      event: Event;
-      onError: Action;
-      onRevert: Action;
-      error: string;
-    };
+  | AsyncIdleState
+  | AsyncPendingState
+  | AsyncLoadingState
+  | AsyncErrorState;
 
 export interface CitationHighlight {
   pageNumber: number;
@@ -150,6 +160,17 @@ export interface DocumentIntelligenceResponse {
   createdDateTime: string;
   lastUpdatedDateTime: string;
   analyzeResult: AnalyzeResult;
+}
+
+export interface State {
+  form: {
+    title: string;
+    docs: Doc[];
+    questions: string[];
+  };
+  citations: Citation[][];
+  ux: UXState;
+  asyncState: AsyncState;
 }
 
 interface AnalyzeResult {

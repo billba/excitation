@@ -2,25 +2,31 @@ import { useAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 
+import { stateAtom } from "./State";
 import {
-  docs,
-  uxAtom,
-} from "./State";
-import { calculateRange, calculateSerializedRange, compareRanges } from "./Range";
+  calculateRange,
+  calculateSerializedRange,
+  compareRanges,
+} from "./Range";
 
 export function Viewer() {
-  const [ux, dispatch] = useAtom(uxAtom);
-
+  const [state, dispatch] = useAtom(stateAtom);
+  const {
+    form: { docs },
+    ux,
+  } = state;
   const { newCitation, docIndex, pageNumber } = ux;
-
   const { filename } = docs[docIndex];
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.addEventListener("selectionchange", () => {
+      if (!newCitation) return;
       const selection = document.getSelection();
-      const range = selection?.rangeCount ? selection?.getRangeAt(0) : undefined;
+      const range = selection?.rangeCount
+        ? selection?.getRangeAt(0)
+        : undefined;
       const serializedRange = calculateSerializedRange(range);
       console.log("selectionchange", serializedRange);
       const ancestor = range?.commonAncestorContainer;
@@ -33,7 +39,7 @@ export function Viewer() {
             : undefined,
       });
     });
-  }, [dispatch]);
+  }, [newCitation, dispatch]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const highlightCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -66,17 +72,24 @@ export function Viewer() {
     if (!realRange) return;
 
     selection.addRange(realRange);
-  }, [renderCounter, range])
+  }, [renderCounter, range]);
 
   const [resizeCounter, setResizeCounter] = useState(0); // make highlighting responsive to window resizing
   useEffect(() => {
     window.addEventListener("resize", () => setResizeCounter((c) => c + 1));
   }, [setResizeCounter]);
 
-  useEffect(() => {
-    if (ux.newCitation || ux.citationIndex == undefined || ux.citationHighlights.length == 0) return;
+  const polygons =
+    !newCitation &&
+    ux.citationIndex != undefined &&
+    ux.citationHighlights.length > 0
+      ? ux.citationHighlights.filter(
+          (citationHighlight) => citationHighlight.pageNumber == pageNumber
+        )[0].polygons
+      : undefined;
 
-    const { polygons } = ux.citationHighlights.filter(({ pageNumber }) => pageNumber == ux.pageNumber)[0];
+  useEffect(() => {
+    if (!polygons) return;
 
     const canvas = canvasRef.current;
     const highlightCanvas = highlightCanvasRef.current;
@@ -114,7 +127,7 @@ export function Viewer() {
   }, [
     canvasRef,
     highlightCanvasRef,
-    ux,
+    polygons,
     renderCounter, // the underlying PDF page canvas has changed
     resizeCounter, // the window has resized
   ]);
@@ -128,17 +141,19 @@ export function Viewer() {
           onRenderSuccess={onRenderSuccess}
         />
       </Document>
-      {!newCitation && ux.citationIndex != undefined && ux.citationHighlights.length &&
-        <canvas
-          ref={highlightCanvasRef}
-          id="highlight-canvas"
-          style={{
-            position: "absolute",
-            zIndex: 1000,
-            opacity: 1,
-          }}
-        />
-        }
+      {!newCitation &&
+        ux.citationIndex != undefined &&
+        ux.citationHighlights.length && (
+          <canvas
+            ref={highlightCanvasRef}
+            id="highlight-canvas"
+            style={{
+              position: "absolute",
+              zIndex: 1000,
+              opacity: 1,
+            }}
+          />
+        )}
     </div>
   );
 }

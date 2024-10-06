@@ -11,8 +11,6 @@
 
 export const rangeToString = (range: Range) => {
   const fragment = range.cloneContents();
-  console.log("fragment", fragment);
-
   const { children } = fragment;
 
   if (children.length === 0) {

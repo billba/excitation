@@ -1,11 +1,11 @@
 import { useAtom } from "jotai";
 import { Action } from "./Types";
-import { docs, uxAtom } from "./State";
+import { stateAtom } from "./State";
 import { useCallback } from "react";
 
 export const NavBar = () => {
-  const [ux, _dispatch] = useAtom(uxAtom);
-
+  const [state, _dispatch] = useAtom(stateAtom);
+  const { form: { docs }, ux } = state
   const { docIndex, pageNumber, newCitation } = ux;
 
   const dispatch = useCallback(

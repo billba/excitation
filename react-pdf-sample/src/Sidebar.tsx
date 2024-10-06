@@ -1,8 +1,7 @@
-import { useAtomValue, useAtom } from "jotai";
-import { docs, citationsAtom, uxAtom, asyncAtom } from "./State";
-import { questions } from "./Questions";
+import { useAtom } from "jotai";
+import { stateAtom } from "./State";
 import { useCallback, useMemo } from "react";
-import { Action, Citation } from "./Types";
+import { Action, Citation, Doc } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
@@ -28,7 +27,7 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
   return review * 1000 + citationIndex;
 };
 
-const groupCitations = (questionCitations: Citation[]) =>
+const groupCitations = (docs: Doc[], questionCitations: Citation[]) =>
   docs.map((_, docIndex) => ({
     docIndex,
     pageGroups: questionCitations
@@ -74,15 +73,18 @@ const groupCitations = (questionCitations: Citation[]) =>
   }));
 
 export function Sidebar() {
-  const citations = useAtomValue(citationsAtom);
-  const [ux, _dispatch] = useAtom(uxAtom);
-  const [asyncState, setAsyncState] = useAtom(asyncAtom);
-
+  const [state, _dispatch] = useAtom(stateAtom);
+  const {
+    form: { docs, questions },
+    citations,
+    ux,
+    asyncState,
+  } = state;
   const { questionIndex, newCitation } = ux;
 
   const groupedCitations = useMemo(
-    () => groupCitations(citations[questionIndex]),
-    [citations, questionIndex]
+    () => groupCitations(docs, citations[questionIndex]),
+    [docs, citations, questionIndex]
   );
 
   const dispatch = useCallback(
@@ -102,21 +104,6 @@ export function Sidebar() {
     _dispatch({ type: "endNewCitation" });
     document.getSelection()?.empty();
   }, [_dispatch]);
-
-  const retryAfterError = useCallback(() => {
-    if (asyncState.status == "retryRevert") {
-      const { ux, event, onError, onRevert } = asyncState;
-      setAsyncState({ status: "pending", ux, event, onError, onRevert });
-    }
-  }, [asyncState, setAsyncState]);
-
-  const revertAfterError = useCallback(() => {
-    if (asyncState.status == "retryRevert") {
-      console.log("dispatching onRevert")
-      _dispatch(asyncState.onRevert);
-      setAsyncState({ status: "idle" });
-    }
-  }, [asyncState, _dispatch, setAsyncState]);
 
   return (
     <div id="sidebar">
@@ -213,12 +200,12 @@ export function Sidebar() {
             new citation
           </button>
         )}
-        {asyncState.status == "retryRevert" && (
+        {asyncState.status == "error" && (
           <div>
             &nbsp;
-            <button onClick={retryAfterError}>Retry</button>
+            <button onClick={dispatch({ type: 'asyncRetry' })}>Retry</button>
             &nbsp;
-            <button onClick={revertAfterError}>Revert</button>
+            <button onClick={dispatch({ type: 'asyncRevert' })}>Revert</button>
           </div>
         )}
       </div>
