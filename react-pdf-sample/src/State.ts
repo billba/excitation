@@ -98,23 +98,6 @@ function inferUXState(
   };
 }
 
-// function locateUx(citations: Citation[][], ux: UXState) {
-//   let { docIndex, pageNumber } = ux;
-//   const { selectedCitation } = ux;
-
-//   if (selectedCitation) {
-//     const { citationIndex, citationHighlights } = selectedCitation;
-//     if (citationHighlights.length) {
-//       ({ docIndex } = citations[ux.questionIndex][citationIndex]);
-//       [pageNumber] = citationHighlights
-//         .map(({ pageNumber }) => pageNumber)
-//         .sort();
-//     }
-//   }
-
-//   return { docIndex, pageNumber };
-// }
-
 const _stateAtom = atom<State>({
   form: {
     title: "Sample Form",
