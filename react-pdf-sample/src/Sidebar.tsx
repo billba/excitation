@@ -80,7 +80,7 @@ export function Sidebar() {
     ux,
     asyncState,
   } = state;
-  const { questionIndex, newCitation } = ux;
+  const { questionIndex, selectedCitation } = ux;
 
   const groupedCitations = useMemo(
     () => groupCitations(docs, citations[questionIndex]),
@@ -97,11 +97,6 @@ export function Sidebar() {
 
   const addSelection = useCallback(() => {
     _dispatch({ type: "addSelection" });
-    document.getSelection()?.empty();
-  }, [_dispatch]);
-
-  const endNewCitation = useCallback(() => {
-    _dispatch({ type: "endNewCitation" });
     document.getSelection()?.empty();
   }, [_dispatch]);
 
@@ -172,9 +167,8 @@ export function Sidebar() {
                       excerpt={excerpt}
                       review={review}
                       selected={
-                        !newCitation && citationIndex == ux.citationIndex
+                       selectedCitation?.citationIndex == citationIndex
                       }
-                      selectable={!newCitation}
                     />
                   );
                 })}
@@ -184,22 +178,12 @@ export function Sidebar() {
         ))}
         <br />
         &nbsp;
-        {newCitation ? (
-          <>
-            <button
-              onClick={addSelection}
-              disabled={asyncState.status != "idle" || ux.range == undefined}
-            >
-              add selection
-            </button>
-            &nbsp;
-            <button onClick={endNewCitation}>done</button>
-          </>
-        ) : (
-          <button onClick={dispatch({ type: "startNewCitation" })}>
-            new citation
-          </button>
-        )}
+        <button
+          onClick={addSelection}
+          disabled={asyncState.status != "idle" || ux.range == undefined}
+        >
+          add selection
+        </button>
         {asyncState.status == "error" && (
           <div>
             &nbsp;

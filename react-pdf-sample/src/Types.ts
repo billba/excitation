@@ -2,12 +2,6 @@ import { SerializedRange } from "./Range";
 
 export type Action =
   | {
-      type: "startNewCitation";
-    }
-  | {
-      type: "endNewCitation";
-    }
-  | {
       type: "gotoCitation";
       citationIndex: number;
     }
@@ -109,31 +103,16 @@ export interface CitationHighlight {
   polygons: number[][];
 }
 
-interface BaseState {
+export interface UXState {
   questionIndex: number;
-  newCitation: boolean;
   docIndex: number;
   pageNumber: number;
-}
-
-export interface NewCitationState extends BaseState {
-  newCitation: true;
   range?: SerializedRange;
+  selectedCitation?: {
+    citationIndex: number;
+    citationHighlights: CitationHighlight[];
+  }
 }
-
-export interface NoCitationsState extends BaseState {
-  newCitation: false;
-  citationIndex: undefined;
-}
-
-export interface CitationState extends BaseState {
-  newCitation: false;
-  citationIndex: number;
-  citationHighlights: CitationHighlight[];
-}
-
-export type NotNewCitationStates = NoCitationsState | CitationState;
-export type UXState = NewCitationState | NotNewCitationStates;
 
 export enum Review {
   Unreviewed,

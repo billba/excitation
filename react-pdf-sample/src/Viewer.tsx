@@ -7,6 +7,7 @@ import {
   calculateRange,
   calculateSerializedRange,
   compareRanges,
+  SerializedRange,
 } from "./Range";
 
 export function Viewer() {
@@ -15,31 +16,29 @@ export function Viewer() {
     form: { docs },
     ux,
   } = state;
-  const { newCitation, docIndex, pageNumber } = ux;
+  const { docIndex, pageNumber, range, selectedCitation } = ux;
   const { filename } = docs[docIndex];
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.addEventListener("selectionchange", () => {
-      if (!newCitation) return;
       const selection = document.getSelection();
-      const range = selection?.rangeCount
-        ? selection?.getRangeAt(0)
-        : undefined;
-      const serializedRange = calculateSerializedRange(range);
-      console.log("selectionchange", serializedRange);
-      const ancestor = range?.commonAncestorContainer;
-      console.assert(viewerRef.current != undefined);
+      let range: SerializedRange | undefined;
+      if (selection?.rangeCount) {
+        const selectionRange = selection.getRangeAt(0);
+        console.assert(viewerRef.current != undefined);
+        if (!selectionRange.collapsed && viewerRef.current!.contains(selectionRange.commonAncestorContainer)) {
+          range = calculateSerializedRange(selectionRange);
+        }
+      }
+      console.log("selectionchange", range);
       dispatch({
         type: "setSelectedText",
-        range:
-          ancestor && viewerRef.current!.contains(ancestor)
-            ? serializedRange
-            : undefined,
+        range,
       });
     });
-  }, [newCitation, dispatch]);
+  }, [dispatch]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const highlightCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -51,8 +50,6 @@ export function Viewer() {
     () => setRenderCounter((c) => c + 1),
     [setRenderCounter]
   );
-
-  const range = ux.newCitation ? ux.range : undefined;
 
   useEffect(() => {
     if (!range) return;
@@ -79,14 +76,9 @@ export function Viewer() {
     window.addEventListener("resize", () => setResizeCounter((c) => c + 1));
   }, [setResizeCounter]);
 
-  const polygons =
-    !newCitation &&
-    ux.citationIndex != undefined &&
-    ux.citationHighlights.length > 0
-      ? ux.citationHighlights.filter(
-          (citationHighlight) => citationHighlight.pageNumber == pageNumber
-        )[0].polygons
-      : undefined;
+  const polygons = selectedCitation?.citationHighlights.filter(
+    (citationHighlight) => citationHighlight.pageNumber == pageNumber
+  )[0]?.polygons;
 
   useEffect(() => {
     if (!polygons) return;
@@ -141,19 +133,17 @@ export function Viewer() {
           onRenderSuccess={onRenderSuccess}
         />
       </Document>
-      {!newCitation &&
-        ux.citationIndex != undefined &&
-        ux.citationHighlights.length && (
-          <canvas
-            ref={highlightCanvasRef}
-            id="highlight-canvas"
-            style={{
-              position: "absolute",
-              zIndex: 1000,
-              opacity: 1,
-            }}
-          />
-        )}
+      {polygons && (
+        <canvas
+          ref={highlightCanvasRef}
+          id="highlight-canvas"
+          style={{
+            position: "absolute",
+            zIndex: 1,
+            opacity: 1,
+          }}
+        />
+      )}
     </div>
   );
 }

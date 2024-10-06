@@ -55,7 +55,6 @@ interface Props {
   excerpt: string;
   review: Review;
   selected: boolean; // is this citation currently selected?
-  selectable: boolean; // can this citation be selected?
 }
 
 export const CitationUX = ({
@@ -63,7 +62,6 @@ export const CitationUX = ({
   excerpt,
   review,
   selected,
-  selectable,
 }: Props) => {
   const _dispatch = useSetAtom(stateAtom);
 
@@ -104,11 +102,7 @@ export const CitationUX = ({
     <div
       className={selected ? "citation-selected" : "citation-unselected"}
       key={citationIndex}
-      onClick={
-        selectable
-          ? dispatch({ type: "gotoCitation", citationIndex })
-          : undefined
-      }
+      onClick={dispatch({ type: "gotoCitation", citationIndex })}
     >
       {selected ? (
         <>

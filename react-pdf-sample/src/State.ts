@@ -8,9 +8,6 @@ import {
   UXState,
   Action,
   Review,
-  NewCitationState,
-  CitationState,
-  NoCitationsState,
   Event,
   State,
   AsyncSuccessState,
@@ -68,17 +65,14 @@ function inferUXState(
     }
   }
 
-  const newCitation = false;
   let pageNumber = 1;
   let docIndex = 0;
 
   if (citationIndex == undefined)
     return {
       questionIndex,
-      newCitation,
       pageNumber,
       docIndex,
-      citationIndex,
     };
 
   const citationHighlights =
@@ -95,30 +89,31 @@ function inferUXState(
 
   return {
     questionIndex,
-    newCitation,
     pageNumber,
     docIndex,
-    citationIndex,
-    citationHighlights,
+    selectedCitation:
+      citationIndex == undefined
+        ? undefined
+        : { citationIndex, citationHighlights },
   };
 }
 
-function locateUx(citations: Citation[][], ux: UXState) {
-  let { docIndex, pageNumber } = ux;
+// function locateUx(citations: Citation[][], ux: UXState) {
+//   let { docIndex, pageNumber } = ux;
+//   const { selectedCitation } = ux;
 
-  if (
-    !ux.newCitation &&
-    ux.citationIndex != undefined &&
-    ux.citationHighlights.length
-  ) {
-    ({ docIndex } = citations[ux.questionIndex][ux.citationIndex]);
-    [pageNumber] = ux.citationHighlights
-      .map(({ pageNumber }) => pageNumber)
-      .sort();
-  }
+//   if (selectedCitation) {
+//     const { citationIndex, citationHighlights } = selectedCitation;
+//     if (citationHighlights.length) {
+//       ({ docIndex } = citations[ux.questionIndex][citationIndex]);
+//       [pageNumber] = citationHighlights
+//         .map(({ pageNumber }) => pageNumber)
+//         .sort();
+//     }
+//   }
 
-  return { docIndex, pageNumber };
-}
+//   return { docIndex, pageNumber };
+// }
 
 const _stateAtom = atom<State>({
   form: {
@@ -142,216 +137,202 @@ export const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-          const { form, citations, ux, asyncState } = state;
-          const { newCitation, docIndex, pageNumber, questionIndex } = ux;
-          const { docs } = form;
+            const { form, citations, ux, asyncState } = state;
+            const {
+              docIndex,
+              pageNumber,
+              questionIndex,
+              selectedCitation,
+            } = ux;
+            const { docs } = form;
 
-          function gotoPage(
-            gotoPageNumber: number,
-            alwaysDeselectCitation = false
-          ) {
-            ux.pageNumber = gotoPageNumber;
-            (ux as NewCitationState).range = undefined;
-            // Deselect the current citation, unless moving to
-            // a different page of the same multi-page citation.
-            if (
-              alwaysDeselectCitation ||
-              newCitation ||
-              ux.citationIndex == undefined ||
-              !ux.citationHighlights.find(
-                ({ pageNumber }) => pageNumber == gotoPageNumber
-              )
+            function gotoPage(
+              gotoPageNumber: number,
+              alwaysDeselectCitation = false
             ) {
-              (ux as NoCitationsState).citationIndex = undefined;
-              delete (ux as Partial<CitationState>).citationHighlights;
+              ux.pageNumber = gotoPageNumber;
+              ux.range = undefined;
+              
+              // Deselect the current citation, unless moving to
+              // a different page of the same multi-page citation.
+              if (
+                alwaysDeselectCitation ||
+                !selectedCitation?.citationHighlights.find(
+                    ({ pageNumber }) => pageNumber == gotoPageNumber
+                  )
+              ) {
+                ux.selectedCitation = undefined;
               }
-          }
+            }
 
-          function setAsync({
-            event,
-            onError,
-          }: {
-            event: Event;
-            onError: Action;
-          }) {
-            state.asyncState = {
-              status: "pending",
-              prevState,
+            function setAsync({
               event,
               onError,
-            };
-          }
-
-          switch (action.type) {
-            case "startNewCitation":
-              console.assert(!newCitation);
-              state.ux = {
-                ...locateUx(citations, ux),
-                questionIndex,
-                newCitation: true,
-                range: undefined,
+            }: {
+              event: Event;
+              onError: Action;
+            }) {
+              state.asyncState = {
+                status: "pending",
+                prevState,
+                event,
+                onError,
               };
-              break;
-
-            case "endNewCitation":
-              console.assert(ux.newCitation);
-              state.ux = inferUXState(citations, questionIndex);
-              break;
-
-            case "gotoCitation":
-              state.ux = inferUXState(
-                citations,
-                questionIndex,
-                action.citationIndex,
-                true
-              );
-              break;
-
-            case "prevQuestion":
-              state.ux = inferUXState(citations, questionIndex - 1);
-              break;
-
-            case "nextQuestion":
-              state.ux = inferUXState(citations, questionIndex + 1);
-              break;
-
-            case "prevPage":
-              gotoPage(pageNumber - 1);
-              break;
-
-            case "nextPage":
-              gotoPage(pageNumber + 1);
-              break;
-
-            case "gotoPage":
-              gotoPage(action.pageNumber);
-              break;
-
-            case "gotoDoc":
-              console.assert(docIndex != action.docIndex);
-              ux.docIndex = action.docIndex;
-              gotoPage(ux.pageNumber = 1, true);
-              break;
-
-            case "setSelectedText":
-              console.assert(newCitation);
-              (ux as NewCitationState).range = action.range;
-              break;
-
-            case "addSelection": {
-              console.assert(newCitation);
-              console.assert(asyncState.status == "idle");
-              const { range } = ux as NewCitationState;
-              console.assert(range !== undefined);
-              const realRange = calculateRange(range);
-              console.assert(realRange !== undefined);
-              const excerpt = rangeToString(realRange!);
-
-              citations[questionIndex].push({
-                docIndex,
-                boundingRegions: returnTextPolygonsFromDI(
-                  excerpt,
-                  docs[docIndex].response!
-                ),
-                excerpt,
-                review: Review.Approved,
-              });
-
-              setAsync({
-                event: {
-                  type: "mockEvent",
-                  delay: 0,
-                  // delay: 5000,
-                  // error: {
-                  //   count: 3,
-                  //   description: "dang",
-                  // },
-                },
-                onError: {
-                  type: "errorAddSelection",
-                  questionIndex,
-                },
-              });
-              break;
             }
 
-            case "errorAddSelection": {
-              const { questionIndex } = action;
-              state.ux = inferUXState(
-                citations,
-                questionIndex,
-                citations[questionIndex].length - 1,
-                true
-              );
-              break;
-            }
-
-            case "toggleReview": {
-              console.assert(asyncState.status === "idle");
-
-              const targetCitation =
-                citations[questionIndex][action.citationIndex];
-              targetCitation.review =
-                targetCitation.review == action.target
-                  ? Review.Unreviewed
-                  : action.target;
-
-              // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
-              if (targetCitation.review! != Review.Unreviewed) {
+            switch (action.type) {
+              case "gotoCitation":
                 state.ux = inferUXState(
                   citations,
                   questionIndex,
-                  action.citationIndex
+                  action.citationIndex,
+                  true
                 );
+                break;
+
+              case "prevQuestion":
+                state.ux = inferUXState(citations, questionIndex - 1);
+                break;
+
+              case "nextQuestion":
+                state.ux = inferUXState(citations, questionIndex + 1);
+                break;
+
+              case "prevPage":
+                gotoPage(pageNumber - 1);
+                break;
+
+              case "nextPage":
+                gotoPage(pageNumber + 1);
+                break;
+
+              case "gotoPage":
+                gotoPage(action.pageNumber);
+                break;
+
+              case "gotoDoc":
+                console.assert(docIndex != action.docIndex);
+                ux.docIndex = action.docIndex;
+                gotoPage((ux.pageNumber = 1), true);
+                break;
+
+              case "setSelectedText":
+                ux.range = action.range;
+                break;
+
+              case "addSelection": {
+                console.assert(asyncState.status == "idle");
+                const { range } = ux;
+                console.assert(range !== undefined);
+                const realRange = calculateRange(range);
+                console.assert(realRange !== undefined);
+                const excerpt = rangeToString(realRange!);
+
+                citations[questionIndex].push({
+                  docIndex,
+                  boundingRegions: returnTextPolygonsFromDI(
+                    excerpt,
+                    docs[docIndex].response!
+                  ),
+                  excerpt,
+                  review: Review.Approved,
+                });
+
+                setAsync({
+                  event: {
+                    type: "mockEvent",
+                    delay: 0,
+                    // delay: 5000,
+                    // error: {
+                    //   count: 2,
+                    //   description: "dang",
+                    // },
+                  },
+                  onError: {
+                    type: "errorAddSelection",
+                    questionIndex,
+                  },
+                });
+                break;
               }
-              break;
-            }
 
-            case "asyncLoading":
-              console.assert(asyncState.status === "pending");
-              asyncState.status = "loading";
-              break;
-
-            case "asyncSuccess": {
-              console.assert(asyncState.status === "loading");
-              const { uxAtError } =
-                asyncState as unknown as AsyncSuccessState;
-              console.log("async success", uxAtError);
-              if (uxAtError) {
-                state.ux = uxAtError;
+              case "errorAddSelection": {
+                const { questionIndex } = action;
+                state.ux = inferUXState(
+                  citations,
+                  questionIndex,
+                  citations[questionIndex].length - 1,
+                  true
+                );
+                break;
               }
 
-              state.asyncState = {
-                status: "idle",
-              };
-              break;
-            }
+              case "toggleReview": {
+                console.assert(asyncState.status === "idle");
 
-            case "asyncError": {
-              const { error } = action;
-              console.assert(asyncState.status === "loading");
-              asyncState.status = "error";
-              (asyncState as AsyncErrorState).error = error;
-              const { uxAtError } =
-                asyncState as unknown as AsyncSuccessState;
-              if (!uxAtError) {
-                (asyncState as AsyncErrorState).uxAtError = ux;
+                const targetCitation =
+                  citations[questionIndex][action.citationIndex];
+                targetCitation.review =
+                  targetCitation.review == action.target
+                    ? Review.Unreviewed
+                    : action.target;
+
+                // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
+                if (targetCitation.review! != Review.Unreviewed) {
+                  state.ux = inferUXState(
+                    citations,
+                    questionIndex,
+                    action.citationIndex
+                  );
+                }
+                break;
               }
-              break;
-            }
 
-            case "asyncRetry": {
-              console.assert(asyncState.status === "error");
-              asyncState.status = "pending";
-              break;
-            }
+              case "asyncLoading":
+                console.assert(asyncState.status === "pending");
+                asyncState.status = "loading";
+                break;
 
-            default:
-              console.log("unhandled action", action);
-              break;
-          }
-        });
-    
+              case "asyncSuccess": {
+                console.assert(asyncState.status === "loading");
+                const { uxAtError } =
+                  asyncState as unknown as AsyncSuccessState;
+                console.log("async success", uxAtError);
+                if (uxAtError) {
+                  state.ux = uxAtError;
+                }
+
+                state.asyncState = {
+                  status: "idle",
+                };
+                break;
+              }
+
+              case "asyncError": {
+                const { error } = action;
+                console.assert(asyncState.status === "loading");
+                asyncState.status = "error";
+                (asyncState as AsyncErrorState).error = error;
+                const { uxAtError } =
+                  asyncState as unknown as AsyncSuccessState;
+                if (!uxAtError) {
+                  (asyncState as AsyncErrorState).uxAtError = ux;
+                }
+                break;
+              }
+
+              case "asyncRetry": {
+                console.assert(asyncState.status === "error");
+                asyncState.status = "pending";
+                break;
+              }
+
+              default:
+                console.log("unhandled action", action);
+                break;
+            }
+          });
+
     console.log("new state", newState);
     set(_stateAtom, newState);
   }
@@ -378,6 +359,7 @@ export const useAsyncStateMachine = () => {
         } catch (error) {
           console.log("caught me an error", error);
           dispatch({ type: "asyncError", error: error as string });
+          document.getSelection()?.empty();
           dispatch(onError);
         }
       }
