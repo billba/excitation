@@ -41,7 +41,6 @@ CREATE TABLE citations (
   document_id INTEGER NOT NULL,
   excerpt TEXT NOT NULL,
   bounds JSONB,
-  bounds_created_at TIMESTAMP,
   review TEXT NOT NULL DEFAULT 'Unreviewed',
   creator TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()

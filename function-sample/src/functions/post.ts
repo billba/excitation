@@ -20,7 +20,6 @@ async function insertCitation(form_id: number, question_id: number, document_id:
     document_id,
     excerpt,
     bounds,
-    bounds_created_at: sql`now()`,
     review,
     creator
   }).returning();
@@ -30,7 +29,6 @@ async function insertCitation(form_id: number, question_id: number, document_id:
 async function updateCitationBounds(citation_id: number, bounds: BoundingRegion[]) {
   return db.update(citations).set({
     bounds,
-    bounds_created_at: sql`now()`
   }).where(eq(citations.id, citation_id)).returning({
     id: citations.id,
     excerpt: citations.excerpt,
