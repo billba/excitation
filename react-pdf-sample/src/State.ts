@@ -75,26 +75,21 @@ function inferUXState(
       docIndex,
     };
 
-  const citationHighlights =
-    citationIndex == undefined
-      ? []
-      : citationHighlightsFor(questionCitations[citationIndex]);
+  const citation = questionCitations[citationIndex];
+  const citationHighlights = citationHighlightsFor(citation);
 
   if (citationHighlights.length) {
     [pageNumber] = citationHighlights
       .map(({ pageNumber }) => pageNumber)
       .sort();
-    ({ docIndex } = questionCitations[citationIndex]);
+    ({ docIndex } = citation);
   }
 
   return {
     questionIndex,
     pageNumber,
     docIndex,
-    selectedCitation:
-      citationIndex == undefined
-        ? undefined
-        : { citationIndex, citationHighlights },
+    selectedCitation: { citationIndex, citationHighlights },
   };
 }
 
@@ -121,12 +116,8 @@ export const stateAtom = atom<State, [Action], void>(
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
             const { form, citations, ux, asyncState } = state;
-            const {
-              docIndex,
-              pageNumber,
-              questionIndex,
-              selectedCitation,
-            } = ux;
+            const { docIndex, pageNumber, questionIndex, selectedCitation } =
+              ux;
             const { docs } = form;
 
             function gotoPage(
@@ -135,14 +126,14 @@ export const stateAtom = atom<State, [Action], void>(
             ) {
               ux.pageNumber = gotoPageNumber;
               ux.range = undefined;
-              
+
               // Deselect the current citation, unless moving to
               // a different page of the same multi-page citation.
               if (
                 alwaysDeselectCitation ||
                 !selectedCitation?.citationHighlights.find(
-                    ({ pageNumber }) => pageNumber == gotoPageNumber
-                  )
+                  ({ pageNumber }) => pageNumber == gotoPageNumber
+                )
               ) {
                 ux.selectedCitation = undefined;
               }
