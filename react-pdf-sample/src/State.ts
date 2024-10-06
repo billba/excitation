@@ -264,7 +264,7 @@ export const stateAtom = atom<State, [Action], void>(
                   state.ux.selectedCitation = {
                     citationIndex: action.citationIndex,
                     citationHighlights: citationHighlightsFor(targetCitation),
-                  }
+                  };
                 }
                 break;
               }
@@ -290,15 +290,11 @@ export const stateAtom = atom<State, [Action], void>(
               }
 
               case "asyncError": {
-                const { error } = action;
                 console.assert(asyncState.status === "loading");
+                const { error } = action;
                 asyncState.status = "error";
                 (asyncState as AsyncErrorState).error = error;
-                const { uxAtError } =
-                  asyncState as unknown as AsyncSuccessState;
-                if (!uxAtError) {
-                  (asyncState as AsyncErrorState).uxAtError = ux;
-                }
+                (asyncState as AsyncErrorState).uxAtError = ux;
                 break;
               }
 
@@ -307,6 +303,11 @@ export const stateAtom = atom<State, [Action], void>(
                 asyncState.status = "pending";
                 break;
               }
+
+              // case "asyncRevert":
+              // here we need to assign the entire state to the ux.prevstate
+              // we can't do that inside the 'create' function (which is just about
+              // making changes *within* the state, so we do it at the top of the function
 
               default:
                 console.log("unhandled action", action);
@@ -357,7 +358,7 @@ export const sendEvent = (event: Event) => {
       return new Promise<void>((resolve, reject) =>
         setTimeout(() => {
           console.log(errorCount, event.error?.count);
-          if (event.error && ++errorCount < event.error.count) {
+          if (event.error && errorCount++ < event.error.count) {
             console.log("mockEvent error");
             reject(event.error.description);
           } else {
