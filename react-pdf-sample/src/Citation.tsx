@@ -35,7 +35,7 @@ const citationIcons = {
   [Review.Approved]: [
     CheckmarkCircleFilled,
     [
-      "citation-icon-approved",
+      "citation-icon-approved-on",
       "citation-icon-approved-off",
       "citation-icon-approved-on",
     ],
@@ -43,7 +43,7 @@ const citationIcons = {
   [Review.Rejected]: [
     DismissCircleFilled,
     [
-      "citation-icon-rejected",
+      "citation-icon-rejected-on",
       "citation-icon-rejected-off",
       "citation-icon-rejected-on",
     ],
@@ -93,7 +93,7 @@ export const CitationUX = ({
       <Icon
         key={r}
         className={className + (selected ? " large-icon" : " icon")}
-        onClick={selected ? toggleReview(r, citationIndex) : undefined}
+        onClick={toggleReview(r, citationIndex)}
       />
     );
   });

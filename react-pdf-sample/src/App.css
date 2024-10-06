@@ -168,11 +168,6 @@ button:focus-visible {
 .citation-full {
 }
 
-.citation-icon-approved {
-  color: rgb(0, 172, 0);
-  pointer-events: all;
-}
-
 .citation-icon-approved-on {
   color: rgb(0, 172, 0);
   pointer-events: all;
@@ -187,11 +182,6 @@ button:focus-visible {
   :hover {
     color: rgb(0, 172, 0);
   }
-}
-
-.citation-icon-rejected {
-  color: lightcoral;
-  pointer-events: all;
 }
 
 .citation-icon-rejected-on {

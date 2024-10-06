@@ -61,7 +61,7 @@ function inferUXState(
       const index = questionCitations.findIndex(
         (citation) => citation.review === Review.Unreviewed
       );
-      citationIndex = index == -1 ? citationIndex ?? 0 : index;
+      citationIndex = index == -1 ? undefined : index;
     }
   }
 
@@ -251,13 +251,20 @@ export const stateAtom = atom<State, [Action], void>(
                     ? Review.Unreviewed
                     : action.target;
 
-                // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
-                if (targetCitation.review! != Review.Unreviewed) {
-                  state.ux = inferUXState(
-                    citations,
-                    questionIndex,
-                    action.citationIndex
-                  );
+                if (selectedCitation?.citationIndex == action.citationIndex) {
+                  // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
+                  if (targetCitation.review! != Review.Unreviewed) {
+                    state.ux = inferUXState(
+                      citations,
+                      questionIndex,
+                      action.citationIndex
+                    );
+                  }
+                } else {
+                  state.ux.selectedCitation = {
+                    citationIndex: action.citationIndex,
+                    citationHighlights: citationHighlightsFor(targetCitation),
+                  }
                 }
                 break;
               }
