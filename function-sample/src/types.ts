@@ -15,6 +15,7 @@ export type Event =
     formId: number;
     questionId: number;
     documentId: number;
+    citationId: number;
     excerpt: string;
     bounds: BoundingRegion[];
     review: Review;

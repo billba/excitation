@@ -48,14 +48,6 @@ export const citations = pgTable('citations', {
 
 export const events = pgTable('events', {
   id: serial('id').primaryKey().notNull(),
-  type: text('type').notNull(),
-  form_id: integer('form_id'),
-  question_id: integer('question_id'),
-  document_id: integer('document_id'),
-  citation_id: integer('citation_id').notNull(),
-  excerpt: text('excerpt').notNull(),
-  bounds: jsonb('bounds'),
-  review: text('review'),
-  creator: text('creator').notNull(),
+  body: jsonb('body').notNull(),
   created_at: timestamp('created_at').notNull().defaultNow()
 });

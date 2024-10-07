@@ -41,22 +41,14 @@ CREATE TABLE citations (
   document_id INTEGER NOT NULL,
   excerpt TEXT NOT NULL,
   bounds JSONB,
-  review TEXT NOT NULL DEFAULT 'Unreviewed',
+  review INTEGER NOT NULL DEFAULT 0,
   creator TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE events (
   id SERIAL PRIMARY KEY,
-  type TEXT NOT NULL,
-  form_id INTEGER,
-  question_id INTEGER,
-  document_id INTEGER,
-  citation_id INTEGER NOT NULL,
-  excerpt TEXT,
-  bounds JSONB,
-  review TEXT,
-  creator TEXT NOT NULL,
+  body JSONB NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
