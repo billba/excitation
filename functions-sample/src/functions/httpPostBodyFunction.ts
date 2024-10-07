@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/fu
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
-import { citations, events } from '../schema';
+import { citations, events } from '../schema'
 import { BoundingRegion, Review, Event } from '../types'
 
 const queryClient = postgres(process.env.POSTGRES);

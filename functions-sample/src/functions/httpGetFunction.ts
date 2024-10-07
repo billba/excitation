@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/fu
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
-import { citations, documents, forms, questions, templates } from '../schema';
+import { citations, documents, forms, templates } from '../schema';
 
 const queryClient = postgres(process.env.POSTGRES);
 const db = drizzle(queryClient);
@@ -10,7 +10,6 @@ const db = drizzle(queryClient);
 // ============================================================================
 // db operations
 // ============================================================================
-
 async function getForm(formId: number) {
   // get template id
   const form = await db.select({
@@ -24,21 +23,16 @@ async function getForm(formId: number) {
   const template = await db.select({
     templateName: templates.template_name
   }).from(templates).where(eq(templates.id, templateId));
-  formName = template[0].templateName.concat(': ', formName);
 
-  // get question array
-  const qs = await db.select({
-    questionText: questions.question_text
-  }).from(questions).where(eq(questions.template_id, templateId));
-  let questionArray = [];
-  for (let index = 0; index < qs.length; index++) {
-    let q = qs[index];
-    questionArray.push(q.questionText);
-  }
-  return {
-    formName,
-    questionArray
-  }
+  let templateName = template[0].templateName;
+  return { formName, templateName, templateId };
+}
+
+async function getQuestionsAndCitations(formId: number) {
+  const form = await db.select({
+    templateId: forms.template_id
+  }).from(forms).where(eq(forms.id, formId));
+  return form[0].templateId;
 }
 
 async function getDocuments(formId: number) {
@@ -74,16 +68,17 @@ async function getCitations(formId: number) {
 // ============================================================================
 // main
 // ============================================================================
-
 export async function get(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
   let formId = Number(request.params.id);
   if (isNaN(formId)) { return { status: 400 }; }
 
-  let { formName, questionArray } = await getForm(formId);
+  let { formName, templateName } = await getForm(formId);
   context.log("formName:", formName);
-  context.log("questions:", questionArray);
+
+  let questionsAndCitations = await getQuestionsAndCitations(formId);
+  context.log("questions and citations:", questionsAndCitations);
 
   let docArray = await getDocuments(formId);
   context.log("doc ids:", docArray);
@@ -95,7 +90,7 @@ export async function get(request: HttpRequest, context: InvocationContext): Pro
     jsonBody: {
       formId: formId,
       formName: formName,
-      questions: questionArray,
+      templateName: templateName,
       documents: docArray,
       citations: cits
     }

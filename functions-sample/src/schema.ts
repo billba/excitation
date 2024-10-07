@@ -21,6 +21,7 @@ export const questions = pgTable('questions', {
   id: serial('id').primaryKey().notNull(),
   template_id: integer('template_id').notNull(),
   question_text: text('question_text').notNull(),
+  prefix: text('prefix'),
   creator: text('creator').notNull(),
   created_at: timestamp('created_at').notNull().defaultNow()
 });
