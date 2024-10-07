@@ -2,9 +2,9 @@ import { SerializedRange } from "./Range";
 
 export type Action =
   | {
-      type: "gotoCitation";
-      citationIndex: number;
-    }
+      type: "selectCitation";
+      citationIndex?: number;
+  }
   | {
       type: "prevQuestion";
     }

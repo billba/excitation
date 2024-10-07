@@ -1,7 +1,7 @@
 import { useAtom } from "jotai";
 import { stateAtom } from "./State";
 import { useCallback, useMemo } from "react";
-import { Action, Citation, Doc } from "./Types";
+import { Citation, Doc } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
@@ -9,6 +9,7 @@ import {
   DocumentOnePageMultipleRegular,
   DocumentOnePageAddRegular,
 } from "@fluentui/react-icons";
+import { useDispatchHandler } from "./Hooks";
 
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
@@ -87,21 +88,21 @@ export function Sidebar() {
     [docs, citations, questionIndex]
   );
 
-  const dispatch = useCallback(
-    (action: Action) => () => _dispatch(action),
-    [_dispatch]
-  );
+  const dispatch = useDispatchHandler(_dispatch);
 
   const disablePrev = questionIndex === 0;
   const disableNext = questionIndex === questions.length - 1;
 
-  const addSelection = useCallback(() => {
+  const addSelection = useCallback((event: React.MouseEvent) => {
     _dispatch({ type: "addSelection" });
     document.getSelection()?.empty();
+    event.stopPropagation();
   }, [_dispatch]);
 
+  console.log("rendering");
+
   return (
-    <div id="sidebar">
+    <div id="sidebar" onClick={dispatch({ type: "selectCitation" })}>
       <div className="sidebar-header">
         <button
           disabled={disablePrev}
@@ -118,7 +119,7 @@ export function Sidebar() {
         </button>
       </div>
       <div className="question">{questions[questionIndex]}</div>
-      <div>
+      <div id="citation-groups">
         {groupedCitations.map(({ docIndex, pageGroups }) => (
           <div id="document-group" key={docIndex}>
             <div
@@ -167,7 +168,7 @@ export function Sidebar() {
                       excerpt={excerpt}
                       review={review}
                       selected={
-                       selectedCitation?.citationIndex == citationIndex
+                        selectedCitation?.citationIndex == citationIndex
                       }
                     />
                   );
@@ -187,9 +188,9 @@ export function Sidebar() {
         {asyncState.status == "error" && (
           <div>
             &nbsp;
-            <button onClick={dispatch({ type: 'asyncRetry' })}>Retry</button>
+            <button onClick={dispatch({ type: "asyncRetry" })}>Retry</button>
             &nbsp;
-            <button onClick={dispatch({ type: 'asyncRevert' })}>Revert</button>
+            <button onClick={dispatch({ type: "asyncRevert" })}>Revert</button>
           </div>
         )}
       </div>

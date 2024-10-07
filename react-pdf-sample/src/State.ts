@@ -155,14 +155,20 @@ export const stateAtom = atom<State, [Action], void>(
             }
 
             switch (action.type) {
-              case "gotoCitation":
-                state.ux = inferUXState(
-                  citations,
-                  questionIndex,
-                  action.citationIndex,
-                  true
-                );
+              case "selectCitation": {
+                const { citationIndex } = action;
+                if (citationIndex !== undefined) {
+                  state.ux = inferUXState(
+                    citations,
+                    questionIndex,
+                    citationIndex,
+                    true
+                  );
+                } else {
+                  ux.selectedCitation = undefined;
+                }
                 break;
+              }
 
               case "prevQuestion":
                 state.ux = inferUXState(citations, questionIndex - 1);
@@ -191,9 +197,9 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "setSelectedText":
-                ux.range = action.range;
+                if (ux.range || action.range) ux.range = action.range;
                 break;
-              
+
               case "setViewerSize": {
                 const { top, left, width, height } = action;
                 state.viewer = { top, left, width, height };
@@ -210,7 +216,7 @@ export const stateAtom = atom<State, [Action], void>(
                 const { excerpt, boundingRegions } = findUserSelection(
                   pageNumber,
                   realRange!,
-                  viewer,
+                  viewer
                   // docs[docIndex].response!
                 );
                 citations[questionIndex].push({
@@ -323,8 +329,12 @@ export const stateAtom = atom<State, [Action], void>(
             }
           });
 
-    console.log("new state", newState);
-    set(_stateAtom, newState);
+    if (prevState === newState) {
+      console.log("no state change");
+    } else {
+      console.log("new state", newState);
+      set(_stateAtom, newState);
+    }
   }
 );
 

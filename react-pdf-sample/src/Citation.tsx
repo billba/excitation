@@ -1,12 +1,12 @@
 import { useSetAtom } from "jotai";
-import { Action, Review } from "./Types";
+import { Review } from "./Types";
 import { stateAtom } from "./State";
 import {
   CircleRegular,
   CheckmarkCircleFilled,
   DismissCircleFilled,
 } from "@fluentui/react-icons";
-import { useCallback } from "react";
+import { useDispatchHandler } from "./Hooks";
 
 // not selected
 //    unreviewed  CircleRegular (no hover) - grey
@@ -64,24 +64,7 @@ export const CitationUX = ({
   selected,
 }: Props) => {
   const _dispatch = useSetAtom(stateAtom);
-
-  const dispatch = useCallback(
-    (action: Action) => () => _dispatch(action),
-    [_dispatch]
-  );
-
-  const toggleReview = useCallback(
-    (target: Review, citationIndex: number) =>
-      (event: React.MouseEvent<SVGElement>) => {
-        _dispatch({
-          type: "toggleReview",
-          target,
-          citationIndex,
-        });
-        event.stopPropagation();
-      },
-    [_dispatch]
-  );
+  const dispatch = useDispatchHandler(_dispatch);
 
   const icons = (
     review == Review.Unreviewed && selected ? reviewIcons : [review]
@@ -93,7 +76,7 @@ export const CitationUX = ({
       <Icon
         key={r}
         className={className + (selected ? " large-icon" : " icon")}
-        onClick={toggleReview(r, citationIndex)}
+        onClick={dispatch({ type: "toggleReview", target: r, citationIndex })}
       />
     );
   });
@@ -102,7 +85,7 @@ export const CitationUX = ({
     <div
       className={selected ? "citation-selected" : "citation-unselected"}
       key={citationIndex}
-      onClick={dispatch({ type: "gotoCitation", citationIndex })}
+      onClick={dispatch({ type: "selectCitation", citationIndex })}
     >
       {selected ? (
         <>

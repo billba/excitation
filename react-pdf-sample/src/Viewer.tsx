@@ -32,7 +32,6 @@ export function Viewer() {
           range = calculateSerializedRange(selectionRange);
         }
       }
-      console.log("selectionchange", range);
       dispatch({
         type: "setSelectedText",
         range,
