@@ -257,25 +257,8 @@ export const returnTextPolygonsFromDI = (
   // The question exists, the reference exists, the document exists, Document Intelligence just didn't do its job
 };
 
-import { create } from "mutative";
-import { Doc, Citation } from "./Types";
 import { rangeToString } from "./Range";
 
-export function locateCitations(
-  docs: Doc[],
-  citations: Citation[][]
-): Citation[][] {
-  return citations.map((questionCitations) =>
-    questionCitations.map((citation) =>
-      create(citation, (draft) => {
-        draft.boundingRegions = returnTextPolygonsFromDI(
-          citation.excerpt,
-          docs[citation.docIndex].response!
-        );
-      })
-    )
-  );
-}
 
 export function findUserSelection(
   pageNumber: number,

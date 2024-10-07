@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { atom, useAtom } from "jotai";
 import { create } from "mutative";
 import {
-  Doc,
   Citation,
   CitationHighlight,
   UXState,
@@ -12,24 +11,39 @@ import {
   State,
   AsyncSuccessState,
   AsyncErrorState,
+  Form,
+  FormDocument,
 } from "./Types";
-import { mockCitations, mockDocs, mockQuestions } from "./Mocks";
-import { findUserSelection, locateCitations } from "./Utility";
+import { findUserSelection, returnTextPolygonsFromDI } from "./Utility";
 import { calculateRange } from "./Range";
 
-async function docsWithResponses(docs: Doc[]) {
-  return await Promise.all(
-    docs.map(async (doc) =>
-      create(doc, async (draft) => {
-        draft.response = await (await fetch(doc.filename + ".json")).json();
-      })
-    )
-  );
+const form: Form = await (await fetch("./mocks.json")).json();
+
+console.log(form);
+
+for await (const doc of form.documents) {
+  doc.response = await (await fetch(doc.filename + ".json")).json();
 }
 
-export const docs = await docsWithResponses(mockDocs); // not an atom because they never change
+form.defaultDoc = form.documents[0];
 
-const locatedCitations = locateCitations(docs, mockCitations);
+for (const question of form.questions) {
+  for (const citation of question.citations) {
+    if (!citation.boundingRegions) {
+      const doc = form.documents.find(
+        ({ documentId }) => documentId === citation.documentId
+      );
+      citation.doc = doc;
+      const { response } = doc!;
+      citation.boundingRegions = returnTextPolygonsFromDI(
+        citation.excerpt,
+        response!
+      );
+    }
+  }
+}
+
+// eventually we'll want to send any new bounding regions back to the server
 
 const citationHighlightsFor = (citation?: Citation) => {
   const boundingRegions = citation?.boundingRegions ?? [];
@@ -47,18 +61,17 @@ const citationHighlightsFor = (citation?: Citation) => {
 // when citationIndex !== undefined && keepCurrentCitation == false, we keep citationIndex if there are no unreviewed citations
 // when citationIndex !== undefined && keepCurrentCitation == true, we keep citationIndex no matter what
 function inferUXState(
-  citations: Citation[][],
+  defaultDoc: FormDocument,
   questionIndex: number,
+  citations: Citation[],
   citationIndex?: number,
   keepCurrentCitation = false
 ): UXState {
-  const questionCitations = citations[questionIndex];
-
   if (!keepCurrentCitation) {
-    if (questionCitations.length === 0) {
+    if (citations.length === 0) {
       citationIndex = undefined;
     } else {
-      const index = questionCitations.findIndex(
+      const index = citations.findIndex(
         (citation) => citation.review === Review.Unreviewed
       );
       citationIndex = index == -1 ? undefined : index;
@@ -66,42 +79,39 @@ function inferUXState(
   }
 
   let pageNumber = 1;
-  let docIndex = 0;
+  let doc = defaultDoc;
 
   if (citationIndex == undefined)
     return {
       questionIndex,
       pageNumber,
-      docIndex,
+      doc,
     };
 
-  const citation = questionCitations[citationIndex];
+  const citation = citations[citationIndex];
   const citationHighlights = citationHighlightsFor(citation);
 
   if (citationHighlights.length) {
     [pageNumber] = citationHighlights
       .map(({ pageNumber }) => pageNumber)
       .sort();
-    ({ docIndex } = citation);
+    doc = citation.doc!;
   }
 
   return {
     questionIndex,
     pageNumber,
-    docIndex,
+    doc: doc,
     selectedCitation: { citationIndex, citationHighlights },
   };
 }
 
+console.log(form);
+
 const _stateAtom = atom<State>({
-  form: {
-    title: "Sample Form",
-    docs,
-    questions: mockQuestions,
-  },
-  ux: inferUXState(locatedCitations, 0),
+  ...form,
+  ux: inferUXState(form.defaultDoc, 0, form.questions[0].citations, 0),
   asyncState: { status: "idle" },
-  citations: locatedCitations,
   viewer: { top: 0, left: 0, width: 1024, height: 768 },
 });
 
@@ -116,9 +126,8 @@ export const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-            const { citations, ux, asyncState, viewer } = state;
-            const { docIndex, pageNumber, questionIndex, selectedCitation } =
-              ux;
+            const { defaultDoc, questions, ux, asyncState, viewer } = state;
+            const { doc, pageNumber, questionIndex, selectedCitation } = ux;
 
             function gotoPage(
               gotoPageNumber: number,
@@ -159,8 +168,9 @@ export const stateAtom = atom<State, [Action], void>(
                 const { citationIndex } = action;
                 if (citationIndex !== undefined) {
                   state.ux = inferUXState(
-                    citations,
+                    defaultDoc!,
                     questionIndex,
+                    questions[questionIndex].citations,
                     citationIndex,
                     true
                   );
@@ -171,11 +181,19 @@ export const stateAtom = atom<State, [Action], void>(
               }
 
               case "prevQuestion":
-                state.ux = inferUXState(citations, questionIndex - 1);
+                state.ux = inferUXState(
+                  defaultDoc!,
+                  questionIndex - 1,
+                  questions[questionIndex - 1].citations
+                );
                 break;
 
               case "nextQuestion":
-                state.ux = inferUXState(citations, questionIndex + 1);
+                state.ux = inferUXState(
+                  defaultDoc!,
+                  questionIndex + 1,
+                  questions[questionIndex + 1].citations
+                );
                 break;
 
               case "prevPage":
@@ -191,9 +209,9 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "gotoDoc":
-                console.assert(docIndex != action.docIndex);
-                ux.docIndex = action.docIndex;
-                gotoPage((ux.pageNumber = 1), true);
+                console.assert(doc != action.doc);
+                ux.doc = action.doc;
+                gotoPage(1, true);
                 break;
 
               case "setSelectedText":
@@ -219,8 +237,10 @@ export const stateAtom = atom<State, [Action], void>(
                   viewer
                   // docs[docIndex].response!
                 );
-                citations[questionIndex].push({
-                  docIndex,
+                questions[questionIndex].citations.push({
+                  documentId: doc.documentId,
+                  doc,
+                  citationId: "foobar",
                   boundingRegions,
                   excerpt,
                   review: Review.Approved,
@@ -230,7 +250,7 @@ export const stateAtom = atom<State, [Action], void>(
                   event: {
                     type: "mockEvent",
                     delay: 0,
-                    // delay: 5000,
+                    // delay: 3000,
                     // error: {
                     //   count: 2,
                     //   description: "dang",
@@ -246,10 +266,12 @@ export const stateAtom = atom<State, [Action], void>(
 
               case "errorAddSelection": {
                 const { questionIndex } = action;
+                const { citations } = questions[questionIndex];
                 state.ux = inferUXState(
-                  citations,
+                  defaultDoc!,
                   questionIndex,
-                  citations[questionIndex].length - 1,
+                  citations,
+                  citations.length - 1,
                   true
                 );
                 break;
@@ -258,8 +280,8 @@ export const stateAtom = atom<State, [Action], void>(
               case "toggleReview": {
                 console.assert(asyncState.status === "idle");
 
-                const targetCitation =
-                  citations[questionIndex][action.citationIndex];
+                const { citations } = questions[questionIndex];
+                const targetCitation = citations[action.citationIndex];
                 targetCitation.review =
                   targetCitation.review == action.target
                     ? Review.Unreviewed
@@ -269,8 +291,9 @@ export const stateAtom = atom<State, [Action], void>(
                   // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
                   if (targetCitation.review! != Review.Unreviewed) {
                     state.ux = inferUXState(
-                      citations,
+                      defaultDoc!,
                       questionIndex,
+                      citations,
                       action.citationIndex
                     );
                   }

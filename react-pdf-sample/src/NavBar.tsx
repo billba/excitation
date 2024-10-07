@@ -1,23 +1,21 @@
 import { useAtom } from "jotai";
-import { Action } from "./Types";
 import { stateAtom } from "./State";
-import { useCallback } from "react";
+import { useDispatchHandler } from "./Hooks";
 
 export const NavBar = () => {
   const [state, _dispatch] = useAtom(stateAtom);
-  const { form: { docs }, ux } = state
-  const { docIndex, pageNumber, newCitation } = ux;
+  const { ux } = state;
+  const { pageNumber, selectedCitation, doc: document } = ux;
+  const { filename, friendlyname, pages } = document;
 
-  const dispatch = useCallback(
-    (action: Action) => () => _dispatch(action),
-    [_dispatch]
-  );
+  const dispatch = useDispatchHandler(_dispatch);
 
-  const pages = docs[docIndex].pages;
   const pageNumbers =
-    newCitation || ux.citationIndex == undefined
+    selectedCitation == undefined
       ? []
-      : ux.citationHighlights.map(({ pageNumber }) => pageNumber).sort();
+      : selectedCitation.citationHighlights
+          .map(({ pageNumber }) => pageNumber)
+          .sort();
 
   const disablePrev = pageNumber === 1;
   const disableNext = pageNumber === pages - 1;
@@ -27,7 +25,7 @@ export const NavBar = () => {
 
   return (
     <div id="navbar">
-      <div className="navbar-filename">{docs[docIndex].friendlyname ?? docs[docIndex].filename}</div>
+      <div className="navbar-filename">{friendlyname ?? filename}</div>
       <div className="navbar-page">
         <div className="navbar-column">
           <span
@@ -66,9 +64,8 @@ export const NavBar = () => {
           >
             Citation continues on next page
           </span>
-          {!newCitation &&
-            ux.citationIndex !== undefined &&
-            ux.citationHighlights.length == 0 && (
+          {selectedCitation &&
+            selectedCitation.citationHighlights.length == 0 && (
               <span className="selected">Unable to locate citation</span>
             )}
         </div>

@@ -23,7 +23,7 @@ export type Action =
     }
   | {
       type: "gotoDoc";
-      docIndex: number;
+      doc: FormDocument;
     }
   | {
       type: "setSelectedText";
@@ -112,7 +112,7 @@ export interface CitationHighlight {
 
 export interface UXState {
   questionIndex: number;
-  docIndex: number;
+  doc: FormDocument;
   pageNumber: number;
   range?: SerializedRange;
   selectedCitation?: {
@@ -127,18 +127,27 @@ export enum Review {
   Rejected,
 }
 
-export interface Doc {
+export interface FormDocument {
   filename: string;
   friendlyname?: string;
   pages: number;
+  documentId: number;
   response?: DocumentIntelligenceResponse;
 }
 
 export interface Citation {
   excerpt: string;
-  docIndex: number;
+  documentId: number;
+  doc?: FormDocument;
   review: Review;
+  citationId: string;
   boundingRegions?: BoundingRegion[];
+}
+
+export interface Question {
+  prefix?: string;
+  text: string;
+  citations: Citation[];
 }
 
 export interface DocumentIntelligenceResponse {
@@ -155,13 +164,20 @@ export interface ViewerState {
   height: number;
 }
 
-export interface State {
-  form: {
-    title: string;
-    docs: Doc[];
-    questions: string[];
-  };
-  citations: Citation[][];
+export interface FormMetadata {
+  templateName: string,
+  formName: string;
+  formId: number,
+}
+
+export interface Form {
+  metadata: FormMetadata;
+  documents: FormDocument[];
+  questions: Question[];
+  defaultDoc?: FormDocument;
+}
+
+export interface State extends Form {
   ux: UXState;
   asyncState: AsyncState;
   viewer: ViewerState;

@@ -1,13 +1,15 @@
 import { useAtom } from "jotai";
 import { stateAtom } from "./State";
 import { useCallback, useMemo } from "react";
-import { Citation, Doc } from "./Types";
+import { Citation, FormDocument } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
   DocumentOnePageRegular,
   DocumentOnePageMultipleRegular,
   DocumentOnePageAddRegular,
+  TriangleLeftFilled,
+  TriangleRightFilled,
 } from "@fluentui/react-icons";
 import { useDispatchHandler } from "./Hooks";
 
@@ -28,15 +30,15 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
   return review * 1000 + citationIndex;
 };
 
-const groupCitations = (docs: Doc[], questionCitations: Citation[]) =>
-  docs.map((_, docIndex) => ({
-    docIndex,
-    pageGroups: questionCitations
+const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
+  docs.map((doc) => ({
+    document: doc,
+    pageGroups: citations
       .map<[Citation, number[]]>((citation, citationIndex) => [
         citation,
         [citationIndex],
       ])
-      .filter(([citation]) => citation.docIndex === docIndex)
+      .filter(([citation]) => citation.doc === doc)
       .map(([citation, citationIndices]) => {
         const pageNumbers = (
           citation.boundingRegions ?? [{ pageNumber: unlocatedPage }]
@@ -66,8 +68,8 @@ const groupCitations = (docs: Doc[], questionCitations: Citation[]) =>
         lastPage,
         citationIndices: citationIndices.sort(
           (a, b) =>
-            sortCitation(questionCitations, a) -
-            sortCitation(questionCitations, b)
+            sortCitation(citations, a) -
+            sortCitation(citations, b)
         ),
       }))
       .sort((a, b) => sortIndex(a) - sortIndex(b)),
@@ -76,16 +78,17 @@ const groupCitations = (docs: Doc[], questionCitations: Citation[]) =>
 export function Sidebar() {
   const [state, _dispatch] = useAtom(stateAtom);
   const {
-    form: { docs, questions },
-    citations,
+    documents,
+    questions,
     ux,
     asyncState,
   } = state;
   const { questionIndex, selectedCitation } = ux;
+  const { prefix, text } = questions[questionIndex];
 
   const groupedCitations = useMemo(
-    () => groupCitations(docs, citations[questionIndex]),
-    [docs, citations, questionIndex]
+    () => groupCitations(documents, questions[questionIndex].citations),
+    [documents, questions, questionIndex]
   );
 
   const dispatch = useDispatchHandler(_dispatch);
@@ -93,45 +96,46 @@ export function Sidebar() {
   const disablePrev = questionIndex === 0;
   const disableNext = questionIndex === questions.length - 1;
 
-  const addSelection = useCallback((event: React.MouseEvent) => {
-    _dispatch({ type: "addSelection" });
-    document.getSelection()?.empty();
-    event.stopPropagation();
-  }, [_dispatch]);
+  const addSelection = useCallback(
+    (event: React.MouseEvent) => {
+      _dispatch({ type: "addSelection" });
+      document.getSelection()?.empty();
+      event.stopPropagation();
+    },
+    [_dispatch]
+  );
 
   console.log("rendering");
 
   return (
     <div id="sidebar" onClick={dispatch({ type: "selectCitation" })}>
       <div className="sidebar-header">
-        <button
-          disabled={disablePrev}
-          onClick={dispatch({ type: "prevQuestion" })}
-        >
-          &lt;
-        </button>
-        <div className="q-number">Question #{questionIndex + 1}</div>
-        <button
-          disabled={disableNext}
-          onClick={dispatch({ type: "nextQuestion" })}
-        >
-          &gt;
-        </button>
+        <TriangleLeftFilled
+          className={disablePrev ? "question-nav-disabled" : "question-nav"}
+          onClick={disablePrev ? undefined : dispatch({ type: "prevQuestion" })}
+        />
+        <div className="question">
+          <span className="question-prefix">{prefix ? <>{prefix}. </> : null}</span>
+          <span className="question-text">{text}</span>
+        </div>
+        <TriangleRightFilled
+          className={disableNext ? "question-nav-disabled" : "question-nav"}
+          onClick={disableNext ? undefined : dispatch({ type: "nextQuestion" })}
+        />
       </div>
-      <div className="question">{questions[questionIndex]}</div>
       <div id="citation-groups">
-        {groupedCitations.map(({ docIndex, pageGroups }) => (
-          <div id="document-group" key={docIndex}>
+        {groupedCitations.map(({ document, pageGroups }) => (
+          <div id="document-group" key={document.documentId}>
             <div
               className="doc-header"
               onClick={
-                docIndex == ux.docIndex
+                document == ux.doc
                   ? undefined
-                  : dispatch({ type: "gotoDoc", docIndex })
+                  : dispatch({ type: "gotoDoc", doc: document })
               }
             >
               <DocumentRegular className="icon" />
-              {docs[docIndex].friendlyname ?? docs[docIndex].filename}
+              {document.friendlyname ?? document.filename}
             </div>
             {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
               <div
@@ -160,7 +164,7 @@ export function Sidebar() {
                 </div>
                 {citationIndices.map((citationIndex) => {
                   const { excerpt, review } =
-                    citations[questionIndex][citationIndex];
+                    questions[questionIndex].citations[citationIndex];
                   return (
                     <CitationUX
                       key={citationIndex}

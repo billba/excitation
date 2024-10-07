@@ -106,31 +106,47 @@ button:focus-visible {
 #sidebar {
   display: flex;
   flex-direction: column;
-  padding: 40px;
+  padding: 20px;
   border-right: skyblue solid 4px;
   background-color: aliceblue;
 }
 
 .sidebar-header {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.q-number {
-  font-weight: bold;
-  font-size: larger;
+  display: grid;
+  grid-template-columns: auto auto auto;
+  user-select: none;
 }
 
 .question {
-  margin-top: 40px;
-  margin-bottom: 20px;
+  font-size: larger;
 }
 
-.citation-header {
-  /* align-self: flex-start;
-  font-weight: 500; */
+.question-prefix {
+  font-weight: bold;
+}
+
+.question-text {
+  font-style: italic;
+}
+
+.question-nav {
+  color: steelblue;
+  font-size: 36pt;
+  vertical-align: top;
+  :hover {
+    color: black;
+    cursor: pointer;
+  }
+}
+
+.question-nav-disabled {
+  vertical-align: top;
+  color: grey;
+  font-size: 36pt;
+}
+
+#citation-groups {
+  margin-top: 10px;
 }
 
 .citation-unselected {

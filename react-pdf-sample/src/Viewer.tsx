@@ -13,11 +13,10 @@ import {
 export function Viewer() {
   const [state, dispatch] = useAtom(stateAtom);
   const {
-    form: { docs },
     ux,
   } = state;
-  const { docIndex, pageNumber, range, selectedCitation } = ux;
-  const { filename } = docs[docIndex];
+  const { doc, pageNumber, range, selectedCitation } = ux;
+  const { filename } = doc;
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
