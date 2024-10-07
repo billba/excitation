@@ -21,6 +21,7 @@ CREATE TABLE questions (
   id SERIAL PRIMARY KEY,
   template_id INTEGER NOT NULL,
   question_text TEXT NOT NULL,
+  prefix TEXT,
   creator TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
