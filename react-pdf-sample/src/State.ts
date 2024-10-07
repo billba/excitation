@@ -197,7 +197,7 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "setSelectedText":
-                if (ux.range || action.range) ux.range = action.range;
+                ux.range = action.range;
                 break;
 
               case "setViewerSize": {
