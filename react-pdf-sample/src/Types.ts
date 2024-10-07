@@ -30,6 +30,13 @@ export type Action =
       range?: SerializedRange;
     }
   | {
+      type: "setViewerSize";
+      top: number;
+      left: number;
+      width: number;
+      height: number;
+    }
+  | {
       type: "addSelection";
     }
   | {
@@ -111,7 +118,7 @@ export interface UXState {
   selectedCitation?: {
     citationIndex: number;
     citationHighlights: CitationHighlight[];
-  }
+  };
 }
 
 export enum Review {
@@ -141,6 +148,13 @@ export interface DocumentIntelligenceResponse {
   analyzeResult: AnalyzeResult;
 }
 
+export interface ViewerState {
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+}
+
 export interface State {
   form: {
     title: string;
@@ -150,6 +164,7 @@ export interface State {
   citations: Citation[][];
   ux: UXState;
   asyncState: AsyncState;
+  viewer: ViewerState;
 }
 
 interface AnalyzeResult {

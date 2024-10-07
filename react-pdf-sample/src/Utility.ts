@@ -1,4 +1,8 @@
-import { BoundingRegion, DocumentIntelligenceResponse } from "./Types";
+import {
+  BoundingRegion,
+  DocumentIntelligenceResponse,
+  ViewerState,
+} from "./Types";
 
 // Rounds a number to the given precision
 const round = (value: number, precision = 0) => {
@@ -109,37 +113,37 @@ export const drawPolygon = (
 
 // Match a subline to a line if at least 75% of its words/word fragments
 // are found in the line, used for creating a reference from selection.
-const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
-  const words = subline.split(" ");
-  let wordsMatched = 0;
+// const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
+//   const words = subline.split(" ");
+//   let wordsMatched = 0;
 
-  for (let i = 0; i < words.length; i++) {
-    if (line.includes(words[i])) wordsMatched++;
-  }
+//   for (let i = 0; i < words.length; i++) {
+//     if (line.includes(words[i])) wordsMatched++;
+//   }
 
-  const matchRate = wordsMatched / words.length;
-  if (matchRate >= threshold) {
-    console.log(
-      "matched DocInt line:\t",
-      line,
-      "\nto OCR subline:\t\t",
-      subline,
-      "\nwith match rate:",
-      matchRate
-    );
-    return true;
-  }
-  if (matchRate > 0.4) {
-    console.log(
-      "did not match DocInt line:\t",
-      line,
-      "\nto OCR subline:\t\t",
-      subline,
-      "\nwith match rate:",
-      matchRate
-    );
-  } else return false;
-};
+//   const matchRate = wordsMatched / words.length;
+//   if (matchRate >= threshold) {
+//     console.log(
+//       "matched DocInt line:\t",
+//       line,
+//       "\nto OCR subline:\t\t",
+//       subline,
+//       "\nwith match rate:",
+//       matchRate
+//     );
+//     return true;
+//   }
+//   if (matchRate > 0.4) {
+//     console.log(
+//       "did not match DocInt line:\t",
+//       line,
+//       "\nto OCR subline:\t\t",
+//       subline,
+//       "\nwith match rate:",
+//       matchRate
+//     );
+//   } else return false;
+// };
 
 // Simple matching
 // special cases:
@@ -148,34 +152,31 @@ const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
 //  - strip trailing semicolons
 //  - strip dollar signs
 //  - strip leading quotes
-const match = (
-  str0: string,
-  str1: string
-) => {
+const match = (str0: string, str1: string) => {
   // lower case
   str0 = str0.toLocaleLowerCase();
   str1 = str1.toLocaleLowerCase();
 
   // Strip trailing periods
-  if (str0.slice(-1) == '.') str0 = str0.slice(0, -1);
-  if (str1.slice(-1) == '.') str1 = str1.slice(0, -1);
+  if (str0.slice(-1) == ".") str0 = str0.slice(0, -1);
+  if (str1.slice(-1) == ".") str1 = str1.slice(0, -1);
 
   // Strip trailing semicolons
-  if (str0.slice(-1) == ';') str0 = str0.slice(0, -1);
-  if (str1.slice(-1) == ';') str1 = str1.slice(0, -1);
+  if (str0.slice(-1) == ";") str0 = str0.slice(0, -1);
+  if (str1.slice(-1) == ";") str1 = str1.slice(0, -1);
 
   // strip dollar signs
-  if (str0.slice(0,1) == '$') str0 = str0.slice(1);
-  if (str1.slice(0,1) == '$') str1 = str1.slice(1);
+  if (str0.slice(0, 1) == "$") str0 = str0.slice(1);
+  if (str1.slice(0, 1) == "$") str1 = str1.slice(1);
 
   // strip leading quotes
-  if (str0.slice(0,1) == '"') str0 = str0.slice(1);
-  if (str1.slice(0,1) == '"') str1 = str1.slice(1);
+  if (str0.slice(0, 1) == '"') str0 = str0.slice(1);
+  if (str1.slice(0, 1) == '"') str1 = str1.slice(1);
 
   if (str0 === str1) return true;
 
   return false;
-}
+};
 
 // Given a docint response and reference text (array of words), find
 // the relevant BoundingRegions (per-word)
@@ -196,7 +197,7 @@ const findBoundingRegions = (
         textIndex++;
         boundingRegions.push({
           pageNumber: pageIndex + 1,
-          polygon: word.polygon
+          polygon: word.polygon,
         });
         if (textIndex == text.length) return boundingRegions;
       } else {
@@ -211,33 +212,33 @@ const findBoundingRegions = (
     }
   }
   return boundingRegions;
-}
-
-const findTextBoundingRegions = (
-  text: string[],
-  response: DocumentIntelligenceResponse
-) => {
-  let nextLine = 0;
-
-  const pages = response.analyzeResult.pages;
-  const boundingRegions: BoundingRegion[] = [];
-
-  for (let i = 0; i < pages.length; i++) {
-    const pageLines = pages[i].lines;
-    for (let j = 0; j < pageLines.length; j++) {
-      if (fuzzyMatch(pageLines[j].content, text[nextLine])) {
-        boundingRegions.push({
-          pageNumber: i + 1,
-          polygon: pageLines[j].polygon,
-        });
-        nextLine++;
-        if (nextLine == text.length) return boundingRegions;
-      }
-    }
-  }
-  console.log("Failed to find all lines in document");
-  return boundingRegions;
 };
+
+// const findTextBoundingRegions = (
+//   text: string[],
+//   response: DocumentIntelligenceResponse
+// ) => {
+//   let nextLine = 0;
+
+//   const pages = response.analyzeResult.pages;
+//   const boundingRegions: BoundingRegion[] = [];
+
+//   for (let i = 0; i < pages.length; i++) {
+//     const pageLines = pages[i].lines;
+//     for (let j = 0; j < pageLines.length; j++) {
+//       if (fuzzyMatch(pageLines[j].content, text[nextLine])) {
+//         boundingRegions.push({
+//           pageNumber: i + 1,
+//           polygon: pageLines[j].polygon,
+//         });
+//         nextLine++;
+//         if (nextLine == text.length) return boundingRegions;
+//       }
+//     }
+//   }
+//   console.log("Failed to find all lines in document");
+//   return boundingRegions;
+// };
 
 export const returnTextPolygonsFromDI = (
   text: string,
@@ -258,6 +259,7 @@ export const returnTextPolygonsFromDI = (
 
 import { create } from "mutative";
 import { Doc, Citation } from "./Types";
+import { rangeToString } from "./Range";
 
 export function locateCitations(
   docs: Doc[],
@@ -273,4 +275,32 @@ export function locateCitations(
       })
     )
   );
+}
+
+export function findUserSelection(
+  pageNumber: number,
+  range: Range,
+  viewer: ViewerState
+  // response: DocumentIntelligenceResponse
+) {
+  const excerpt = rangeToString(range);
+  let { top, left, bottom, right } = range.getBoundingClientRect();
+  const multiplier = 144 / (window.devicePixelRatio || 1);
+
+  const dx = viewer.left - window.scrollX;
+  const dy = viewer.top - window.scrollY;
+
+  top = (top - dy) / multiplier;
+  bottom = (bottom - dy) / multiplier;
+  left = (left - dx) / multiplier;
+  right = (right - dx) / multiplier;
+
+  const boundingRegions = [
+    {
+      pageNumber,
+      polygon: [left, top, right, top, right, bottom, left, bottom],
+    },
+  ];
+
+  return { excerpt, boundingRegions };
 }

@@ -90,18 +90,22 @@ export function Viewer() {
 
     const rect = canvas.getBoundingClientRect();
 
-    highlightCanvas.style.top = rect.top + window.scrollY + "px";
-    highlightCanvas.style.left = rect.left + window.scrollX + "px";
+    const { top, left, width, height } = rect;
+
+    highlightCanvas.style.top = top + window.scrollY + "px";
+    highlightCanvas.style.left = left + window.scrollX + "px";
     highlightCanvas.style.width = rect.width + "px";
     highlightCanvas.style.height = rect.height + "px";
-
+    
     highlightCanvas.width = canvas.width;
     highlightCanvas.height = canvas.height;
-
+    
+    dispatch({ type: 'setViewerSize', top, left, width, height });
+    
     const context = highlightCanvas.getContext("2d")!;
-
+    
     context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    // context.fillStyle = "red";
+    // context.fillStyle = "yellow";
     context.strokeStyle = "blue";
     context.lineWidth = 4;
 
@@ -117,6 +121,7 @@ export function Viewer() {
       context.stroke();
     }
   }, [
+    dispatch,
     canvasRef,
     highlightCanvasRef,
     polygons,

@@ -14,8 +14,8 @@ import {
   AsyncErrorState,
 } from "./Types";
 import { mockCitations, mockDocs, mockQuestions } from "./Mocks";
-import { locateCitations, returnTextPolygonsFromDI } from "./Utility";
-import { calculateRange, rangeToString } from "./Range";
+import { findUserSelection, locateCitations } from "./Utility";
+import { calculateRange } from "./Range";
 
 async function docsWithResponses(docs: Doc[]) {
   return await Promise.all(
@@ -102,6 +102,7 @@ const _stateAtom = atom<State>({
   ux: inferUXState(locatedCitations, 0),
   asyncState: { status: "idle" },
   citations: locatedCitations,
+  viewer: { top: 0, left: 0, width: 1024, height: 768 },
 });
 
 export const stateAtom = atom<State, [Action], void>(
@@ -115,10 +116,9 @@ export const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-            const { form, citations, ux, asyncState } = state;
+            const { citations, ux, asyncState, viewer } = state;
             const { docIndex, pageNumber, questionIndex, selectedCitation } =
               ux;
-            const { docs } = form;
 
             function gotoPage(
               gotoPageNumber: number,
@@ -193,6 +193,12 @@ export const stateAtom = atom<State, [Action], void>(
               case "setSelectedText":
                 ux.range = action.range;
                 break;
+              
+              case "setViewerSize": {
+                const { top, left, width, height } = action;
+                state.viewer = { top, left, width, height };
+                break;
+              }
 
               case "addSelection": {
                 console.assert(asyncState.status == "idle");
@@ -200,14 +206,16 @@ export const stateAtom = atom<State, [Action], void>(
                 console.assert(range !== undefined);
                 const realRange = calculateRange(range);
                 console.assert(realRange !== undefined);
-                const excerpt = rangeToString(realRange!);
 
+                const { excerpt, boundingRegions } = findUserSelection(
+                  pageNumber,
+                  realRange!,
+                  viewer,
+                  // docs[docIndex].response!
+                );
                 citations[questionIndex].push({
                   docIndex,
-                  boundingRegions: returnTextPolygonsFromDI(
-                    excerpt,
-                    docs[docIndex].response!
-                  ),
+                  boundingRegions,
                   excerpt,
                   review: Review.Approved,
                 });
