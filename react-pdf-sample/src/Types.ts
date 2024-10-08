@@ -1,4 +1,5 @@
 import { SerializedRange } from "./Range";
+import { Bounds, DocumentIntelligenceResponse } from "./Utility";
 
 export type Action =
   | {
@@ -125,8 +126,9 @@ export enum Review {
 }
 
 export interface FormDocument {
-  filename: string;
-  friendlyname?: string;
+  diUrl: string;
+  name?: string;
+  pdfUrl: string;
   pages: number;
   documentId: number;
   response?: DocumentIntelligenceResponse;
@@ -138,7 +140,7 @@ export interface Citation {
   doc?: FormDocument;
   review: Review;
   citationId: string;
-  boundingRegions?: BoundingRegion[];
+  bounds?: Bounds[];
 }
 
 export interface Question {
@@ -147,12 +149,6 @@ export interface Question {
   citations: Citation[];
 }
 
-export interface DocumentIntelligenceResponse {
-  status: string;
-  createdDateTime: string;
-  lastUpdatedDateTime: string;
-  analyzeResult: AnalyzeResult;
-}
 
 export interface ViewerState {
   top: number;
@@ -180,115 +176,6 @@ export interface State extends Form {
   viewer: ViewerState;
 }
 
-interface AnalyzeResult {
-  apiVersion: string;
-  modelId: string;
-  stringIndexType: string;
-  content: string;
-  pages: Page[];
-  tables: Table[];
-  paragraphs: Paragraph[];
-  styles: Style[];
-  contentFormat: string;
-  sections: Section[];
-  figures: Figure[];
-}
-
-interface Figure {
-  id: string;
-  boundingRegions: BoundingRegion[];
-  spans: Span[];
-  elements: string[];
-  caption: Caption;
-}
-
-interface Section {
-  spans: Span[];
-  elements: string[];
-}
-
-interface Style {
-  confidence: number;
-  spans: Span[];
-  isHandwritten: boolean;
-}
-
-interface Paragraph {
-  spans: Span[];
-  boundingRegions: BoundingRegion[];
-  role?: string;
-  content: string;
-}
-
-interface Table {
-  rowCount: number;
-  columnCount: number;
-  cells: Cell[];
-  boundingRegions: BoundingRegion[];
-  spans: Span[];
-  caption: Caption;
-}
-
-interface Caption {
-  content: string;
-  boundingRegions: BoundingRegion[];
-  spans: Span[];
-  elements: string[];
-}
-
-interface Cell {
-  rowIndex: number;
-  columnIndex: number;
-  content: string;
-  boundingRegions: BoundingRegion[];
-  spans: (Span | Span)[];
-  elements?: string[];
-  columnSpan?: number;
-  kind?: string;
-}
-
-export interface BoundingRegion {
-  pageNumber: number;
-  polygon: number[];
-}
-
-interface Page {
-  pageNumber: number;
-  angle: number;
-  width: number;
-  height: number;
-  unit: string;
-  words: Word[];
-  lines: Line[];
-  spans: Span[];
-  selectionMarks?: SelectionMark[];
-}
-
-interface SelectionMark {
-  state: string;
-  polygon: number[];
-  confidence: number;
-  span: Span;
-}
-
-interface Line {
-  content: string;
-  polygon: number[];
-  spans: Span[];
-}
-
-interface Word {
-  content: string;
-  polygon: number[];
-  confidence: number;
-  span: Span;
-}
-
-interface Span {
-  offset: number;
-  length: number;
-}
-
 export type Event =
   | {
       type: "mockEvent";
@@ -304,7 +191,7 @@ export type Event =
       questionId: number;
       documentId: number;
       excerpt: string;
-      bounds: BoundingRegion[];
+      bounds: Bounds[];
       review: Review;
       creator: string;
     }
@@ -317,6 +204,6 @@ export type Event =
   | {
       type: "updateBounds";
       citationId: number;
-      bounds: BoundingRegion[];
+      bounds: Bounds[];
       creator: string;
     };

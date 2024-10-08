@@ -1,8 +1,122 @@
 import {
-  BoundingRegion,
-  DocumentIntelligenceResponse,
   ViewerState,
 } from "./Types";
+
+export interface DocumentIntelligenceResponse {
+  status: string;
+  createdDateTime: string;
+  lastUpdatedDateTime: string;
+  analyzeResult: AnalyzeResult;
+}
+
+interface AnalyzeResult {
+  apiVersion: string;
+  modelId: string;
+  stringIndexType: string;
+  content: string;
+  pages: Page[];
+  tables: Table[];
+  paragraphs: Paragraph[];
+  styles: Style[];
+  contentFormat: string;
+  sections: Section[];
+  figures: Figure[];
+}
+
+interface Figure {
+  id: string;
+  boundingRegions: Bounds[];
+  spans: Span[];
+  elements: string[];
+  caption: Caption;
+}
+
+interface Section {
+  spans: Span[];
+  elements: string[];
+}
+
+interface Style {
+  confidence: number;
+  spans: Span[];
+  isHandwritten: boolean;
+}
+
+interface Paragraph {
+  spans: Span[];
+  boundingRegions: Bounds[];
+  role?: string;
+  content: string;
+}
+
+interface Table {
+  rowCount: number;
+  columnCount: number;
+  cells: Cell[];
+  boundingRegions: Bounds[];
+  spans: Span[];
+  caption: Caption;
+}
+
+interface Caption {
+  content: string;
+  boundingRegions: Bounds[];
+  spans: Span[];
+  elements: string[];
+}
+
+interface Cell {
+  rowIndex: number;
+  columnIndex: number;
+  content: string;
+  boundingRegions: Bounds[];
+  spans: (Span | Span)[];
+  elements?: string[];
+  columnSpan?: number;
+  kind?: string;
+}
+
+export interface Bounds {
+  pageNumber: number;
+  polygon: number[];
+}
+
+interface Page {
+  pageNumber: number;
+  angle: number;
+  width: number;
+  height: number;
+  unit: string;
+  words: Word[];
+  lines: Line[];
+  spans: Span[];
+  selectionMarks?: SelectionMark[];
+}
+
+interface SelectionMark {
+  state: string;
+  polygon: number[];
+  confidence: number;
+  span: Span;
+}
+
+interface Line {
+  content: string;
+  polygon: number[];
+  spans: Span[];
+}
+
+interface Word {
+  content: string;
+  polygon: number[];
+  confidence: number;
+  span: Span;
+}
+
+interface Span {
+  offset: number;
+  length: number;
+}
 
 // Rounds a number to the given precision
 const round = (value: number, precision = 0) => {
@@ -52,10 +166,10 @@ const squareUp = (poly: number[]) => {
 
 // return the given boundingRegions combined into the minimum possible
 // number of boundingRegions
-export const condenseRegions = (boundingRegions: BoundingRegion[]) => {
+export const condenseRegions = (boundingRegions: Bounds[]) => {
   if (boundingRegions.length === 0) return boundingRegions;
 
-  const condensedRegions: BoundingRegion[] = [
+  const condensedRegions: Bounds[] = [
     {
       pageNumber: boundingRegions[0].pageNumber,
       polygon: squareUp(boundingRegions[0].polygon),
@@ -185,7 +299,7 @@ const findBoundingRegions = (
   response: DocumentIntelligenceResponse
 ) => {
   const pages = response.analyzeResult.pages;
-  let boundingRegions: BoundingRegion[] = [];
+  let boundingRegions: Bounds[] = [];
 
   let textIndex = 0;
 
@@ -206,7 +320,7 @@ const findBoundingRegions = (
           // some part of the sentence, reset to the beginning and
           // clear stored region data
           textIndex = 0;
-          boundingRegions = [] as BoundingRegion[];
+          boundingRegions = [] as Bounds[];
         }
       }
     }
@@ -246,13 +360,13 @@ export const returnTextPolygonsFromDI = (
 ) => {
   const words = text.split(/\s+/); // split on all space characters
   const foundBoundingRegions = findBoundingRegions(words, response);
-  const boundingRegions = condenseRegions(foundBoundingRegions);
-  if (boundingRegions.length === 0) {
+  const bounds = condenseRegions(foundBoundingRegions);
+  if (bounds.length === 0) {
     console.log("NO MATCH:", words);
     return;
   }
   console.log("MATCH:", words);
-  return boundingRegions;
+  return bounds;
   // what happens if we don't find any bounding regions?
   // The question exists, the reference exists, the document exists, Document Intelligence just didn't do its job
 };
@@ -278,12 +392,12 @@ export function findUserSelection(
   left = (left - dx) / multiplier;
   right = (right - dx) / multiplier;
 
-  const boundingRegions = [
+  const bounds = [
     {
       pageNumber,
       polygon: [left, top, right, top, right, bottom, left, bottom],
     },
   ];
 
-  return { excerpt, boundingRegions };
+  return { excerpt, bounds };
 }

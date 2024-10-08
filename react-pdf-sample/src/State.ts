@@ -22,20 +22,20 @@ const form: Form = await (await fetch("./mocks.json")).json();
 console.log(form);
 
 for await (const doc of form.documents) {
-  doc.response = await (await fetch(doc.filename + ".json")).json();
+  doc.response = await (await fetch(doc.diUrl)).json();
 }
 
 form.defaultDoc = form.documents[0];
 
 for (const question of form.questions) {
   for (const citation of question.citations) {
-    if (!citation.boundingRegions) {
+    if (!citation.bounds) {
       const doc = form.documents.find(
         ({ documentId }) => documentId === citation.documentId
       );
       citation.doc = doc;
       const { response } = doc!;
-      citation.boundingRegions = returnTextPolygonsFromDI(
+      citation.bounds = returnTextPolygonsFromDI(
         citation.excerpt,
         response!
       );
@@ -43,17 +43,19 @@ for (const question of form.questions) {
   }
 }
 
+console.log(form);
+
 // eventually we'll want to send any new bounding regions back to the server
 
 const citationHighlightsFor = (citation?: Citation) => {
-  const boundingRegions = citation?.boundingRegions ?? [];
+  const bounds = citation?.bounds ?? [];
 
   return [
-    ...new Set(boundingRegions.map(({ pageNumber }) => pageNumber)),
+    ...new Set(bounds.map(({ pageNumber }) => pageNumber)),
   ].map<CitationHighlight>((pageNumber) => ({
     pageNumber,
-    polygons: boundingRegions
-      .filter((boundingRegion) => boundingRegion.pageNumber === pageNumber)
+    polygons: bounds
+      .filter((bounds) => bounds.pageNumber === pageNumber)
       .map(({ polygon }) => polygon),
   }));
 };
@@ -226,7 +228,7 @@ export const stateAtom = atom<State, [Action], void>(
                 const realRange = calculateRange(range);
                 console.assert(realRange !== undefined);
 
-                const { excerpt, boundingRegions } = findUserSelection(
+                const { excerpt, bounds } = findUserSelection(
                   pageNumber,
                   realRange!,
                   viewer
@@ -236,7 +238,7 @@ export const stateAtom = atom<State, [Action], void>(
                   documentId: doc.documentId,
                   doc,
                   citationId: "foobar",
-                  boundingRegions,
+                  bounds,
                   excerpt,
                   review: Review.Approved,
                 });

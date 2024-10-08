@@ -6,7 +6,7 @@ export const NavBar = () => {
   const [state, _dispatch] = useAtom(stateAtom);
   const { ux } = state;
   const { pageNumber, selectedCitation, doc: document } = ux;
-  const { filename, friendlyname, pages } = document;
+  const { name, pdfUrl, pages } = document;
 
   const dispatch = useDispatchHandler(_dispatch);
 
@@ -25,7 +25,7 @@ export const NavBar = () => {
 
   return (
     <div id="navbar">
-      <div className="navbar-filename">{friendlyname ?? filename}</div>
+      <div className="navbar-filename">{name ?? pdfUrl}</div>
       <div className="navbar-page">
         <div className="navbar-column">
           <span

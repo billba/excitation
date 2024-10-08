@@ -3,13 +3,15 @@
   "formName": "Microsoft FY24Q3 Earnings",
   "documents": [
     {
-      "filename": "./PressReleaseFY24Q3.pdf",
-      "friendlyname": "Microsoft Press Release FY24Q3",
+      "pdfUrl": "./PressReleaseFY24Q3.pdf",
+      "name": "Microsoft Press Release FY24Q3",
+      "diUrl": "./PressReleaseFY24Q3.pdf.json",
       "documentId": 13
     },
     {
-      "filename": "./Microsoft 10Q FY24Q3 1.pdf",
-      "friendlyname": "Microsoft Form 10Q FY24Q3",
+      "pdfUrl": "./Microsoft 10Q FY24Q3 1.pdf",
+      "name": "Microsoft Form 10Q FY24Q3",
+      "diUrl": "./Microsoft 10Q FY24Q3 1.pdf.json",
       "documentId": 1967
     }
   ],

@@ -16,7 +16,7 @@ export function Viewer() {
     ux,
   } = state;
   const { doc, pageNumber, range, selectedCitation } = ux;
-  const { filename } = doc;
+  const { pdfUrl } = doc;
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -129,7 +129,7 @@ export function Viewer() {
 
   return (
     <div ref={viewerRef}>
-      <Document file={filename} onLoadSuccess={onDocumentLoadSuccess}>
+      <Document file={pdfUrl} onLoadSuccess={onDocumentLoadSuccess}>
         <Page
           canvasRef={canvasRef}
           pageNumber={pageNumber}

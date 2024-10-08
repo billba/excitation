@@ -45,7 +45,7 @@ const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
       .filter(([citation]) => citation.doc === doc)
       .map(([citation, citationIndices]) => {
         const pageNumbers = (
-          citation.boundingRegions ?? [{ pageNumber: unlocatedPage }]
+          citation.bounds ?? [{ pageNumber: unlocatedPage }]
         )
           .map(({ pageNumber }) => pageNumber)
           .sort();
@@ -102,8 +102,6 @@ export function Sidebar() {
     [_dispatch]
   );
 
-  console.log("rendering");
-
   return (
     <div id="sidebar" onClick={dispatch({ type: "selectCitation" })}>
       <div className="sidebar-header">
@@ -141,7 +139,7 @@ export function Sidebar() {
                   ) : (
                     <DocumentRegular className="icon" />
                   )}
-                  {doc.friendlyname ?? doc.filename}
+                  {doc.name ?? doc.pdfUrl}
                 </div>
               </div>
               {pageGroups.map(({ firstPage, lastPage, citationIndices }) => {
