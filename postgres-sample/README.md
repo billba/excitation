@@ -1,6 +1,6 @@
 # Readme
 
-`create.sql` can be run against a postgres database to create:
+`create.sql` can be run against a postgres database to (re)create:
 
 ## Tables
 
@@ -10,6 +10,8 @@
 - **forms**: combination of a template with a set of documents
 - **citations**: excerpts of text and reference docs, potentially with bounds
 - **events**: log of user and system events
+
+> Be aware that `create.sql` will drop existing tables before re-creating to ensure that schema and values are appropriately up-to-date. Do not run `create.sql` against data you need to keep without further editing the file.
 
 ## Insertions
 

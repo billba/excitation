@@ -20,7 +20,8 @@ export const templates = pgTable('templates', {
 export const questions = pgTable('questions', {
   id: serial('id').primaryKey().notNull(),
   template_id: integer('template_id').notNull(),
-  question_text: text('question_text').notNull(),
+  text: text('text').notNull(),
+  prefix: text('prefix'),
   creator: text('creator').notNull(),
   created_at: timestamp('created_at').notNull().defaultNow()
 });
@@ -41,21 +42,13 @@ export const citations = pgTable('citations', {
   document_id: integer('document_id').notNull(),
   excerpt: text('excerpt').notNull(),
   bounds: jsonb('bounds'),
-  review: text('review').notNull().default('Unreviewed'),
+  review: integer('review').notNull().default(0),
   creator: text('creator').notNull(),
   created_at: timestamp('created_at').notNull().defaultNow()
 });
 
 export const events = pgTable('events', {
   id: serial('id').primaryKey().notNull(),
-  type: text('type').notNull(),
-  form_id: integer('form_id'),
-  question_id: integer('question_id'),
-  document_id: integer('document_id'),
-  citation_id: integer('citation_id').notNull(),
-  excerpt: text('excerpt').notNull(),
-  bounds: jsonb('bounds'),
-  review: text('review'),
-  creator: text('creator').notNull(),
+  body: jsonb('body').notNull(),
   created_at: timestamp('created_at').notNull().defaultNow()
 });
