@@ -7,7 +7,7 @@ import { citations, documents, forms, questions, templates } from '../schema';
 // ============================================================================
 // db operations
 // ============================================================================
-async function getForm(db: PostgresJsDatabase, formId: number) {
+async function getFormMetadata(db: PostgresJsDatabase, formId: number) {
   // get template id
   const form = await db.select({
     formName: forms.form_name,
@@ -63,6 +63,7 @@ async function getDocuments(db: PostgresJsDatabase, formId: number, context: Inv
   let docIdArray = docIds[0].documentIds;
   return await Promise.all(docIdArray.map(async (docId) =>
     (await db.select({
+      id: documents.id,
       name: documents.friendly_name,
       pdfUrl: documents.pdf_url,
       diUrl: documents.di_url
@@ -83,7 +84,7 @@ export async function get(request: HttpRequest, context: InvocationContext): Pro
   let formId = Number(request.params.id);
   if (isNaN(formId)) { return { status: 400 }; }
 
-  let { formName, templateName } = await getForm(db, formId);
+  let { formName, templateName } = await getFormMetadata(db, formId);
   context.log("formName:", formName);
   context.log("templateName:", templateName);
 
