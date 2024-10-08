@@ -1,19 +1,16 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
 import { citations, events } from '../schema'
 import { BoundingRegion, Review, Event } from '../types'
-
-const queryClient = postgres(process.env.POSTGRES);
-const db = drizzle(queryClient);
 
 // ============================================================================
 // db operations
 // ============================================================================
 
 // Inserts into db citations table
-async function insertCitation(form_id: number, question_id: number, document_id: number, excerpt: string, bounds: BoundingRegion[], review: Review, creator: string) {
+async function insertCitation(db: PostgresJsDatabase, form_id: number, question_id: number, document_id: number, excerpt: string, bounds: BoundingRegion[], review: Review, creator: string) {
   /* @ts-ignore */
   return await db.insert(citations).values({
     form_id,
@@ -27,7 +24,7 @@ async function insertCitation(form_id: number, question_id: number, document_id:
 }
 
 // Updates db citations table
-async function updateCitationBounds(citation_id: number, bounds: BoundingRegion[]) {
+async function updateCitationBounds(db: PostgresJsDatabase, citation_id: number, bounds: BoundingRegion[]) {
   return db.update(citations).set({
     /* @ts-ignore */
     bounds,
@@ -38,7 +35,7 @@ async function updateCitationBounds(citation_id: number, bounds: BoundingRegion[
   });
 }
 
-async function updateCitationReview(citation_id: number, review: Review) {
+async function updateCitationReview(db: PostgresJsDatabase, citation_id: number, review: Review) {
   return db.update(citations).set({
     /* @ts-ignore */
     review
@@ -50,7 +47,7 @@ async function updateCitationReview(citation_id: number, review: Review) {
 }
 
 // Inserts into db events table
-async function insertAddEvent(event: Event) {
+async function insertAddEvent(db: PostgresJsDatabase, event: Event) {
   /* @ts-ignore */
   return db.insert(events).values({
     body: event
@@ -61,7 +58,7 @@ async function insertAddEvent(event: Event) {
 }
 
 // Inserts into db events table
-async function insertUpdateReviewEvent(event: Event) {
+async function insertUpdateReviewEvent(db: PostgresJsDatabase, event: Event) {
   /* @ts-ignore */
   return db.insert(events).values({
     body: event
@@ -72,7 +69,7 @@ async function insertUpdateReviewEvent(event: Event) {
 }
 
 // Inserts into db events table
-async function insertUpdateBoundsEvent(event: Event) {
+async function insertUpdateBoundsEvent(db: PostgresJsDatabase, event: Event) {
   /* @ts-ignore */
   return db.insert(events).values({
     body: event
@@ -89,12 +86,12 @@ async function insertUpdateBoundsEvent(event: Event) {
 // Adding a citation involves:
 //  - creating a new citation
 //  - creating a new event
-async function addCitation(context: InvocationContext, event: Event) {
+async function addCitation(db: PostgresJsDatabase, context: InvocationContext, event: Event) {
   if (event.type === "addCitation") {
-    let citation = await insertCitation(event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
+    let citation = await insertCitation(db, event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
     context.log("Created citation:", citation);
     event.citationId = citation[0].id;
-    let addEvent = await insertAddEvent(event);
+    let addEvent = await insertAddEvent(db, event);
     context.log("Created event:", addEvent);
   }
 }
@@ -102,11 +99,11 @@ async function addCitation(context: InvocationContext, event: Event) {
 // Adding a review involves:
 //  - updating an existing citation
 //  - creating a new event
-async function addReview(context: InvocationContext, event: Event) {
+async function addReview(db: PostgresJsDatabase, context: InvocationContext, event: Event) {
   if (event.type === 'updateReview') {
-    const citation = await updateCitationReview(event.citationId, event.review);
+    const citation = await updateCitationReview(db, event.citationId, event.review);
     context.log("Updated citation:", citation);
-    const updateEvent = await insertUpdateReviewEvent(event);
+    const updateEvent = await insertUpdateReviewEvent(db, event);
     context.log("Created event:", updateEvent);
   }
 }
@@ -114,11 +111,11 @@ async function addReview(context: InvocationContext, event: Event) {
 // Updating bounds data involves:
 //  - updating an existing citation
 //  - creating a new event
-async function updateBounds(context: InvocationContext, event: Event) {
+async function updateBounds(db: PostgresJsDatabase, context: InvocationContext, event: Event) {
   if (event.type === "updateBounds") {
-    let citation = await updateCitationBounds(event.citationId, event.bounds);
+    let citation = await updateCitationBounds(db, event.citationId, event.bounds);
     context.log("Updated citation:", citation);
-    let updateEvent = await insertUpdateBoundsEvent(event);
+    let updateEvent = await insertUpdateBoundsEvent(db, event);
     context.log("Created event:", updateEvent);
   }
 }
@@ -129,17 +126,21 @@ async function updateBounds(context: InvocationContext, event: Event) {
 export async function post(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
+  /* @ts-ignore */
+  const queryClient = postgres(process.env["POSTGRES"]);
+  const db = drizzle(queryClient);
+
   const body = await request.json() as Event[];
   for await (const event of body) {
     switch (event.type) {
       case 'addCitation':
-        await addCitation(context, event);
+        await addCitation(db, context, event);
         break;
       case 'updateReview':
-        await addReview(context, event);
+        await addReview(db, context, event);
         break;
       case 'updateBounds':
-        await updateBounds(context, event);
+        await updateBounds(db, context, event);
         break;
     }
   }
