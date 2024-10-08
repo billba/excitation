@@ -25,6 +25,31 @@ This project was build using the Azure Functions Typescript HTTP Trigger templat
 + These functions communicate with a postgres database, which can be spun up in various ways including using [Cosmos DB](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/quickstart-create-portal). When running `azd up`, you'll be prompted to enter your postgres connection string, which should be of a format such as `postgres://{username}:{password}@{server}:5432/{database}?sslmode=require`
   + The schema of the postgres database should match the [postgres-sample](../postgres-sample/) [`create`](../postgres-sample/create.sql) script.
 
+## Running locally
+
+To run locally in VSCode, you will want to open the folder `functions-sample` as the top-level folder of a workspace.
+
+Create a file in this directory called `local.settings.json` with the following content:
+
+```json
+{
+    "IsEncrypted": false,
+    "Values": {
+        // If you have dev storage set up, you can use that. Alternately, provide
+        // a storage account connection string
+        "AzureWebJobsStorage": "connection string || UseDevelopmentStorage=true",
+        "FUNCTIONS_WORKER_RUNTIME": "node",
+        // Postgres connection with format as described above
+        "POSTGRES": "connection string"
+    }
+}
+```
+
+You should be able to *either*:
+
+- Press `F5` to start the functions host task, or
+- Run `npm install` and `npm start` from your terminal
+
 ## Deploy to Azure
 
 Run this command to provision the function app, with any required Azure resources, and deploy your code:
