@@ -1,7 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { eq } from 'drizzle-orm';
-import postgres from 'postgres';
 import { citations, events } from '../schema'
 import { BoundingRegion, Review, Event } from '../types'
 
@@ -127,8 +126,7 @@ export async function post(request: HttpRequest, context: InvocationContext): Pr
   context.log(`Http function processed request for url "${request.url}"`);
 
   /* @ts-ignore */
-  const queryClient = postgres(process.env["POSTGRES"]);
-  const db = drizzle(queryClient);
+  const db = await drizzle("postgres-js", process.env.POSTGRES);
 
   const body = await request.json() as Event[];
   for await (const event of body) {

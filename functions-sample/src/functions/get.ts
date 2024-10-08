@@ -1,7 +1,6 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { and, eq } from 'drizzle-orm';
-import postgres from 'postgres';
 import { citations, documents, forms, questions, templates } from '../schema';
 
 // ============================================================================
@@ -76,11 +75,9 @@ async function getDocuments(db: PostgresJsDatabase, formId: number, context: Inv
 export async function get(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
-  context.log("postgres connection string:", process.env["POSTGRES"]);
   /* @ts-ignore */
-  const queryClient = postgres(process.env["POSTGRES"]);
-  const db = drizzle(queryClient);
-
+  const db = await drizzle("postgres-js", process.env.POSTGRES);
+  
   let formId = Number(request.params.id);
   if (isNaN(formId)) { return { status: 400 }; }
 
