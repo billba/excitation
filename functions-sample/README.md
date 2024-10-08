@@ -10,6 +10,7 @@ This project was build using the Azure Functions Typescript HTTP Trigger templat
 | | |- get.ts : GET endpoint, serves /api/form/{id}
 | | |- post.ts: POST endpoint, serves /api
 | |- schema.ts: Defines the postgres schema
+| |- send.json: Sample payload for the POST function
 | |- types.ts : Defines types used by get and post
 ```
 
@@ -21,7 +22,8 @@ This project was build using the Azure Functions Typescript HTTP Trigger templat
 + To use Visual Studio Code to run and debug locally:
   + [Visual Studio Code](https://code.visualstudio.com/)
   + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions)
-+ These functions communicate with a postgres database, which can be spun up in various ways including using [Cosmos DB](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/quickstart-create-portal) When running `azd up`, you'll be prompted to enter your postgres connection string, which should be of a format such as `postgres://{username}:{password}@{server}:5432/{database}?sslmode=require`
++ These functions communicate with a postgres database, which can be spun up in various ways including using [Cosmos DB](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/quickstart-create-portal). When running `azd up`, you'll be prompted to enter your postgres connection string, which should be of a format such as `postgres://{username}:{password}@{server}:5432/{database}?sslmode=require`
+  + The schema of the postgres database should match the [postgres-sample](../postgres-sample/) [`create`](../postgres-sample/create.sql) script.
 
 ## Deploy to Azure
 
