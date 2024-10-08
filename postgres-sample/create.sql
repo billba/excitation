@@ -20,8 +20,8 @@ CREATE TABLE templates (
 CREATE TABLE questions (
   id SERIAL PRIMARY KEY,
   template_id INTEGER NOT NULL,
-  text TEXT NOT NULL,
   prefix TEXT,
+  text TEXT NOT NULL,
   creator TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
@@ -62,14 +62,14 @@ INSERT INTO templates (template_name, creator)
 VALUES
   ('Microsoft Fiscal', 'system');
 
-INSERT INTO questions (template_id, text, creator)
+INSERT INTO questions (template_id, prefix, text, creator)
 VALUES
-  (1, 'What was the company''s revenue for the third quarter of Fiscal Year 2024?', 'system'),
-  (1, 'What are the earnings per share (EPS) for this quarter?', 'system'),
-  (1, 'How much money did Microsoft return to shareholders in the form of share repurchases?', 'system'),
-  (1, 'What are the total assets reported?', 'system'),
-  (1, 'Are there any ongoing legal proceedings?', 'system'),
-  (1, 'What is an excerpt that spans two pages?', 'system');
+  (1, '1', 'What was the company''s revenue for the third quarter of Fiscal Year 2024?', 'system'),
+  (1, '2', 'What are the earnings per share (EPS) for this quarter?', 'system'),
+  (1, '3', 'How much money did Microsoft return to shareholders in the form of share repurchases?', 'system'),
+  (1, '4', 'What are the total assets reported?', 'system'),
+  (1, '5', 'Are there any ongoing legal proceedings?', 'system'),
+  (1, '6', 'What is an excerpt that spans two pages?', 'system');
 
 INSERT INTO forms (template_id, document_ids, form_name, creator)
 VALUES
