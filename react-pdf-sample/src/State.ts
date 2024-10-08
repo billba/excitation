@@ -19,7 +19,7 @@ import { calculateRange } from "./Range";
 
 const form: Form = await (await fetch("./mocks.json")).json();
 
-console.log(form);
+console.log("raw form", form);
 
 for await (const doc of form.documents) {
   doc.response = await (await fetch(doc.diUrl)).json();
@@ -43,7 +43,7 @@ for (const question of form.questions) {
   }
 }
 
-console.log(form);
+console.log("amended form", form);
 
 // eventually we'll want to send any new bounding regions back to the server
 
