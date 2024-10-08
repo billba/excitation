@@ -1,6 +1,7 @@
 [
   {
     "type": "addCitation",
+    "citationId": "",
     "formId": 1,
     "questionId": 1,
     "documentId": 1,

@@ -37,6 +37,7 @@ export const forms = pgTable('forms', {
 
 export const citations = pgTable('citations', {
   id: serial('id').primaryKey().notNull(),
+  citation_id: text('citation_id').notNull().unique(),
   form_id: integer('form_id').notNull(),
   question_id: integer('question_id').notNull(),
   document_id: integer('document_id').notNull(),

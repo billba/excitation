@@ -43,7 +43,7 @@ async function getQuestionsWithCitations(db: PostgresJsDatabase, formId: number)
     prefix,
     text,
     citations: await db.select({
-      id: citations.id,
+      id: citations.citation_id,
       documentId: citations.document_id,
       excerpt: citations.excerpt,
       review: citations.review,
