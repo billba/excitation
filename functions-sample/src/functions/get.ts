@@ -34,7 +34,7 @@ async function getQuestionsWithCitations(db: PostgresJsDatabase, formId: number)
   const qs = await db.select({
     id: questions.id,
     prefix: questions.prefix,
-    text: questions.question_text
+    text: questions.text
   }).from(questions)
     .where(eq(questions.template_id, templateId))
     .orderBy(questions.prefix, questions.id);

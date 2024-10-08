@@ -20,7 +20,7 @@ CREATE TABLE templates (
 CREATE TABLE questions (
   id SERIAL PRIMARY KEY,
   template_id INTEGER NOT NULL,
-  question_text TEXT NOT NULL,
+  text TEXT NOT NULL,
   prefix TEXT,
   creator TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -62,7 +62,7 @@ INSERT INTO templates (template_name, creator)
 VALUES
   ('Microsoft Fiscal', 'system');
 
-INSERT INTO questions (template_id, question_text, creator)
+INSERT INTO questions (template_id, text, creator)
 VALUES
   (1, 'What was the company''s revenue for the third quarter of Fiscal Year 2024?', 'system'),
   (1, 'What are the earnings per share (EPS) for this quarter?', 'system'),
