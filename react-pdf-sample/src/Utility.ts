@@ -118,6 +118,10 @@ interface Span {
   length: number;
 }
 
+export const createCitationId = (formId: number, creator: string) => {
+  return formId + '-' + creator + '-' + Date.now();
+}
+
 // Rounds a number to the given precision
 const round = (value: number, precision = 0) => {
   const multiplier = Math.pow(10, precision);
