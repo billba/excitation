@@ -42,7 +42,7 @@ export const citations = pgTable('citations', {
   document_id: integer('document_id').notNull(),
   excerpt: text('excerpt').notNull(),
   bounds: jsonb('bounds'),
-  review: text('review').notNull().default('Unreviewed'),
+  review: integer('review').notNull().default(0),
   creator: text('creator').notNull(),
   created_at: timestamp('created_at').notNull().defaultNow()
 });
