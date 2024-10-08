@@ -86,6 +86,11 @@ button:focus-visible {
 #navbar {
   width: 100%;
   background-color: skyblue;
+  .selected {
+    background-color: white;
+    border-radius: 2px;
+    border: blue 2px solid;
+  }
 }
 
 .navbar-filename {
@@ -109,12 +114,17 @@ button:focus-visible {
   padding: 20px;
   border-right: skyblue solid 4px;
   background-color: aliceblue;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .sidebar-header {
   display: grid;
   grid-template-columns: auto auto auto;
-  user-select: none;
 }
 
 .question {
@@ -130,128 +140,102 @@ button:focus-visible {
 }
 
 .question-nav {
-  color: steelblue;
-  font-size: 36pt;
+  font-size: 30pt;
   vertical-align: top;
-  :hover {
-    color: black;
-    cursor: pointer;
+  &.enabled {
+    color: steelblue;
+    :hover {
+      color: black;
+      cursor: pointer;
+    }
   }
-}
-
-.question-nav-disabled {
-  vertical-align: top;
-  color: grey;
-  font-size: 36pt;
+  &.disabled {
+    color: grey;
+  }
 }
 
 #citation-groups {
   margin-top: 10px;
 }
 
-.citation-unselected {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+.citation-group {
   margin-top: 5px;
   margin-left: 10px;
-  display: grid;
-  grid-template-columns: 22px 300px;
-  :hover {
-    cursor: pointer;
+  &.unselected {
+    display: grid;
+    grid-template-columns: min-content auto;
+    :hover {
+      cursor: pointer;
+    }
+    div {
+      line-height: 1.1;
+      height: 1.2em;
+      overflow: hidden;
+      border: transparent 2px solid;
+    }
+    div:hover {
+      border-radius: 4px;
+      border: blue 2px solid;
+    }
+  }
+  &.selected {
+    border: solid 2px blue;
+    border-radius: 7px;
+    padding: 4px;
+    background-color: white;
   }
 }
 
-.citation-unselected:hover .citation-short{
-  border-radius: 7px;
-  border: blue 2px solid;
-}
-
-.citation-selected {
-  margin-top: 5px;
-  margin-left: 10px;  
-  border: solid 2px blue;
-  border-radius: 7px;
-  padding: 4px;
-  background-color: white;
-}
-
-.citation-short {
-  width: 260px;
-  border: transparent 2px solid;
-}
-
-.citation-full {
-}
-
-.citation-icon-approved-on {
-  color: rgb(0, 172, 0);
+.citation-icon {
   pointer-events: all;
-  :hover {
-    color: grey;
+  &.approved {
+    &.on {
+      color: rgb(0, 172, 0);
+      :hover {
+        color: grey;
+      }
+    }
+    &.off {
+      color: grey;
+      :hover {
+        color: rgb(0, 172, 0);
+      }
+    }
   }
-}
-
-.citation-icon-approved-off {
-  color: grey;
-  pointer-events: all;
-  :hover {
-    color: rgb(0, 172, 0);
+  &.rejected {
+    &.on {
+      color: lightcoral;
+      :hover {
+        color: grey;
+      }
+    }
+    &.off {
+      color: grey;
+      :hover {
+        color: lightcoral;
+      }
+    }
   }
-}
-
-.citation-icon-rejected-on {
-  color: lightcoral;
-  pointer-events: all;
-  :hover {
-    color: grey;
+  &.unreviewed {
+    color: blue;
   }
-}
-
-.citation-icon-rejected-off {
-  color: grey;
-  pointer-events: all;
-  :hover {
-    color: lightcoral;
-  }
-}
-
-.citation-icon-unreviewed {
-  color: blue;
-  pointer-events: all;
-}
-
-.selected {
-  background-color: white;
-  border: blue 2px solid;
 }
 
 .hidden {
   display: none;
 }
 
-.buttons {
-  width: 40px;
-}
-
-.cite-button {
-  /* width: 25px;
-  height: 25px;
-  margin: 2px;
-  padding: 0px;
-  opacity: 60%; */
-}
-
-.cite-button:hover {
-  /* opacity: 100%; */
-}
-
 .doc-header {
   margin-top: 10px;
-}
-
-.doc-header:hover {
-  /* cursor: pointer; */
+  &.selected {
+    color: darkblue;
+  }
+  &.unselected {
+    :hover {
+      color: darkblue;
+      cursor: pointer;
+    }
+  }
 }
 
 .page-group {
@@ -260,10 +244,15 @@ button:focus-visible {
 }
 
 .page-header {
-}
-
-.page-header:hover {
-  /* cursor: pointer; */
+  &.selected {
+    color: darkblue;
+  }
+  &.unselected {
+    :hover {
+      color: darkblue;
+      cursor: pointer;
+    }
+  }
 }
 
 .error {

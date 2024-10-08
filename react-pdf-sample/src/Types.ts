@@ -18,12 +18,9 @@ export type Action =
       type: "nextPage";
     }
   | {
-      type: "gotoPage";
-      pageNumber: number;
-    }
-  | {
-      type: "gotoDoc";
-      doc: FormDocument;
+      type: "goto";
+      doc?: FormDocument;
+      pageNumber?: number;
     }
   | {
       type: "setSelectedText";

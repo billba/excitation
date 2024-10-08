@@ -5,9 +5,13 @@ import { Citation, FormDocument } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
+  DocumentFilled,
   DocumentOnePageRegular,
+  DocumentOnePageFilled,
   DocumentOnePageMultipleRegular,
+  DocumentOnePageMultipleFilled,
   DocumentOnePageAddRegular,
+  DocumentOnePageAddFilled,
   TriangleLeftFilled,
   TriangleRightFilled,
 } from "@fluentui/react-icons";
@@ -67,9 +71,7 @@ const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
         firstPage,
         lastPage,
         citationIndices: citationIndices.sort(
-          (a, b) =>
-            sortCitation(citations, a) -
-            sortCitation(citations, b)
+          (a, b) => sortCitation(citations, a) - sortCitation(citations, b)
         ),
       }))
       .sort((a, b) => sortIndex(a) - sortIndex(b)),
@@ -77,13 +79,8 @@ const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
 
 export function Sidebar() {
   const [state, _dispatch] = useAtom(stateAtom);
-  const {
-    documents,
-    questions,
-    ux,
-    asyncState,
-  } = state;
-  const { questionIndex, selectedCitation } = ux;
+  const { documents, questions, ux, asyncState } = state;
+  const { pageNumber, questionIndex, selectedCitation } = ux;
   const { prefix, text } = questions[questionIndex];
 
   const groupedCitations = useMemo(
@@ -111,76 +108,119 @@ export function Sidebar() {
     <div id="sidebar" onClick={dispatch({ type: "selectCitation" })}>
       <div className="sidebar-header">
         <TriangleLeftFilled
-          className={disablePrev ? "question-nav-disabled" : "question-nav"}
+          className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
           onClick={disablePrev ? undefined : dispatch({ type: "prevQuestion" })}
         />
         <div className="question">
-          <span className="question-prefix">{prefix ? <>{prefix}. </> : null}</span>
+          <span className="question-prefix">
+            {prefix ? <>{prefix}. </> : null}
+          </span>
           <span className="question-text">{text}</span>
         </div>
         <TriangleRightFilled
-          className={disableNext ? "question-nav-disabled" : "question-nav"}
+          className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
           onClick={disableNext ? undefined : dispatch({ type: "nextQuestion" })}
         />
       </div>
       <div id="citation-groups">
-        {groupedCitations.map(({ document, pageGroups }) => (
-          <div id="document-group" key={document.documentId}>
-            <div
-              className="doc-header"
-              onClick={
-                document == ux.doc
-                  ? undefined
-                  : dispatch({ type: "gotoDoc", doc: document })
-              }
-            >
-              <DocumentRegular className="icon" />
-              {document.friendlyname ?? document.filename}
-            </div>
-            {pageGroups.map(({ firstPage, lastPage, citationIndices }) => (
+        {groupedCitations.map(({ document: doc, pageGroups }) => {
+          const docSelected = doc == ux.doc;
+          return (
+            <div className="doc-group" key={doc.documentId}>
               <div
-                className="page-group"
-                key={firstPage * maxPageNumber + lastPage}
+                className={`doc-header ${
+                  docSelected ? "selected" : "unselected"
+                }`}
+                onClick={
+                  docSelected ? undefined : dispatch({ type: "goto", doc })
+                }
               >
-                <div className="page-header">
-                  {firstPage == lastPage ? (
-                    firstPage == unlocatedPage ? (
-                      <>
-                        <DocumentOnePageAddRegular className="icon" />
-                        Unable to locate citation
-                      </>
-                    ) : (
-                      <>
-                        <DocumentOnePageRegular className="icon" />
-                        Page {firstPage}
-                      </>
-                    )
+                <div>
+                  {docSelected ? (
+                    <DocumentFilled className="icon" />
                   ) : (
-                    <>
-                      <DocumentOnePageMultipleRegular className="icon" />
-                      Pages {firstPage}-{lastPage}
-                    </>
+                    <DocumentRegular className="icon" />
                   )}
+                  {doc.friendlyname ?? doc.filename}
                 </div>
-                {citationIndices.map((citationIndex) => {
-                  const { excerpt, review } =
-                    questions[questionIndex].citations[citationIndex];
-                  return (
-                    <CitationUX
-                      key={citationIndex}
-                      citationIndex={citationIndex}
-                      excerpt={excerpt}
-                      review={review}
-                      selected={
-                        selectedCitation?.citationIndex == citationIndex
-                      }
-                    />
-                  );
-                })}
               </div>
-            ))}
-          </div>
-        ))}
+              {pageGroups.map(({ firstPage, lastPage, citationIndices }) => {
+                const pageSelected =
+                  docSelected &&
+                  (selectedCitation
+                    ? citationIndices.includes(selectedCitation.citationIndex)
+                    : pageNumber >= firstPage && pageNumber <= lastPage);
+                return (
+                  <div
+                    className="page-group"
+                    key={firstPage * maxPageNumber + lastPage}
+                  >
+                    <div
+                      className={`page-header ${
+                        pageSelected ? "selected" : "unselected"
+                      }`}
+                      onClick={
+                        pageSelected
+                          ? undefined
+                          : dispatch({
+                              type: "goto",
+                              pageNumber: firstPage,
+                              doc,
+                            })
+                      }
+                    >
+                      {firstPage == lastPage ? (
+                        firstPage == unlocatedPage ? (
+                          <div>
+                            {pageSelected ? (
+                              <DocumentOnePageAddFilled className="icon" />
+                            ) : (
+                              <DocumentOnePageAddRegular className="icon" />
+                            )}
+                            Unable to locate citation
+                          </div>
+                        ) : (
+                          <div>
+                            {pageSelected ? (
+                              <DocumentOnePageFilled className="icon" />
+                            ) : (
+                              <DocumentOnePageRegular className="icon" />
+                            )}
+                            Page {firstPage}
+                          </div>
+                        )
+                      ) : (
+                        <div>
+                          {pageSelected ? (
+                            <DocumentOnePageMultipleFilled className="icon" />
+                          ) : (
+                            <DocumentOnePageMultipleRegular className="icon" />
+                          )}
+                          Pages {firstPage}-{lastPage}
+                        </div>
+                      )}
+                    </div>
+                    {citationIndices.map((citationIndex) => {
+                      const { excerpt, review } =
+                        questions[questionIndex].citations[citationIndex];
+                      return (
+                        <CitationUX
+                          key={citationIndex}
+                          citationIndex={citationIndex}
+                          excerpt={excerpt}
+                          review={review}
+                          selected={
+                            selectedCitation?.citationIndex == citationIndex
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
         <br />
         &nbsp;
         <button

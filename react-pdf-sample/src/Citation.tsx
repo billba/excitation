@@ -27,25 +27,25 @@ const citationIcons = {
   [Review.Unreviewed]: [
     CircleRegular,
     [
-      "citation-icon-unreviewed",
-      "citation-icon-unreviewed",
-      "citation-icon-unreviewed",
+      "citation-icon unreviewed",
+      "citation-icon unreviewed",
+      "citation-icon unreviewed",
     ],
   ],
   [Review.Approved]: [
     CheckmarkCircleFilled,
     [
-      "citation-icon-approved-on",
-      "citation-icon-approved-off",
-      "citation-icon-approved-on",
+      "citation-icon approved on",
+      "citation-icon approved off",
+      "citation-icon approved on",
     ],
   ],
   [Review.Rejected]: [
     DismissCircleFilled,
     [
-      "citation-icon-rejected-on",
-      "citation-icon-rejected-off",
-      "citation-icon-rejected-on",
+      "citation-icon rejected on",
+      "citation-icon rejected off",
+      "citation-icon rejected on",
     ],
   ],
 } as const;
@@ -83,19 +83,19 @@ export const CitationUX = ({
 
   return (
     <div
-      className={selected ? "citation-selected" : "citation-unselected"}
+      className={`citation-group ${selected ? "selected" : "unselected"}`}
       key={citationIndex}
       onClick={dispatch({ type: "selectCitation", citationIndex })}
     >
       {selected ? (
         <>
-          <div className="citation-full">{excerpt}</div>
-          {icons}
+          {excerpt}
+          <div>{icons}</div>
         </>
       ) : (
         <>
           {icons}
-          <div className="citation-short">{excerpt.substring(0, 35)}...</div>
+          <div>{excerpt}</div>
         </>
       )}
     </div>

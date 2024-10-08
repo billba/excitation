@@ -129,22 +129,23 @@ export const stateAtom = atom<State, [Action], void>(
             const { defaultDoc, questions, ux, asyncState, viewer } = state;
             const { doc, pageNumber, questionIndex, selectedCitation } = ux;
 
-            function gotoPage(
-              gotoPageNumber: number,
-              alwaysDeselectCitation = false
-            ) {
+            function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
               ux.pageNumber = gotoPageNumber;
               ux.range = undefined;
 
-              // Deselect the current citation, unless moving to
-              // a different page of the same multi-page citation.
-              if (
-                alwaysDeselectCitation ||
-                !selectedCitation?.citationHighlights.find(
-                  ({ pageNumber }) => pageNumber == gotoPageNumber
-                )
-              ) {
+              if (gotoDoc && gotoDoc !== doc) {
+                ux.doc = gotoDoc;
                 ux.selectedCitation = undefined;
+              } else {
+                // Deselect the current citation, unless moving to
+                // a different page of the same multi-page citation.
+                if (
+                  !selectedCitation?.citationHighlights.find(
+                    ({ pageNumber }) => pageNumber == gotoPageNumber
+                  )
+                ) {
+                  ux.selectedCitation = undefined;
+                }
               }
             }
 
@@ -197,21 +198,15 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "prevPage":
-                gotoPage(pageNumber - 1);
+                goto(pageNumber - 1);
                 break;
 
               case "nextPage":
-                gotoPage(pageNumber + 1);
+                goto(pageNumber + 1);
                 break;
 
-              case "gotoPage":
-                gotoPage(action.pageNumber);
-                break;
-
-              case "gotoDoc":
-                console.assert(doc != action.doc);
-                ux.doc = action.doc;
-                gotoPage(1, true);
+              case "goto":
+                goto(action.pageNumber ?? 1, action.doc);
                 break;
 
               case "setSelectedText":
