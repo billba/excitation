@@ -21,7 +21,7 @@
       "text": "What was the company’s revenue for the third quarter of Fiscal Year 2024?",
       "citations": [
         {
-          "excerpt": "· Revenue was $61.9 billion and increased 17%",
+          "excerpt": "Revenue was $61.9 billion and increased 17%",
           "documentId": 13,
           "citationId": "123",
           "review": 0
@@ -81,7 +81,7 @@
       "text": "Are there any ongoing legal proceedings?",
       "citations": [
         {
-          "excerpt": "· claims against us that may result in adverse outcomes in legal disputes;",
+          "excerpt": "claims against us that may result in adverse outcomes in legal disputes;",
           "documentId": 13,
           "citationId": "96",
           "review": 0
