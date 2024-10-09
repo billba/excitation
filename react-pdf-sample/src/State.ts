@@ -14,7 +14,7 @@ import {
   Form,
   FormDocument,
 } from "./Types";
-import { findUserSelection, returnTextPolygonsFromDI } from "./Utility";
+import { createCitationId, findUserSelection, returnTextPolygonsFromDI } from "./Utility";
 import { calculateRange } from "./Range";
 
 const form: Form = await (await fetch("./mocks.json")).json();
@@ -237,7 +237,7 @@ export const stateAtom = atom<State, [Action], void>(
                 questions[questionIndex].citations.push({
                   documentId: doc.documentId,
                   doc,
-                  citationId: "foobar",
+                  citationId: createCitationId(form.metadata.formId, 'client'),
                   bounds,
                   excerpt,
                   review: Review.Approved,
