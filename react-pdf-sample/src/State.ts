@@ -14,45 +14,66 @@ import {
   Form,
   FormDocument,
 } from "./Types";
-import { createCitationId, findUserSelection, returnTextPolygonsFromDI } from "./Utility";
+import {
+  createCitationId,
+  findUserSelection,
+  returnTextPolygonsFromDI,
+} from "./Utility";
 import { calculateRange } from "./Range";
 
 async function loadForm(url: string): Promise<State> {
-  const form: Form = await (await fetch(url)).json();
+  try {
+    const form: Form = await (await fetch(url)).json();
 
-  console.log("raw form", form);
-  
-  for await (const doc of form.documents) {
-    doc.response = await (await fetch(doc.diUrl)).json();
-  }
-  
-  form.defaultDoc = form.documents[0];
-  
-  for (const question of form.questions) {
-    for (const citation of question.citations) {
-      if (!citation.bounds) {
+    console.log("raw form", form);
+
+    for await (const doc of form.documents) {
+      doc.response = await (await fetch(doc.diUrl)).json();
+    }
+
+    form.defaultDoc = form.documents[0];
+
+    const updatedCitations: Event[] = [];
+
+    for (const question of form.questions) {
+      for (const citation of question.citations) {
         const doc = form.documents.find(
           ({ documentId }) => documentId === citation.documentId
         );
         citation.doc = doc;
-        const { response } = doc!;
-        citation.bounds = returnTextPolygonsFromDI(
-          citation.excerpt,
-          response!
-        );
+        const { bounds, citationId } = citation;
+        if (!bounds) {
+          const { response } = doc!;
+          const bounds = returnTextPolygonsFromDI(citation.excerpt, response!);
+          if (bounds) {
+            citation.bounds = bounds;
+            updatedCitations.push({
+              type: "updateBounds",
+              citationId,
+              bounds,
+              creator: "client",
+            });
+          }
+        }
       }
     }
-  }
-  
-  console.log("amended form", form);
-  // eventually we'll want to send any new bounding regions back to the server
 
-  return {
-    ...form,
-    ux: inferUXState(form.defaultDoc, 0, form.questions[0].citations, 0),
-    asyncState: { status: "idle" },
-    viewer: { top: 0, left: 0, width: 1024, height: 768 },
-  };
+    console.log("amended form", form);
+
+    if (updatedCitations.length) {
+      await dispatchEvents(updatedCitations);
+    }
+
+    return {
+      ...form,
+      ux: inferUXState(form.defaultDoc, 0, form.questions[0].citations, 0),
+      asyncState: { status: "idle" },
+      viewer: { top: 0, left: 0, width: 1024, height: 768 },
+    };
+  } catch (error) {
+    console.error("error loading form", error);
+    throw error;
+  }
 }
 
 const citationHighlightsFor = (citation?: Citation) => {
@@ -116,7 +137,7 @@ function inferUXState(
   };
 }
 
-const _stateAtom = atom<State>(await loadForm("./mocks.json"));
+const _stateAtom = atom<State>(await loadForm("http://localhost:8000/form/0"));
 export const stateAtom = atom<State, [Action], void>(
   (get) => get(_stateAtom),
 
@@ -128,7 +149,8 @@ export const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-            const { metadata, defaultDoc, questions, ux, asyncState, viewer } = state;
+            const { metadata, defaultDoc, questions, ux, asyncState, viewer } =
+              state;
             const { doc, pageNumber, questionIndex, selectedCitation } = ux;
 
             function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
@@ -237,7 +259,7 @@ export const stateAtom = atom<State, [Action], void>(
                 questions[questionIndex].citations.push({
                   documentId: doc.documentId,
                   doc,
-                  citationId: createCitationId(metadata.formId, 'client'),
+                  citationId: createCitationId(metadata.formId, "client"),
                   bounds,
                   excerpt,
                   review: Review.Approved,
@@ -245,13 +267,15 @@ export const stateAtom = atom<State, [Action], void>(
 
                 setAsync({
                   event: {
-                    type: "mockEvent",
-                    delay: 0,
-                    // delay: 3000,
-                    // error: {
-                    //   count: 2,
-                    //   description: "dang",
-                    // },
+                    type: "addCitation",
+                    formId: metadata.formId,
+                    questionId: questionIndex,
+                    documentId: doc.documentId,
+                    citationId: createCitationId(metadata.formId, "client"),
+                    excerpt,
+                    bounds,
+                    review: Review.Approved,
+                    creator: "client",
                   },
                   onError: {
                     type: "errorAddSelection",
@@ -300,6 +324,33 @@ export const stateAtom = atom<State, [Action], void>(
                     citationHighlights: citationHighlightsFor(targetCitation),
                   };
                 }
+
+                setAsync({
+                  event: {
+                    type: "updateReview",
+                    citationId: targetCitation.citationId,
+                    review: targetCitation.review,
+                    creator: "client",
+                  },
+                  onError: {
+                    type: "errorToggleReview",
+                    questionIndex,
+                    citationIndex: action.citationIndex,
+                  },
+                });
+                break;
+              }
+
+              case "errorToggleReview": {
+                const { questionIndex, citationIndex } = action;
+                const { citations } = questions[questionIndex];
+                state.ux = inferUXState(
+                  defaultDoc!,
+                  questionIndex,
+                  citations,
+                  citationIndex,
+                  true
+                );
                 break;
               }
 
@@ -372,7 +423,7 @@ export const useAsyncStateMachine = () => {
           type: "asyncLoading",
         });
         try {
-          await sendEvent(event);
+          await dispatchEvents([event]);
           dispatch({
             type: "asyncSuccess",
           });
@@ -387,28 +438,17 @@ export const useAsyncStateMachine = () => {
   }, [asyncState, dispatch]);
 };
 
-let errorCount = 0;
-
-export const sendEvent = (event: Event) => {
-  switch (event.type) {
-    case "mockEvent":
-      console.log("mockEvent loading");
-      return new Promise<void>((resolve, reject) =>
-        setTimeout(() => {
-          console.log(errorCount, event.error?.count);
-          if (event.error && errorCount++ < event.error.count) {
-            console.log("mockEvent error");
-            reject(event.error.description);
-          } else {
-            console.log("mockEvent success");
-            errorCount = 0;
-            resolve();
-          }
-        }, event.delay)
-      );
-
-    default:
-      console.error("unexpected event type", event);
-      return new Promise<void>((_, reject) => reject("unexpected event type"));
+async function dispatchEvents(events: Event[]): Promise<string | void> {
+  console.log("dispatching events", events);
+  const response = await fetch("http://localhost:8000/event", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(events),
+  });
+  console.log("events response", response.status, await response.text());
+  if (!response.ok) {
+    throw new Error(await response.text());
   }
-};
+}

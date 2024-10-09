@@ -5,7 +5,7 @@ export type Action =
   | {
       type: "selectCitation";
       citationIndex?: number;
-  }
+    }
   | {
       type: "prevQuestion";
     }
@@ -38,13 +38,18 @@ export type Action =
       type: "addSelection";
     }
   | {
+      type: "errorAddSelection";
+      questionIndex: number;
+    }
+  | {
       type: "toggleReview";
       citationIndex: number;
       target: Review;
     }
   | {
-      type: "errorAddSelection";
+      type: "errorToggleReview";
       questionIndex: number;
+      citationIndex: number;
     }
   | {
       type: "asyncLoading";
@@ -129,8 +134,8 @@ export interface FormDocument {
   diUrl: string;
   name?: string;
   pdfUrl: string;
-  pages: number;
   documentId: number;
+  pages?: number;
   response?: DocumentIntelligenceResponse;
 }
 
@@ -149,7 +154,6 @@ export interface Question {
   citations: Citation[];
 }
 
-
 export interface ViewerState {
   top: number;
   left: number;
@@ -158,9 +162,9 @@ export interface ViewerState {
 }
 
 export interface FormMetadata {
-  templateName: string,
+  templateName: string;
   formName: string;
-  formId: number,
+  formId: number;
 }
 
 export interface Form {
@@ -190,6 +194,7 @@ export type Event =
       formId: number;
       questionId: number;
       documentId: number;
+      citationId: string;
       excerpt: string;
       bounds: Bounds[];
       review: Review;
@@ -197,13 +202,13 @@ export type Event =
     }
   | {
       type: "updateReview";
-      citationId: number;
+      citationId: string;
       review: Review;
       creator: string;
     }
   | {
       type: "updateBounds";
-      citationId: number;
+      citationId: string;
       bounds: Bounds[];
       creator: string;
     };

@@ -18,7 +18,7 @@ export const NavBar = () => {
           .sort();
 
   const disablePrev = pageNumber === 1;
-  const disableNext = pageNumber === pages - 1;
+  const disableNext = pageNumber === pages! - 1;
 
   const citationPrev = pageNumbers.includes(pageNumber - 1);
   const citationNext = pageNumbers.includes(pageNumber + 1);
