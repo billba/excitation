@@ -17,35 +17,43 @@ import {
 import { createCitationId, findUserSelection, returnTextPolygonsFromDI } from "./Utility";
 import { calculateRange } from "./Range";
 
-const form: Form = await (await fetch("./mocks.json")).json();
+async function loadForm(url: string): Promise<State> {
+  const form: Form = await (await fetch(url)).json();
 
-console.log("raw form", form);
-
-for await (const doc of form.documents) {
-  doc.response = await (await fetch(doc.diUrl)).json();
-}
-
-form.defaultDoc = form.documents[0];
-
-for (const question of form.questions) {
-  for (const citation of question.citations) {
-    if (!citation.bounds) {
-      const doc = form.documents.find(
-        ({ documentId }) => documentId === citation.documentId
-      );
-      citation.doc = doc;
-      const { response } = doc!;
-      citation.bounds = returnTextPolygonsFromDI(
-        citation.excerpt,
-        response!
-      );
+  console.log("raw form", form);
+  
+  for await (const doc of form.documents) {
+    doc.response = await (await fetch(doc.diUrl)).json();
+  }
+  
+  form.defaultDoc = form.documents[0];
+  
+  for (const question of form.questions) {
+    for (const citation of question.citations) {
+      if (!citation.bounds) {
+        const doc = form.documents.find(
+          ({ documentId }) => documentId === citation.documentId
+        );
+        citation.doc = doc;
+        const { response } = doc!;
+        citation.bounds = returnTextPolygonsFromDI(
+          citation.excerpt,
+          response!
+        );
+      }
     }
   }
+  
+  console.log("amended form", form);
+  // eventually we'll want to send any new bounding regions back to the server
+
+  return {
+    ...form,
+    ux: inferUXState(form.defaultDoc, 0, form.questions[0].citations, 0),
+    asyncState: { status: "idle" },
+    viewer: { top: 0, left: 0, width: 1024, height: 768 },
+  };
 }
-
-console.log("amended form", form);
-
-// eventually we'll want to send any new bounding regions back to the server
 
 const citationHighlightsFor = (citation?: Citation) => {
   const bounds = citation?.bounds ?? [];
@@ -108,15 +116,7 @@ function inferUXState(
   };
 }
 
-console.log(form);
-
-const _stateAtom = atom<State>({
-  ...form,
-  ux: inferUXState(form.defaultDoc, 0, form.questions[0].citations, 0),
-  asyncState: { status: "idle" },
-  viewer: { top: 0, left: 0, width: 1024, height: 768 },
-});
-
+const _stateAtom = atom<State>(await loadForm("./mocks.json"));
 export const stateAtom = atom<State, [Action], void>(
   (get) => get(_stateAtom),
 
@@ -128,7 +128,7 @@ export const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-            const { defaultDoc, questions, ux, asyncState, viewer } = state;
+            const { metadata, defaultDoc, questions, ux, asyncState, viewer } = state;
             const { doc, pageNumber, questionIndex, selectedCitation } = ux;
 
             function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
@@ -232,12 +232,12 @@ export const stateAtom = atom<State, [Action], void>(
                   pageNumber,
                   realRange!,
                   viewer
-                  // docs[docIndex].response!
+                  // doc.response!
                 );
                 questions[questionIndex].citations.push({
                   documentId: doc.documentId,
                   doc,
-                  citationId: createCitationId(form.metadata.formId, 'client'),
+                  citationId: createCitationId(metadata.formId, 'client'),
                   bounds,
                   excerpt,
                   review: Review.Approved,
