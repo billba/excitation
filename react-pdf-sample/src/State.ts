@@ -270,8 +270,8 @@ export const stateAtom = atom<State, [Action], void>(
                 const { excerpt, bounds } = findUserSelection(
                   pageNumber,
                   realRange!,
-                  viewer
-                  // doc.response!
+                  viewer,
+                  doc.response!
                 );
                 questions[questionIndex].citations.push({
                   documentId: doc.documentId,
