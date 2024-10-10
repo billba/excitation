@@ -133,7 +133,7 @@ export function Sidebar() {
         {groupedCitations.map(({ doc, pageGroups }) => {
           const docSelected = doc == ux.doc;
           return (
-            <div className="doc-group" key={doc.documentId}>
+            <div className={`doc-group ${docSelected ? "selected" : "unselected"}`} key={doc.documentId}>
               <div
                 className={`doc-header ${
                   docSelected ? "selected" : "unselected"
@@ -161,7 +161,9 @@ export function Sidebar() {
                     : pageNumber >= firstPage && pageNumber <= lastPage);
                 return (
                   <div
-                    className="page-group"
+                    className={`page-group ${
+                      pageSelected ? "selected" : "unselected"
+                    }`}
                     key={firstPage * maxPageNumber + lastPage}
                   >
                     <div
