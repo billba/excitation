@@ -111,13 +111,14 @@ export function Viewer() {
     context.lineWidth = 4;
 
     const multiplier = 72 * (window.devicePixelRatio || 1);
+    const padding = 3;
 
     for (const polygon of polygons) {
       context.beginPath();
-      context.moveTo(polygon[0] * multiplier, polygon[1] * multiplier);
-      context.lineTo(polygon[2] * multiplier, polygon[3] * multiplier);
-      context.lineTo(polygon[4] * multiplier, polygon[5] * multiplier);
-      context.lineTo(polygon[6] * multiplier, polygon[7] * multiplier);
+      context.moveTo(polygon[0] * multiplier - padding, polygon[1] * multiplier - padding);
+      context.lineTo(polygon[2] * multiplier + padding, polygon[3] * multiplier - padding);
+      context.lineTo(polygon[4] * multiplier + padding, polygon[5] * multiplier + padding);
+      context.lineTo(polygon[6] * multiplier - padding, polygon[7] * multiplier + padding);
       context.closePath();
       context.stroke();
     }
