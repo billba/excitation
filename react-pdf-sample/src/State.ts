@@ -137,7 +137,9 @@ function inferUXState(
   };
 }
 
-const _stateAtom = atom<State>(await loadForm("http://localhost:8000/form/0"));
+const formId = window.location.pathname.split("/")[1]
+console.log(formId)
+const _stateAtom = atom<State>(await loadForm("http://localhost:8000/form/" + formId));
 export const stateAtom = atom<State, [Action], void>(
   (get) => get(_stateAtom),
 
