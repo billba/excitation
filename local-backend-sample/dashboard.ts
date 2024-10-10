@@ -4,8 +4,8 @@ import { type Settings } from "./settings.ts";
 
 const valueAndSelected = (test: Settings["test"], value: Settings["test"]) => `value="${test}" ${test === value ? "checked" : ""}`;
 
-export function dashboard(forms: Form[], templates: Template[], { test, randomness, count, tries }: Settings): string {
-  console.log(test, randomness, count, tries);
+export function dashboard(forms: Form[], templates: Template[], { test, randomness, errorCount, errorTries, delay, delayTries }: Settings): string {
+  console.log(test, randomness, errorCount, errorTries);
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -16,27 +16,34 @@ export function dashboard(forms: Form[], templates: Template[], { test, randomne
       </head>
       <body>
         <h2><i>excitation</i> dashboard</h3>
-          <form action="/settings" method="post">
-            <h3>testing</h3>
-            <p style="font-size: smaller">(submit changes before reviewing citations)</p>
-            <div>
-              <input type="radio" name="test" ${valueAndSelected("none", test)}>No errors</input>
-            </div>
-            <div>
-              <input type="radio" name="test" ${valueAndSelected("random", test)}>Random errors</input>
-              &nbsp;
-              <input type="text" size="3" name="randomness" value="${randomness}"/>%
-            </div>
-            <div>
-              <input type="radio" name="test" ${valueAndSelected("scheduled", test)}>Scheduled error</input>
-              &nbsp;
-              <input type="text" size="3" name="count" value="${count}"/>
-              &nbsp;time(s) after&nbsp;
-              <input type="text" size="3" name="tries" value="${tries}"/>
-              &nbsp;tries&nbsp;
-            </div>
-            <button type="submit">Submit</button>
-          </form>
+        <p style="font-size: smaller">(<a href="/">refresh</a> upon returning to dashboard)</p>
+        <form action="/settings" method="post">
+          <h3>testing</h3>
+          <p style="font-size: smaller">(submit changes before reviewing citations)</p>
+          <div>
+            <input type="radio" name="test" ${valueAndSelected("none", test)}>No errors</input>
+          </div>
+          <div>
+            <input type="radio" name="test" ${valueAndSelected("random", test)}>Random errors</input>
+            &nbsp;
+            <input type="text" size="3" name="randomness" value="${randomness}"/>%
+          </div>
+          <div>
+            <input type="radio" name="test" ${valueAndSelected("scheduled", test)}>Scheduled error</input>
+            &nbsp;
+            <input type="text" size="3" name="count" value="${errorCount}"/>
+            &nbsp;time(s) after&nbsp;
+            <input type="text" size="3" name="tries" value="${errorTries}"/>
+            &nbsp;tries&nbsp;
+          </div>
+          <p>
+            Delay <input type="text" size="3" name="delay" value="${delay}"/>
+            &nbsp;seconds after&nbsp;
+            <input type="text" size="3" name="delayTries" value="${delayTries}"/>
+            &nbsp;tries
+          </p>
+          <button type="submit">Submit</button>
+        </form>
         ${templates.map(
           (template, templateId) => `
           <h3>template "${template.name}"</h4>

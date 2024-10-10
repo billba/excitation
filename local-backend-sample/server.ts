@@ -72,7 +72,7 @@ router
     try {
       for (const event of await request.body.json() as Event[]) {
         console.log("dispatching", event);
-        dispatchEvent(event);
+        await dispatchEvent(event);
       }
       response.status = 200;
     } catch (e) {

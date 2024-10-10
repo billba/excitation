@@ -178,10 +178,10 @@ function findCitation(citationId: string): Citation | undefined {
   return undefined;
 }
 
-export function dispatchEvent(event: Event) {
+export async function dispatchEvent(event: Event) {
   switch (event.type) {
     case "addCitation": {
-      if (isError()) throw new Error(`Congratulations, you asked for an error and you got one!`);
+      if (await isError()) throw new Error(`Congratulations, you asked for an error and you got one!`);
 
       const {
         formId,
@@ -214,7 +214,7 @@ export function dispatchEvent(event: Event) {
     }
 
     case "updateReview": {
-      if (isError()) throw new Error(`Congratulations, you asked for an error and you got one!`);
+      if (await isError()) throw new Error(`Congratulations, you asked for an error and you got one!`);
 
       const citation = findCitation(event.citationId);
       if (!citation) throw new Error(`Citation ${event.citationId} not found`);
