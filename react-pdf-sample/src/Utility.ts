@@ -377,14 +377,13 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
   // poly is earlier in the column
   if (y[1] < refY[0]) return -1;
   // poly is later in the column
-  if (y[0] < refY[1]) return 1;
+  if (y[0] > refY[1]) return 1;
 
   // if we're still here, poly overlaps refPoly
   return 0;
 }
 
 const polygonBinarySearch = (lines: Line[], poly: number[]) => {
-  if (lines.length === 1) return lines[0];
   let axis = Math.floor(lines.length / 2);
   console.log("lines:", lines);
   console.log("axis:", axis);
