@@ -438,6 +438,6 @@ export function findUserSelection(
   ];
 
   const excerpt = findTextFromBoundingRegions(response, bounds);
-  console.log(excerpt);
+  console.log("found excerpt:", excerpt);
   return { excerpt, bounds };
 }
