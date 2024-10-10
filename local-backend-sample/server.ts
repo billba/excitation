@@ -5,6 +5,7 @@ import {
   getClientFormFromBootstrap,
   Event,
   dispatchEvent,
+  dashboard
 } from "./excitation.ts";
 
 const app = new Application();
@@ -12,7 +13,7 @@ const router = new Router();
 
 router
   .get("/", ({ response }) => {
-    response.body = "dashboard goes here";
+    response.body = dashboard();
   })
   .get("/file/:path", async (context) => {
     const {

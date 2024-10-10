@@ -37,7 +37,7 @@ interface Bounds {
 interface Citation {
   excerpt: string;
   documentId: number;
-  citationId: string;
+  citationId?: string;
   review: Review;
   bounds?: Bounds[];
 }
@@ -142,13 +142,11 @@ const templates: Template[] = [
             {
               excerpt: "Revenue was $61.9 billion and increased 17%.",
               documentId: 13,
-              citationId: "123",
               review: 0,
             },
             {
               excerpt: "61,858",
               documentId: 1967,
-              citationId: "987",
               review: 0,
             },
           ],
@@ -156,7 +154,6 @@ const templates: Template[] = [
             {
               excerpt: "$2.94",
               documentId: 13,
-              citationId: "224-13",
               review: 0,
             },
           ],
@@ -165,7 +162,6 @@ const templates: Template[] = [
               excerpt:
                 "Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third quarter of fiscal year 2024.",
               documentId: 13,
-              citationId: "abc",
               review: 0,
             },
           ],
@@ -173,13 +169,11 @@ const templates: Template[] = [
             {
               excerpt: "484,275",
               documentId: 13,
-              citationId: "98-43-12",
               review: 0,
             },
             {
               excerpt: "484,275",
               documentId: 1967,
-              citationId: "1",
               review: 0,
             },
           ],
@@ -188,14 +182,12 @@ const templates: Template[] = [
               excerpt:
                 "Claims against us that may result in adverse outcomes in legal disputes.",
               documentId: 13,
-              citationId: "96",
               review: 0,
             },
             {
               excerpt:
                 "Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused their brain tumors and other adverse health effects.",
               documentId: 1967,
-              citationId: "0",
               review: 0,
             },
           ],
@@ -204,7 +196,6 @@ const templates: Template[] = [
               excerpt:
                 "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage;\n· claims against us that may result in adverse outcomes in legal disputes;",
               documentId: 13,
-              citationId: "dog",
               review: 0,
             },
           ],
@@ -256,9 +247,9 @@ export function getClientFormFromBootstrap(
   forms.push({
     name,
     templateId,
-    citations: citations.map((questionCitations, questionIndex) => questionCitations.map(citation => ({
+    citations: citations.map((questionCitations, questionIndex) => questionCitations.map((citation, citationIndex) => ({
       ...citation,
-      citationId: `${formId}-${questionIndex}-${citation.citationId}`,
+      citationId: `${formId}-${questionIndex}-${citationIndex}`,
     }))),
   });
 
@@ -320,4 +311,8 @@ export function dispatchEvent(event: Event) {
     default:
       throw new Error(`Unknown event type ${event.type}`);
   }
+}
+
+export function dashboard(): string {
+  return "Dashboard goes here";
 }
