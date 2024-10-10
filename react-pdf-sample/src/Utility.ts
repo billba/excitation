@@ -385,16 +385,17 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
 
 const polygonBinarySearch = (lines: Line[], poly: number[]) => {
   let axis = Math.floor(lines.length / 2);
-  console.log("lines:", lines);
-  console.log("axis:", axis);
+  console.log(`axis [${axis}]`, lines[axis].content);
 
   switch (comparePolygons(poly, lines[axis].polygon)) {
     case -1:
+      console.log("looking farther up the page...");
       return polygonBinarySearch(lines.slice(0, axis), poly);
     case 0:
-      // todo spread out and find *all* intersecting lines
+      // TODO spread out and find *all* intersecting lines
       return lines[axis];
     case 1:
+      console.log("looking farther down the page...")
       return polygonBinarySearch(lines.slice(axis + 1), poly);
   }
 }
@@ -403,11 +404,9 @@ const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   boundingRegions: Bounds[]
 ) => {
-  console.log(response);
   // page numbers are 1-indexed, thus the subtraction
   const page = response.analyzeResult.pages[boundingRegions[0].pageNumber - 1];
   const lines = page.lines;
-  console.log(lines);
   const intersectingLine = polygonBinarySearch(lines, boundingRegions[0].polygon)
   return intersectingLine.content;
 }
