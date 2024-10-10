@@ -9,6 +9,7 @@ import {
   compareRanges,
   SerializedRange,
 } from "./Range";
+import { useAsyncHelper } from "./Hooks";
 
 export function Viewer() {
   const [state, dispatch] = useAtom(stateAtom);
@@ -17,6 +18,8 @@ export function Viewer() {
   } = state;
   const { doc, pageNumber, range, selectedCitation } = ux;
   const { pdfUrl } = doc;
+
+  const { isError } = useAsyncHelper();
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -142,7 +145,7 @@ export function Viewer() {
           id="highlight-canvas"
           style={{
             position: "absolute",
-            zIndex: 1,
+            zIndex: isError ? 1000: 1,
             opacity: 1,
           }}
         />

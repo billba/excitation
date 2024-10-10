@@ -156,6 +156,8 @@ export const stateAtom = atom<State, [Action], void>(
             const { metadata, defaultDoc, questions, ux, asyncState, viewer } =
               state;
             const { doc, pageNumber, questionIndex, selectedCitation } = ux;
+            const isAsyncing = asyncState.status != "idle";
+            const isError = isAsyncing && !!asyncState.uxAtError;
 
             function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
               ux.pageNumber = gotoPageNumber;
@@ -238,6 +240,7 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "setSelectedText":
+                console.log(!isError);
                 ux.range = action.range;
                 break;
 
@@ -248,7 +251,7 @@ export const stateAtom = atom<State, [Action], void>(
               }
 
               case "addSelection": {
-                console.assert(asyncState.status == "idle");
+                console.assert(!isAsyncing);
                 const { range } = ux;
                 console.assert(range !== undefined);
                 const realRange = calculateRange(range);
@@ -303,7 +306,7 @@ export const stateAtom = atom<State, [Action], void>(
               }
 
               case "toggleReview": {
-                console.assert(asyncState.status === "idle");
+                console.assert(!isAsyncing);
 
                 const { citations } = questions[questionIndex];
                 const targetCitation = citations[action.citationIndex];
