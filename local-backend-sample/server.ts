@@ -50,11 +50,11 @@ router
     ({ response, params: { templateId, bootstrapId } }) => {
       try {
         console.log("creating new form", templateId, bootstrapId);
-        const formId = getClientFormFromBootstrap(
+        getClientFormFromBootstrap(
           Number(templateId),
           Number(bootstrapId)
         );
-        response.redirect(clientUrl(formId));
+        response.redirect("/");
       } catch (e) {
         response.body = e.message;
         response.status = 400;
