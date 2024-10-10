@@ -75,10 +75,6 @@ button:focus-visible {
   gap: 10px;
 }
 
-#sidebar {
-  grid-column: 1;
-}
-
 #viewer {
   grid-column: 2;
 }
@@ -111,9 +107,9 @@ button:focus-visible {
 #sidebar {
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  border-right: skyblue solid 4px;
-  background-color: aliceblue;
+  padding: 0px;
+  /* border-right: skyblue solid 4px; */
+  background-color: #d6d6d6;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
@@ -160,7 +156,7 @@ button:focus-visible {
 
 .citation-group {
   margin-top: 5px;
-  margin-left: 10px;
+  padding-left: 30px;
   &.unselected {
     display: grid;
     grid-template-columns: min-content auto;
@@ -225,8 +221,21 @@ button:focus-visible {
   display: none;
 }
 
+.doc-group {
+  padding-left: 10px;
+  &.selected {
+    background-color: #e0e0e0;
+  }
+  &.unselected {
+    :hover {
+      background-color: #e0e0e0;
+    }
+  }
+}
+
 .doc-header {
   margin-top: 10px;
+  padding-left: 10px;
   &.selected {
     color: darkblue;
   }
@@ -239,11 +248,20 @@ button:focus-visible {
 }
 
 .page-group {
-  margin-top: 5px;
-  margin-left: 10px;
+  padding-top: 5px;
+  &.selected {
+    background-color: #ffffff
+  }
+  &.unselected {
+    :hover {
+      background-color: #f0f0f0;
+    }
+  }
 }
 
 .page-header {
+  padding-left: 20px;
+  padding-right: 20px;
   &.selected {
     color: darkblue;
   }
