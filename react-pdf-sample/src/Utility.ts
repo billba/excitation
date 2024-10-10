@@ -420,7 +420,7 @@ export function findUserSelection(
   response: DocumentIntelligenceResponse
 ) {
   let { top, left, bottom, right } = range.getBoundingClientRect();
-  const multiplier = 144 / (window.devicePixelRatio || 1);
+  const multiplier = 72;
 
   const dx = viewer.left - window.scrollX;
   const dy = viewer.top - window.scrollY;
