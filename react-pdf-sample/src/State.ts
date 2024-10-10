@@ -405,7 +405,18 @@ export const stateAtom = atom<State, [Action], void>(
                 console.log("unhandled action", action);
                 break;
             }
-          });
+        },
+          {
+            mark: (state) => {
+              // don't proxy the DI response. It's not a class so we can't identify it with instanceof
+              // so instead we check for what seems like a unique field.
+              if (state.analyzeResult) {
+                console.assert(state.status && state.createdDateTime && state.lastUpdatedDateTime);
+                return () => state;
+              }
+            },
+          }
+        );
 
     if (prevState === newState) {
       console.log("no state change");
