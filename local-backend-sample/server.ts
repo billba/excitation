@@ -3,11 +3,13 @@ import { oakCors } from "https://deno.land/x/cors/mod.ts";
 import {
   getClientForm,
   getClientFormFromBootstrap,
-  Event,
+  type Event,
   dispatchEvent,
-  dashboard
+  forms,
 } from "./excitation.ts";
-
+import { templates } from "./templates.ts";
+import { dashboard } from "./dashboard.ts";
+import { settings, set, clearErrors } from "./settings.ts";
 const app = new Application();
 const router = new Router();
 
@@ -15,8 +17,13 @@ export const clientUrl = (formId: number) => `http://localhost:5173/${formId}`;
 
 router
   .get("/", ({ response }) => {
-    response.body = dashboard();
+    clearErrors();
+    response.body = dashboard(forms, templates, settings);
     response.headers.set("Content-Type", "text/html");
+  })
+  .post("/settings", async ({ request: { body }, response }) => {
+    set(await body.formData());
+    response.redirect("/");
   })
   .get("/file/:path", async (context) => {
     const {
