@@ -423,10 +423,10 @@ export function findUserSelection(
   const dx = viewer.left - window.scrollX;
   const dy = viewer.top - window.scrollY;
 
-  top = (top - dy) / multiplier;
-  bottom = (bottom - dy) / multiplier;
-  left = (left - dx) / multiplier;
-  right = (right - dx) / multiplier;
+  top = round((top - dy) / multiplier, 4);
+  bottom = round((bottom - dy) / multiplier, 4);
+  left = round((left - dx) / multiplier, 4);
+  right = round((right - dx) / multiplier, 4);
 
   const bounds = [
     {
