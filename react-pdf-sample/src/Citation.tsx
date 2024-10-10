@@ -64,7 +64,7 @@ export const CitationUX = ({
   selected,
 }: Props) => {
   const _dispatch = useSetAtom(stateAtom);
-  const dispatch = useDispatchHandler(_dispatch);
+  const { dispatchUnlessAsyncing } = useDispatchHandler(_dispatch);
 
   const icons = (
     review == Review.Unreviewed && selected ? reviewIcons : [review]
@@ -76,7 +76,7 @@ export const CitationUX = ({
       <Icon
         key={r}
         className={className + (selected ? " large-icon" : " icon")}
-        onClick={dispatch({ type: "toggleReview", target: r, citationIndex })}
+        onClick={dispatchUnlessAsyncing({ type: "toggleReview", target: r, citationIndex })}
       />
     );
   });
@@ -85,7 +85,7 @@ export const CitationUX = ({
     <div
       className={`citation-group ${selected ? "selected" : "unselected"}`}
       key={citationIndex}
-      onClick={dispatch({ type: "selectCitation", citationIndex })}
+      onClick={dispatchUnlessAsyncing({ type: "selectCitation", citationIndex })}
     >
       {selected ? (
         <>

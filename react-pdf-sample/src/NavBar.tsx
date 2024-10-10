@@ -1,14 +1,15 @@
 import { useAtom } from "jotai";
 import { stateAtom } from "./State";
-import { useDispatchHandler } from "./Hooks";
+import { useAsyncHelper, useDispatchHandler } from "./Hooks";
 
 export const NavBar = () => {
   const [state, _dispatch] = useAtom(stateAtom);
   const { ux } = state;
   const { pageNumber, selectedCitation, doc: document } = ux;
   const { name, pdfUrl, pages } = document;
+  const { isError } = useAsyncHelper();
 
-  const dispatch = useDispatchHandler(_dispatch);
+  const { dispatchUnlessError } = useDispatchHandler(_dispatch);
 
   const pageNumbers =
     selectedCitation == undefined
@@ -17,10 +18,10 @@ export const NavBar = () => {
           .map(({ pageNumber }) => pageNumber)
           .sort();
 
-  const disablePrev = pageNumber === 1;
-  const disableNext = pageNumber === pages! - 1;
+  const disablePrev = isError || pageNumber === 1;
+  const disableNext = isError || pageNumber === pages! - 1;
 
-  const citationPrev = pageNumbers.includes(pageNumber - 1);
+  const citationPrev = isError || pageNumbers.includes(pageNumber - 1);
   const citationNext = pageNumbers.includes(pageNumber + 1);
 
   return (
@@ -30,14 +31,14 @@ export const NavBar = () => {
         <div className="navbar-column">
           <span
             className={citationPrev ? "selected clickable" : "hidden"}
-            onClick={citationPrev ? dispatch({ type: "prevPage" }) : undefined}
+            onClick={citationPrev ? dispatchUnlessError({ type: "prevPage" }) : undefined}
           >
             Citation continues from previous page
           </span>
         </div>
         <div className="navbar-column">
           <button
-            onClick={dispatch({ type: "prevPage" })}
+            onClick={dispatchUnlessError({ type: "prevPage" })}
             disabled={disablePrev}
           >
             &lt;
@@ -51,7 +52,7 @@ export const NavBar = () => {
           </span>{" "}
           / {pages}
           <button
-            onClick={dispatch({ type: "nextPage" })}
+            onClick={dispatchUnlessError({ type: "nextPage" })}
             disabled={disableNext}
           >
             &gt;
@@ -60,7 +61,7 @@ export const NavBar = () => {
         <div className="navbar-column">
           <span
             className={citationNext ? "selected clickable" : "hidden"}
-            onClick={citationNext ? dispatch({ type: "nextPage" }) : undefined}
+            onClick={citationNext ? dispatchUnlessError({ type: "nextPage" }) : undefined}
           >
             Citation continues on next page
           </span>

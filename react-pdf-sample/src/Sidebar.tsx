@@ -15,7 +15,7 @@ import {
   TriangleLeftFilled,
   TriangleRightFilled,
 } from "@fluentui/react-icons";
-import { useDispatchHandler } from "./Hooks";
+import { useAsyncHelper, useDispatchHandler } from "./Hooks";
 
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
@@ -83,15 +83,17 @@ export function Sidebar() {
   const { pageNumber, questionIndex, selectedCitation } = ux;
   const { prefix, text } = questions[questionIndex];
 
+  const { isAsyncing, isError } = useAsyncHelper();
+
   const groupedCitations = useMemo(
     () => groupCitations(documents, questions[questionIndex].citations),
     [documents, questions, questionIndex]
   );
 
-  const dispatch = useDispatchHandler(_dispatch);
+  const { dispatch, dispatchUnlessError } = useDispatchHandler(_dispatch);
 
-  const disablePrev = questionIndex === 0;
-  const disableNext = questionIndex === questions.length - 1;
+  const disablePrev = isError || questionIndex === 0;
+  const disableNext = isError || questionIndex === questions.length - 1;
 
   const addSelection = useCallback(
     (event: React.MouseEvent) => {
@@ -103,11 +105,11 @@ export function Sidebar() {
   );
 
   return (
-    <div id="sidebar" onClick={dispatch({ type: "selectCitation" })}>
+    <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
       <div className="sidebar-header">
         <TriangleLeftFilled
           className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
-          onClick={disablePrev ? undefined : dispatch({ type: "prevQuestion" })}
+          onClick={disablePrev ? undefined : dispatchUnlessError({ type: "prevQuestion" })}
         />
         <div className="question">
           <span className="question-prefix">
@@ -117,7 +119,7 @@ export function Sidebar() {
         </div>
         <TriangleRightFilled
           className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
-          onClick={disableNext ? undefined : dispatch({ type: "nextQuestion" })}
+          onClick={disableNext ? undefined : dispatchUnlessError({ type: "nextQuestion" })}
         />
       </div>
       <div id="citation-groups">
@@ -130,7 +132,7 @@ export function Sidebar() {
                   docSelected ? "selected" : "unselected"
                 }`}
                 onClick={
-                  docSelected ? undefined : dispatch({ type: "goto", doc })
+                  docSelected ? undefined : dispatchUnlessError({ type: "goto", doc })
                 }
               >
                 <div>
@@ -160,7 +162,7 @@ export function Sidebar() {
                       onClick={
                         pageSelected
                           ? undefined
-                          : dispatch({
+                          : dispatchUnlessError({
                               type: "goto",
                               pageNumber: firstPage,
                               doc,
@@ -223,7 +225,7 @@ export function Sidebar() {
         &nbsp;
         <button
           onClick={addSelection}
-          disabled={asyncState.status != "idle" || ux.range == undefined}
+          disabled={isAsyncing || ux.range == undefined}
         >
           add selection
         </button>
