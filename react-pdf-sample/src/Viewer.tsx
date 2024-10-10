@@ -55,7 +55,7 @@ export function Viewer() {
   useEffect(() => {
     if (!range) return;
 
-    console.log("highlighting", range);
+    console.log("rehydrating text selection", range);
 
     const selection = document.getSelection()!;
     const currentRange = selection.rangeCount && selection.getRangeAt(0);
