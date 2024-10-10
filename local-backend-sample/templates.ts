@@ -1,4 +1,17 @@
-import { Template } from "./excitation.ts";
+import { Template, FormDocument } from "./excitation.ts";
+
+export const documents: FormDocument[] = [
+  {
+    pdfUrl: "PressReleaseFY24Q3.pdf",
+    name: "Microsoft Press Release FY24Q3",
+    diUrl: "http://localhost:8000/file/PressReleaseFY24Q3.pdf.json",
+  },
+  {
+    pdfUrl: "Microsoft 10Q FY24Q3 1.pdf",
+    name: "Microsoft Form 10Q FY24Q3",
+    diUrl: "http://localhost:8000/file/Microsoft 10Q FY24Q3 1.pdf.json",
+  },
+];
 
 export const templates: Template[] = [
   {
@@ -32,23 +45,26 @@ export const templates: Template[] = [
     formBootstraps: [
       {
         name: "Microsoft FY24Q3",
+        documentIds: [
+          0, 1
+        ],    
         citations: [
           [
             {
               excerpt: "Revenue was $61.9 billion and increased 17%.",
-              documentId: 13,
+              documentId: 0,
               review: 0,
             },
             {
               excerpt: "61,858",
-              documentId: 1967,
+              documentId: 1,
               review: 0,
             },
           ],
           [
             {
               excerpt: "$2.94",
-              documentId: 13,
+              documentId: 0,
               review: 0,
             },
           ],
@@ -56,19 +72,19 @@ export const templates: Template[] = [
             {
               excerpt:
                 "Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third quarter of fiscal year 2024.",
-              documentId: 13,
+              documentId: 0,
               review: 0,
             },
           ],
           [
             {
               excerpt: "484,275",
-              documentId: 13,
+              documentId: 0,
               review: 0,
             },
             {
               excerpt: "484,275",
-              documentId: 1967,
+              documentId: 1,
               review: 0,
             },
           ],
@@ -76,13 +92,13 @@ export const templates: Template[] = [
             {
               excerpt:
                 "Claims against us that may result in adverse outcomes in legal disputes.",
-              documentId: 13,
+              documentId: 0,
               review: 0,
             },
             {
               excerpt:
                 "Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused their brain tumors and other adverse health effects.",
-              documentId: 1967,
+              documentId: 1,
               review: 0,
             },
           ],
@@ -90,7 +106,7 @@ export const templates: Template[] = [
             {
               excerpt:
                 "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage;\n· claims against us that may result in adverse outcomes in legal disputes;",
-              documentId: 13,
+              documentId: 0,
               review: 0,
             },
           ],

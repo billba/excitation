@@ -1,15 +1,20 @@
-import { templates } from "./templates.ts";
+import { documents, templates } from "./templates.ts";
 import { isError } from "./settings.ts";
 
 export interface Template {
   name: string;
   questions: Question[];
-  formBootstraps: { name: string; citations: Citation[][] }[];
+  formBootstraps: {
+    name: string;
+    documentIds: number[];
+    citations: Citation[][];
+  }[];
 }
 
 export interface Form {
   name: string;
   templateId: number;
+  documentIds: number[];
   citations: Citation[][];
 }
 
@@ -19,11 +24,11 @@ interface FormMetadata {
   formId: number;
 }
 
-interface FormDocument {
+export interface FormDocument {
   name: string;
   diUrl: string;
   pdfUrl: string;
-  documentId: number;
+  documentId?: number;
 }
 
 enum Review {
@@ -93,21 +98,6 @@ export type Event =
       creator: string;
     };
 
-const documents: FormDocument[] = [
-  {
-    pdfUrl: "PressReleaseFY24Q3.pdf",
-    name: "Microsoft Press Release FY24Q3",
-    diUrl: "http://localhost:8000/file/PressReleaseFY24Q3.pdf.json",
-    documentId: 13,
-  },
-  {
-    pdfUrl: "Microsoft 10Q FY24Q3 1.pdf",
-    name: "Microsoft Form 10Q FY24Q3",
-    diUrl: "http://localhost:8000/file/Microsoft 10Q FY24Q3 1.pdf.json",
-    documentId: 1967,
-  },
-];
-
 export const createCitationId = (formId: number, creator: string) => {
   return formId + "-" + creator + "-" + Date.now();
 };
@@ -126,7 +116,10 @@ export function getClientForm(formId: number): ClientForm {
       formName: form.name,
       templateName: template.name,
     },
-    documents,
+    documents: form.documentIds.map((documentId) => ({
+      ...documents[documentId],
+      documentId,
+    })),
     questions: template.questions.map((question, i) => {
       return {
         ...question,
@@ -148,11 +141,12 @@ export function getClientFormFromBootstrap(
   if (isNaN(bootstrapId) || bootstrapId >= formBootstraps.length)
     throw new Error("Template ${templateId}/Bootstrap ${}not found");
 
-  const { name, citations } = formBootstraps[bootstrapId];
+  const { name, citations, documentIds } = formBootstraps[bootstrapId];
   const formId = forms.length;
   forms.push({
     name,
     templateId,
+    documentIds,
     citations: citations.map((questionCitations, questionIndex) =>
       questionCitations.map((citation, citationIndex) => ({
         ...citation,
@@ -181,7 +175,10 @@ function findCitation(citationId: string): Citation | undefined {
 export async function dispatchEvent(event: Event) {
   switch (event.type) {
     case "addCitation": {
-      if (await isError()) throw new Error(`Congratulations, you asked for an error and you got one!`);
+      if (await isError())
+        throw new Error(
+          `Congratulations, you asked for an error and you got one!`
+        );
 
       const {
         formId,
@@ -214,7 +211,10 @@ export async function dispatchEvent(event: Event) {
     }
 
     case "updateReview": {
-      if (await isError()) throw new Error(`Congratulations, you asked for an error and you got one!`);
+      if (await isError())
+        throw new Error(
+          `Congratulations, you asked for an error and you got one!`
+        );
 
       const citation = findCitation(event.citationId);
       if (!citation) throw new Error(`Citation ${event.citationId} not found`);
