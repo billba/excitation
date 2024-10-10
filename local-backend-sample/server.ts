@@ -11,9 +11,12 @@ import {
 const app = new Application();
 const router = new Router();
 
+export const clientUrl = (formId: number) => `http://localhost:5173/${formId}`;
+
 router
   .get("/", ({ response }) => {
     response.body = dashboard();
+    response.headers.set("Content-Type", "text/html");
   })
   .get("/file/:path", async (context) => {
     const {
@@ -46,16 +49,12 @@ router
     "/newform/:templateId/:bootstrapId",
     ({ response, params: { templateId, bootstrapId } }) => {
       try {
-        console.log("creating and serving new form", templateId, bootstrapId);
-        const [formId, form] = getClientFormFromBootstrap(
+        console.log("creating new form", templateId, bootstrapId);
+        const formId = getClientFormFromBootstrap(
           Number(templateId),
           Number(bootstrapId)
         );
-        response.body = JSON.stringify({
-          formId,
-          form,
-        });
-        response.headers.set("content-type", "application/json");
+        response.redirect(clientUrl(formId));
       } catch (e) {
         response.body = e.message;
         response.status = 400;

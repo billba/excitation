@@ -1,3 +1,5 @@
+import { clientUrl } from './server.ts';
+
 interface Template {
   name: string;
   questions: Question[];
@@ -235,7 +237,7 @@ export function getClientForm(formId: number): ClientForm {
 export function getClientFormFromBootstrap(
   templateId: number,
   bootstrapId: number,
-): [number, ClientForm] {
+): number {
   if (isNaN(templateId) || templateId >= templates.length) throw new Error("Template ${templateId}/Bootstrap ${}not found");
   
   const { formBootstraps } = templates[templateId];
@@ -253,7 +255,7 @@ export function getClientFormFromBootstrap(
     }))),
   });
 
-  return [formId, getClientForm(formId)];
+  return formId;
 }
 
 function findCitation(citationId: string): Citation | undefined {  
@@ -314,5 +316,41 @@ export function dispatchEvent(event: Event) {
 }
 
 export function dashboard(): string {
-  return "Dashboard goes here";
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Excitation Dashboard</title>
+      </head>
+      <body>
+        <h2>Excitation</h3>
+        ${templates.map((template, templateId) => `
+          <h3>Template "${template.name}"</h4>
+          ${template.formBootstraps.map((bootstrap, bootstrapId) => `
+            <h4>
+              ${bootstrap.name}
+            </h4>
+            ${forms
+              .map((form, formId) => [form, formId] as const)
+              .filter(([form]) => form.templateId === templateId && form.name === bootstrap.name)
+              .map(([_, formId]) => `
+                <div>
+                  <a href="${clientUrl(formId)}">Form #${formId}</a>
+                </div>
+              `)
+              .join('')
+            }
+            <div>
+              <a href="/newform/${templateId}/${bootstrapId}">new form</a>
+            </div>
+          `)
+          .join('')             
+          }
+        `
+        )}
+      </body>
+    </html>
+  `;
 }

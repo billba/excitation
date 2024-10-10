@@ -10,4 +10,4 @@ npm install
 npm run dev
 ```
 
-Then aim your browser at the indicated VITE dev endpoint, which for me is [http://localhost:5173/](http://localhost:5173/)
+This starts the Vite dev server. It needs to be serving from [http://localhost:5173/](http://localhost:5173/) but don't go there. Instead, follow the directions at [local-backend-sample](../local-backend-sample/).
