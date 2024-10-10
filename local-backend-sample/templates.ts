@@ -51,7 +51,7 @@ export const templates: Template[] = [
         citations: [
           [
             {
-              excerpt: "Revenue was $61.9 billion and increased 17%.",
+              excerpt: "Revenue was $61.9 billion and increased 17%",
               documentId: 0,
               review: 0,
             },
@@ -78,7 +78,7 @@ export const templates: Template[] = [
           ],
           [
             {
-              excerpt: "484,275",
+              excerpt: "$484,275",
               documentId: 0,
               review: 0,
             },
@@ -91,7 +91,7 @@ export const templates: Template[] = [
           [
             {
               excerpt:
-                "Claims against us that may result in adverse outcomes in legal disputes.",
+                "claims against us that may result in adverse outcomes in legal disputes;",
               documentId: 0,
               review: 0,
             },
@@ -105,7 +105,7 @@ export const templates: Template[] = [
           [
             {
               excerpt:
-                "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage;\n· claims against us that may result in adverse outcomes in legal disputes;",
+                "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage; · claims against us that may result in adverse outcomes in legal disputes;",
               documentId: 0,
               review: 0,
             },

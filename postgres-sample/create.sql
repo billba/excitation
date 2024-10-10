@@ -84,7 +84,7 @@ VALUES
   (gen_random_uuid(), 1, 3, 1, 'Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third quarter of fiscal year 2024.', 'system'),
   (gen_random_uuid(), 1, 4, 1, '$484,275', 'system'),
   (gen_random_uuid(), 1, 4, 2, '484,275', 'system'),
-  (gen_random_uuid(), 1, 5, 1, 'claims against us that may result in adverse outcomes in legal disputes.', 'system'),
+  (gen_random_uuid(), 1, 5, 1, 'claims against us that may result in adverse outcomes in legal disputes;', 'system'),
   (gen_random_uuid(), 1, 5, 2, 'Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused their brain tumors and other adverse health effects.', 'system'),
   (gen_random_uuid(), 1, 6, 1, '· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage; · claims against us that may result in adverse outcomes in legal disputes;', 'system');
   
