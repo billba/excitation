@@ -21,7 +21,7 @@
       "text": "What was the company’s revenue for the third quarter of Fiscal Year 2024?",
       "citations": [
         {
-          "excerpt": "Revenue was $61.9 billion and increased 17%.",
+          "excerpt": "Revenue was $61.9 billion and increased 17%",
           "documentId": 13,
           "citationId": "123",
           "review": 0
@@ -63,7 +63,7 @@
       "text": "What are the total assets reported?",
       "citations": [
         {
-          "excerpt": "484,275",
+          "excerpt": "$484,275",
           "documentId": 13,
           "citationId": "98-43-12",
           "review": 0
@@ -81,7 +81,7 @@
       "text": "Are there any ongoing legal proceedings?",
       "citations": [
         {
-          "excerpt": "Claims against us that may result in adverse outcomes in legal disputes.",
+          "excerpt": "claims against us that may result in adverse outcomes in legal disputes;",
           "documentId": 13,
           "citationId": "96",
           "review": 0
@@ -99,7 +99,7 @@
       "text": "What is a quote that spans two pages?",
       "citations": [
         {
-          "excerpt": "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage;\n· claims against us that may result in adverse outcomes in legal disputes;",
+          "excerpt": "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage; · claims against us that may result in adverse outcomes in legal disputes;",
           "documentId": 13,
           "citationId": "dog",
           "review": 0
