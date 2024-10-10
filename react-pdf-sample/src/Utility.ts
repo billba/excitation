@@ -229,40 +229,6 @@ export const drawPolygon = (
   context.stroke();
 };
 
-// Match a subline to a line if at least 75% of its words/word fragments
-// are found in the line, used for creating a reference from selection.
-// const fuzzyMatch = (line: string, subline: string, threshold = 0.6) => {
-//   const words = subline.split(" ");
-//   let wordsMatched = 0;
-
-//   for (let i = 0; i < words.length; i++) {
-//     if (line.includes(words[i])) wordsMatched++;
-//   }
-
-//   const matchRate = wordsMatched / words.length;
-//   if (matchRate >= threshold) {
-//     console.log(
-//       "matched DocInt line:\t",
-//       line,
-//       "\nto OCR subline:\t\t",
-//       subline,
-//       "\nwith match rate:",
-//       matchRate
-//     );
-//     return true;
-//   }
-//   if (matchRate > 0.4) {
-//     console.log(
-//       "did not match DocInt line:\t",
-//       line,
-//       "\nto OCR subline:\t\t",
-//       subline,
-//       "\nwith match rate:",
-//       matchRate
-//     );
-//   } else return false;
-// };
-
 // Simple matching
 // special cases:
 //  - case is irrelevant
@@ -275,21 +241,21 @@ const match = (str0: string, str1: string) => {
   str0 = str0.toLocaleLowerCase();
   str1 = str1.toLocaleLowerCase();
 
-  // Strip trailing periods
-  if (str0.slice(-1) == ".") str0 = str0.slice(0, -1);
-  if (str1.slice(-1) == ".") str1 = str1.slice(0, -1);
+  // // Strip trailing periods
+  // if (str0.slice(-1) == ".") str0 = str0.slice(0, -1);
+  // if (str1.slice(-1) == ".") str1 = str1.slice(0, -1);
 
-  // Strip trailing semicolons
-  if (str0.slice(-1) == ";") str0 = str0.slice(0, -1);
-  if (str1.slice(-1) == ";") str1 = str1.slice(0, -1);
+  // // Strip trailing semicolons
+  // if (str0.slice(-1) == ";") str0 = str0.slice(0, -1);
+  // if (str1.slice(-1) == ";") str1 = str1.slice(0, -1);
 
-  // strip dollar signs
-  if (str0.slice(0, 1) == "$") str0 = str0.slice(1);
-  if (str1.slice(0, 1) == "$") str1 = str1.slice(1);
+  // // strip dollar signs
+  // if (str0.slice(0, 1) == "$") str0 = str0.slice(1);
+  // if (str1.slice(0, 1) == "$") str1 = str1.slice(1);
 
-  // strip leading quotes
-  if (str0.slice(0, 1) == '"') str0 = str0.slice(1);
-  if (str1.slice(0, 1) == '"') str1 = str1.slice(1);
+  // // strip leading quotes
+  // if (str0.slice(0, 1) == '"') str0 = str0.slice(1);
+  // if (str1.slice(0, 1) == '"') str1 = str1.slice(1);
 
   if (str0 === str1) return true;
 

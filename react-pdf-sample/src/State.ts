@@ -159,6 +159,8 @@ export const stateAtom = atom<State, [Action], void>(
             const isAsyncing = asyncState.status != "idle";
             const isError = isAsyncing && !!asyncState.uxAtError;
 
+            console.log("DI response", doc.response);
+          
             function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
               ux.pageNumber = gotoPageNumber;
               ux.range = undefined;
@@ -410,10 +412,14 @@ export const stateAtom = atom<State, [Action], void>(
             mark: (state) => {
               // don't proxy the DI response. It's not a class so we can't identify it with instanceof
               // so instead we check for what seems like a unique field.
-              if (state.analyzeResult) {
+              
+              console.log("mark", state)
+              if (state?.analyzeResult) {
+                console.log("yes mark")
                 console.assert(state.status && state.createdDateTime && state.lastUpdatedDateTime);
                 return () => state;
               }
+              console.log("no mark")
             },
           }
         );
