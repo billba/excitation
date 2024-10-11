@@ -365,12 +365,12 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
   // no data whatsoever
   if (end == 0) {
     console.log("no lines to search");
-    return lines;
+    return [];
   }
   // no intersections :(
   if (start == end) {
-    console.log("no further lines to search; closest guess returned");
-    return lines.slice(start, start + 1);
+    console.log("no further lines to search");
+    return [];
   }
 
   // find the midpoint of the given range [start, end)
@@ -430,21 +430,16 @@ const splitIntoColumns = (lines: Line[]) => {
     }
   }
 
-  console.log(`split ${lines.length} lines into ${cols.length} columns`)
+  console.log(`split ${lines.length} lines into ${cols.length} columns`);
+  for (let index = 0; index < cols.length; index++)
+    console.log(`col [${index}]: "${cols[index].lines[0].content}" and ${cols[index].lines.length - 1} more lines`);
+
   return cols;
 }
 
 // from an array of Columns, find the first where col.polygon intersects with poly
-const getRelevantColumn = (columns: Column[], poly: number[]) => {
-  for (const col of columns) {
-    if (comparePolygons(col.polygon, poly) == 0) return col;
-  }
-
-  // if there's no match or no columns
-  return {
-    polygon: [],
-    lines: []
-  };
+const getRelevantColumns = (columns: Column[], poly: number[]) => {
+  return columns.filter((col) => comparePolygons(col.polygon, poly) == 0)
 }
 
 const findTextFromBoundingRegions = (
@@ -457,11 +452,15 @@ const findTextFromBoundingRegions = (
     // page numbers are 1-indexed, thus the subtraction
     const page = response.analyzeResult.pages[bound.pageNumber - 1];
     const lines = page.lines;
+
     const columns = splitIntoColumns(lines);
-    for (let index = 0; index < columns.length; index++)
-      console.log(`col [${index}]: "${columns[index].lines[0].content}" and ${columns[index].lines.length - 1} more lines`);
-    const col = getRelevantColumn(columns, bound.polygon);
-    const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon);
+    const relevantColumns = getRelevantColumns(columns, bound.polygon);
+
+    const intersectingLines = [];
+    for (let index = 0; index < relevantColumns.length; index++) {
+      console.log(`searching col ${index}`);
+      intersectingLines.push(...polygonBinarySearch(relevantColumns[index].lines, 0, relevantColumns[index].lines.length, bound.polygon));
+    }
 
     const contents = intersectingLines.map((line) => line.content);
     excerpt += contents.join(' ') + ' ';
