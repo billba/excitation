@@ -312,8 +312,6 @@ export const returnTextPolygonsFromDI = (
   }
   console.log("MATCH:", words);
   return bounds;
-  // what happens if we don't find any bounding regions?
-  // The question exists, the reference exists, the document exists, Document Intelligence just didn't do its job
 };
 
 // compares a bounding regions polygon to a reference polygon
