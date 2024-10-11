@@ -368,12 +368,14 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
   const refY = [ refPoly[1], refPoly[5] ];
 
   // first: are they in the same column?
+  console.log("\tCOL comparing x values:", x, refX);
   // no, poly is an earlier column
   if (x[1] < refX[0]) return -1;
   // no, poly is a later column
   if (x[0] > refX[1]) return 1;
 
   // then: how do they compare vertically within a column?
+  console.log("\tROW comparing y values:", y, refY);
   // poly is earlier in the column
   if (y[1] < refY[0]) return -1;
   // poly is later in the column
@@ -423,9 +425,8 @@ const findTextFromBoundingRegions = (
   const page = response.analyzeResult.pages[boundingRegions[0].pageNumber - 1];
   const lines = page.lines;
   const intersectingLines = polygonBinarySearch(lines, boundingRegions[0].polygon);
-  let ret = "";
-  for (const line of intersectingLines) ret += line.content + ' ';
-  return ret;
+  const contents = intersectingLines.map((line) => line.content);
+  return contents.join(' ');
 }
 
 export function findUserSelection(
@@ -444,6 +445,11 @@ export function findUserSelection(
   bottom = round((bottom - dy) / multiplier, 4);
   left = round((left - dx) / multiplier, 4);
   right = round((right - dx) / multiplier, 4);
+
+  if (top < 1) console.log("bounds:top is curiously small for a standard document", top);
+  if (bottom > 10) console.log("bounds:bottom is curiously large for a standard document", bottom);
+  if (left < 1) console.log("bounds:left is curiously small for a standard document", left);
+  if (right > 7.5) console.log("bounds:right is curiously large for a standard document", right);
 
   const bounds = [
     {
