@@ -5,13 +5,9 @@ import { Citation, FormDocument } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
-  DocumentFilled,
   DocumentOnePageRegular,
-  DocumentOnePageFilled,
   DocumentOnePageMultipleRegular,
-  DocumentOnePageMultipleFilled,
   DocumentOnePageAddRegular,
-  DocumentOnePageAddFilled,
   TriangleLeftFilled,
   TriangleRightFilled,
 } from "@fluentui/react-icons";
@@ -34,7 +30,12 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
   return review * 1000 + citationIndex;
 };
 
-const groupCitations = (docs: FormDocument[], citations: Citation[], docCurrent: FormDocument, pageNumber: number) =>
+const groupCitations = (
+  docs: FormDocument[],
+  citations: Citation[],
+  docCurrent: FormDocument,
+  pageNumber: number
+) =>
   docs.map((doc) => ({
     doc,
     pageGroups: citations
@@ -53,18 +54,31 @@ const groupCitations = (docs: FormDocument[], citations: Citation[], docCurrent:
           citationIndices,
         };
       })
-      .reduce((pageGroups, pageGroup) => {
-        const matchingPageGroup = pageGroups.find(
-          ({ firstPage, lastPage }) =>
-            firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
-        );
-        if (matchingPageGroup) {
-          matchingPageGroup.citationIndices.push(pageGroup.citationIndices[0]);
-        } else {
-          pageGroups.push(pageGroup);
-        }
-        return pageGroups;
-      }, doc === docCurrent ? [{firstPage: pageNumber, lastPage: pageNumber, citationIndices: []}] : [] as PageGroup[])
+      .reduce(
+        (pageGroups, pageGroup) => {
+          const matchingPageGroup = pageGroups.find(
+            ({ firstPage, lastPage }) =>
+              firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
+          );
+          if (matchingPageGroup) {
+            matchingPageGroup.citationIndices.push(
+              pageGroup.citationIndices[0]
+            );
+          } else {
+            pageGroups.push(pageGroup);
+          }
+          return pageGroups;
+        },
+        doc === docCurrent
+          ? [
+              {
+                firstPage: pageNumber,
+                lastPage: pageNumber,
+                citationIndices: [],
+              },
+            ]
+          : ([] as PageGroup[])
+      )
       .map(({ firstPage, lastPage, citationIndices }) => ({
         firstPage,
         lastPage,
@@ -84,7 +98,13 @@ export function Sidebar() {
   const { isAsyncing, isError } = useAsyncHelper();
 
   const groupedCitations = useMemo(
-    () => groupCitations(documents, questions[questionIndex].citations, doc, pageNumber),
+    () =>
+      groupCitations(
+        documents,
+        questions[questionIndex].citations,
+        doc,
+        pageNumber
+      ),
     [documents, questions, questionIndex, doc, pageNumber]
   );
 
@@ -104,6 +124,7 @@ export function Sidebar() {
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
+      <p>Please provide evidence to answer the following question:</p>
       <div className="sidebar-header">
         <TriangleLeftFilled
           className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
@@ -132,121 +153,144 @@ export function Sidebar() {
         {groupedCitations.map(({ doc, pageGroups }) => {
           const docSelected = doc == ux.doc;
           return (
-            <div className={`doc-group ${docSelected ? "selected" : "unselected"}`} key={doc.documentId}>
+            <div
+              className={`doc-parent ${
+                docSelected ? "selected" : "unselected"
+              }`}
+            >
               <div
-                className={`doc-header ${
+                className={`doc-group ${
                   docSelected ? "selected" : "unselected"
                 }`}
-                onClick={
-                  docSelected
-                    ? undefined
-                    : dispatchUnlessError({ type: "goto", doc })
-                }
+                key={doc.documentId}
               >
-                <div>
-                  {docSelected ? (
-                    <DocumentRegular className="icon" />
-                  ) : (
-                    <DocumentRegular className="icon" />
-                  )}
-                  {doc.name ?? doc.pdfUrl}
+                <div
+                  className={`doc-header ${
+                    docSelected ? "selected" : "unselected"
+                  }`}
+                  onClick={
+                    docSelected
+                      ? undefined
+                      : dispatchUnlessError({ type: "goto", doc })
+                  }
+                >
+                  <div>
+                    {docSelected ? (
+                      <DocumentRegular className="icon" />
+                    ) : (
+                      <DocumentRegular className="icon" />
+                    )}
+                    {doc.name ?? doc.pdfUrl}
+                  </div>
                 </div>
-              </div>
-              {pageGroups.map(({ firstPage, lastPage, citationIndices }) => {
-                const pageSelected =
-                  docSelected &&
-                  (selectedCitation
-                    ? citationIndices.includes(selectedCitation.citationIndex)
-                    : pageNumber >= firstPage && pageNumber <= lastPage);
-                return (
-                  <div
-                    className={`page-group ${
-                      pageSelected ? "selected" : "unselected"
-                    }`}
-                    key={firstPage * maxPageNumber + lastPage}
-                  >
+                {pageGroups.map(({ firstPage, lastPage, citationIndices }) => {
+                  const pageSelected =
+                    docSelected &&
+                    (selectedCitation
+                      ? citationIndices.includes(selectedCitation.citationIndex)
+                      : pageNumber >= firstPage && pageNumber <= lastPage);
+                  return (
                     <div
-                      className={`page-header ${
+                      className={`page-group ${
                         pageSelected ? "selected" : "unselected"
                       }`}
-                      onClick={
-                        pageSelected
-                          ? undefined
-                          : dispatchUnlessError({
-                              type: "goto",
-                              pageNumber: firstPage,
-                              doc,
-                            })
-                      }
+                      key={firstPage * maxPageNumber + lastPage}
                     >
-                      {firstPage == lastPage ? (
-                        firstPage == unlocatedPage ? (
-                          <div>
-                            {pageSelected ? (
-                              <DocumentOnePageAddRegular className="icon" />
-                            ) : (
-                              <DocumentOnePageAddRegular className="icon" />
-                            )}
-                            Unable to locate citation
-                          </div>
+                      <div
+                        className={`page-header ${
+                          pageSelected ? "selected" : "unselected"
+                        }`}
+                        onClick={
+                          pageSelected
+                            ? undefined
+                            : dispatchUnlessError({
+                                type: "goto",
+                                pageNumber: firstPage,
+                                doc,
+                              })
+                        }
+                      >
+                        {firstPage == lastPage ? (
+                          firstPage == unlocatedPage ? (
+                            <div>
+                              {pageSelected ? (
+                                <DocumentOnePageAddRegular className="icon" />
+                              ) : (
+                                <DocumentOnePageAddRegular className="icon" />
+                              )}
+                              Unable to locate citation
+                            </div>
+                          ) : (
+                            <div>
+                              {pageSelected ? (
+                                <DocumentOnePageRegular className="icon" />
+                              ) : (
+                                <DocumentOnePageRegular className="icon" />
+                              )}
+                              Page {firstPage}
+                            </div>
+                          )
                         ) : (
                           <div>
                             {pageSelected ? (
-                              <DocumentOnePageRegular className="icon" />
+                              <DocumentOnePageMultipleRegular className="icon" />
                             ) : (
-                              <DocumentOnePageRegular className="icon" />
+                              <DocumentOnePageMultipleRegular className="icon" />
                             )}
-                            Page {firstPage}
+                            Pages {firstPage}-{lastPage}
                           </div>
-                        )
-                      ) : (
-                        <div>
-                          {pageSelected ? (
-                            <DocumentOnePageMultipleRegular className="icon" />
-                          ) : (
-                            <DocumentOnePageMultipleRegular className="icon" />
-                          )}
-                          Pages {firstPage}-{lastPage}
-                        </div>
-                      )}
+                        )}
+                      </div>
+                      {citationIndices.map((citationIndex) => {
+                        const { excerpt, review } =
+                          questions[questionIndex].citations[citationIndex];
+                        return (
+                          <CitationUX
+                            key={citationIndex}
+                            citationIndex={citationIndex}
+                            excerpt={excerpt}
+                            review={review}
+                            selected={
+                              selectedCitation?.citationIndex == citationIndex
+                            }
+                          />
+                        );
+                      })}
                     </div>
-                    {citationIndices.map((citationIndex) => {
-                      const { excerpt, review } =
-                        questions[questionIndex].citations[citationIndex];
-                      return (
-                        <CitationUX
-                          key={citationIndex}
-                          citationIndex={citationIndex}
-                          excerpt={excerpt}
-                          review={review}
-                          selected={
-                            selectedCitation?.citationIndex == citationIndex
-                          }
-                        />
-                      );
-                    })}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              <div
+                className={`doc-right ${
+                  docSelected ? "selected" : "unselected"
+                }`}
+              />
             </div>
           );
         })}
-        <br />
-        &nbsp;
-        <button
-          onClick={addSelection}
-          disabled={isAsyncing || ux.range == undefined}
-        >
-          add selection
-        </button>
-        {asyncState.status == "error" && (
+        <div className="doc-parent unselected tall">
           <div>
-            &nbsp;
-            <button onClick={dispatch({ type: "asyncRetry" })}>Retry</button>
-            &nbsp;
-            <button onClick={dispatch({ type: "asyncRevert" })}>Revert</button>
+            <button
+              onClick={addSelection}
+              disabled={isAsyncing || ux.range == undefined}
+            >
+              add selection
+            </button>
+            {asyncState.status == "error" && (
+              <div>
+                &nbsp;
+                <button onClick={dispatch({ type: "asyncRetry" })}>
+                  Retry
+                </button>
+                &nbsp;
+                <button onClick={dispatch({ type: "asyncRevert" })}>
+                  Revert
+                </button>
+              </div>
+            )}
           </div>
-        )}
+          <div className="doc-right unselected" />
+        </div>
       </div>
     </div>
   );
