@@ -36,17 +36,15 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
 
 const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
   docs.map((doc) => ({
-    document: doc,
+    doc,
     pageGroups: citations
       .map<[Citation, number[]]>((citation, citationIndex) => [
         citation,
         [citationIndex],
       ])
-      .filter(([citation]) => citation.doc === doc)
+      .filter(([citation]) => citation.doc!.documentId === doc.documentId)
       .map(([citation, citationIndices]) => {
-        const pageNumbers = (
-          citation.bounds ?? [{ pageNumber: unlocatedPage }]
-        )
+        const pageNumbers = (citation.bounds ?? [{ pageNumber: unlocatedPage }])
           .map(({ pageNumber }) => pageNumber)
           .sort();
         return {
@@ -81,13 +79,14 @@ export function Sidebar() {
   const [state, _dispatch] = useAtom(stateAtom);
   const { documents, questions, ux, asyncState } = state;
   const { pageNumber, questionIndex, selectedCitation } = ux;
-  const { prefix, text } = questions[questionIndex];
+  const question = questions[questionIndex];
+  const { prefix, text, citations } = question;
 
   const { isAsyncing, isError } = useAsyncHelper();
 
   const groupedCitations = useMemo(
-    () => groupCitations(documents, questions[questionIndex].citations),
-    [documents, questions, questionIndex]
+    () => groupCitations(documents, citations),
+    [documents, citations]
   );
 
   const { dispatch, dispatchUnlessError } = useDispatchHandler(_dispatch);
@@ -109,7 +108,11 @@ export function Sidebar() {
       <div className="sidebar-header">
         <TriangleLeftFilled
           className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
-          onClick={disablePrev ? undefined : dispatchUnlessError({ type: "prevQuestion" })}
+          onClick={
+            disablePrev
+              ? undefined
+              : dispatchUnlessError({ type: "prevQuestion" })
+          }
         />
         <div className="question">
           <span className="question-prefix">
@@ -119,11 +122,15 @@ export function Sidebar() {
         </div>
         <TriangleRightFilled
           className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
-          onClick={disableNext ? undefined : dispatchUnlessError({ type: "nextQuestion" })}
+          onClick={
+            disableNext
+              ? undefined
+              : dispatchUnlessError({ type: "nextQuestion" })
+          }
         />
       </div>
       <div id="citation-groups">
-        {groupedCitations.map(({ document: doc, pageGroups }) => {
+        {groupedCitations.map(({ doc, pageGroups }) => {
           const docSelected = doc == ux.doc;
           return (
             <div className="doc-group" key={doc.documentId}>
@@ -132,7 +139,9 @@ export function Sidebar() {
                   docSelected ? "selected" : "unselected"
                 }`}
                 onClick={
-                  docSelected ? undefined : dispatchUnlessError({ type: "goto", doc })
+                  docSelected
+                    ? undefined
+                    : dispatchUnlessError({ type: "goto", doc })
                 }
               >
                 <div>
