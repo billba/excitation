@@ -398,6 +398,11 @@ const getLastIntersectionIndex = (lines: Line[], poly: number[], axis: number) =
 // searches lines[start, end) (that is, inclusive of start and exclusive of end)
 // for poly, in a binary search - compare against midpoint and move from there
 const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: number[]) => {
+  // no data whatsoever
+  if (end == 0) {
+    console.log("no lines to search");
+    return lines;
+  }
   // no intersections :(
   if (start == end) {
     console.log("no further lines to search; closest guess returned");
@@ -425,14 +430,71 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
   }
 }
 
+interface Column {
+  polygon: number[],
+  lines: Line[]
+}
+
+const splitIntoColumns = (lines: Line[]) => {
+  if (lines.length == 0) return [{
+    polygon: [],
+    lines: []
+  }];
+  if (lines.length == 1) return [{
+    polygon: lines[0].polygon,
+    lines: lines
+  }];
+
+  let cols = [];
+  let firstLineOfCol = 0;
+
+  for (let currentLine = 0; currentLine < lines.length; currentLine++) {
+    // is lines[currentLine + 1] a new column?
+    // OR, is this the last line and therefore the end of the last column?
+    if (currentLine == lines.length - 1
+        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) < 0) {
+      // let's wrap up the current column.
+      cols.push({
+        polygon: combinePolygons(lines[firstLineOfCol].polygon, lines[currentLine].polygon),
+        lines: lines.slice(firstLineOfCol, currentLine + 1)
+      });
+      firstLineOfCol = currentLine + 1;
+    }
+  }
+
+  console.log(`split ${lines.length} lines into ${cols.length} columns`)
+  return cols;
+}
+
+// from an array of Columns, find the first where col.polygon intersects with poly
+const getRelevantColumn = (columns: Column[], poly: number[]) => {
+  for (const col of columns) {
+    console.log(`col ${col}`);
+    if (comparePolygons(col.polygon, poly) == 0) return col;
+  }
+
+  // if there's no match or no columns
+  return {
+    polygon: [],
+    lines: []
+  };
+}
+
 const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
-  boundingRegions: Bounds[]
+  bounds: Bounds[]
 ) => {
   // page numbers are 1-indexed, thus the subtraction
-  const page = response.analyzeResult.pages[boundingRegions[0].pageNumber - 1];
+  const page = response.analyzeResult.pages[bounds[0].pageNumber - 1];
   const lines = page.lines;
-  const intersectingLines = polygonBinarySearch(lines, 0, lines.length, boundingRegions[0].polygon);
+  const columns = splitIntoColumns(lines);
+  const col = getRelevantColumn(columns, bounds[0].polygon);
+  const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bounds[0].polygon);
+
+  if (intersectingLines.length == 0) {
+    console.log("nothing found for user selection");
+    return 'ERR';
+  }
   const contents = intersectingLines.map((line) => line.content);
   return contents.join(' ');
 }
