@@ -118,6 +118,11 @@ interface Span {
   length: number;
 }
 
+interface Column {
+  polygon: number[],
+  lines: Line[]
+}
+
 export const createCitationId = (formId: number, creator: string) => {
   return formId + '-' + creator + '-' + Date.now();
 }
@@ -147,19 +152,6 @@ const adjacent = (poly0: number[], poly1: number[], delta = 0.2) => {
     y1[0] > y0[1] + delta;
   return !noOverlap;
 };
-
-// Similar to above, but only returns true if the polygons are adjacent in
-// such a way that they are on the same line (or thereabouts; basically the 
-// y-data needs to overlap)
-const onSameLine = (poly0: number[], poly1: number[], delta= 0.2) => {
-  const y0 = [round(poly0[1], 1), round(poly0[5], 1)];
-  const y1 = [round(poly1[1], 1), round(poly1[5], 1)];
-
-  const noOverlap = 
-    y0[0] > y1[1] + delta ||
-    y1[0] > y0[1] + delta;
-  return !noOverlap;
-}
 
 // from x(x0, x1) and y(y0, y1) create an 8 value polygon
 const polygonize = (x: number[], y: number[]) => {
@@ -222,53 +214,13 @@ export const condenseRegions = (boundingRegions: Bounds[]) => {
   return condensedRegions;
 };
 
-// creates a polygon on provided canvas using provided scale and polygon data
-export const drawPolygon = (
-  context: CanvasRenderingContext2D,
-  scale: number = 1,
-  polygon: number[]
-): void => {
-  const multiplier = 72 * (window.devicePixelRatio || 1) * scale;
-  context.fillStyle = "rgba(252, 207, 8, 0.3)";
-  context.strokeStyle = "#fccf08";
-  context.lineWidth = 1;
-  context.beginPath();
-  context.moveTo(polygon[0] * multiplier, polygon[1] * multiplier);
-  for (let i = 2; i < polygon.length; i += 2) {
-    context.lineTo(polygon[i] * multiplier, polygon[i + 1] * multiplier);
-  }
-  context.closePath();
-  context.fill();
-  context.stroke();
-};
-
 // Simple matching
 // special cases:
 //  - case is irrelevant
-//  - strip trailing periods
-//  - strip trailing semicolons
-//  - strip dollar signs
-//  - strip leading quotes
 const match = (str0: string, str1: string) => {
   // lower case
   str0 = str0.toLocaleLowerCase();
   str1 = str1.toLocaleLowerCase();
-
-  // // Strip trailing periods
-  // if (str0.slice(-1) == ".") str0 = str0.slice(0, -1);
-  // if (str1.slice(-1) == ".") str1 = str1.slice(0, -1);
-
-  // // Strip trailing semicolons
-  // if (str0.slice(-1) == ";") str0 = str0.slice(0, -1);
-  // if (str1.slice(-1) == ";") str1 = str1.slice(0, -1);
-
-  // // strip dollar signs
-  // if (str0.slice(0, 1) == "$") str0 = str0.slice(1);
-  // if (str1.slice(0, 1) == "$") str1 = str1.slice(1);
-
-  // // strip leading quotes
-  // if (str0.slice(0, 1) == '"') str0 = str0.slice(1);
-  // if (str1.slice(0, 1) == '"') str1 = str1.slice(1);
 
   if (str0 === str1) return true;
 
@@ -430,16 +382,15 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
   }
 }
 
-interface Column {
-  polygon: number[],
-  lines: Line[]
-}
-
+// Takes an array of lines and returns an array of Column items
+// each of which is a polygon and an array of lines
 const splitIntoColumns = (lines: Line[]) => {
+  // no lines
   if (lines.length == 0) return [{
     polygon: [],
     lines: []
   }];
+  // single line
   if (lines.length == 1) return [{
     polygon: lines[0].polygon,
     lines: lines
@@ -449,8 +400,8 @@ const splitIntoColumns = (lines: Line[]) => {
   let firstLineOfCol = 0;
 
   for (let currentLine = 0; currentLine < lines.length; currentLine++) {
-    // is lines[currentLine + 1] a new column?
-    // OR, is this the last line and therefore the end of the last column?
+    // is this the last line and therefore the end of the last column?
+    // OR, is lines[currentLine + 1] a new column?
     if (currentLine == lines.length - 1
         || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) < 0) {
       // let's wrap up the current column.
