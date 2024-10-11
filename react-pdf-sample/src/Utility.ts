@@ -160,11 +160,23 @@ const polygonize = (x: number[], y: number[]) => {
 
 // Combine two squared up polygons and return the combination
 // if the two polygons are NOT adjacent you will get weird results!!!
-const combinePolygons = (poly0: number[], poly1: number[]) => {
+const combineTwoPolygons = (poly0: number[], poly1: number[]) => {
   const x = [Math.min(poly0[0], poly1[0]), Math.max(poly0[2], poly1[2])];
   const y = [Math.min(poly0[1], poly1[1]), Math.max(poly0[5], poly1[5])];
   return polygonize(x, y);
 };
+
+// Combine an array of polygons using combineTwoPolygons
+const combinePolygons = (polygons: number[][]) => {
+  if (polygons.length == 0) return [];
+
+  while (polygons.length > 1) {
+    let lastPoly = polygons.pop();
+    if (lastPoly) polygons[polygons.length - 1] = combineTwoPolygons(polygons[polygons.length - 1], lastPoly);
+  }
+
+  return polygons[0];
+}
 
 // Return a polygon with sides that are parallel to the major axes
 const squareUp = (poly: number[]) => {
@@ -196,7 +208,7 @@ export const condenseRegions = (boundingRegions: Bounds[]) => {
         adjacent(condensedRegions[last].polygon, boundingRegions[index].polygon)
       ) {
         // adding to existing polygon
-        condensedRegions[last].polygon = combinePolygons(
+        condensedRegions[last].polygon = combineTwoPolygons(
           condensedRegions[last].polygon,
           boundingRegions[index].polygon
         );
@@ -405,9 +417,14 @@ const splitIntoColumns = (lines: Line[]) => {
     if (currentLine == lines.length - 1
         || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) < 0) {
       // let's wrap up the current column.
+      const colLines = lines.slice(firstLineOfCol, currentLine + 1);
+      // we combine all polys to make sure we capture the full width of the column
+      // and don't accidentally just grab, say, a header (short) and a last line of
+      // a paragraph (also short)
+      const polygon = combinePolygons(colLines.map((line) => line.polygon));
       cols.push({
-        polygon: combinePolygons(lines[firstLineOfCol].polygon, lines[currentLine].polygon),
-        lines: lines.slice(firstLineOfCol, currentLine + 1)
+        polygon: polygon,
+        lines: colLines
       });
       firstLineOfCol = currentLine + 1;
     }
