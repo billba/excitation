@@ -124,40 +124,45 @@ export function Sidebar() {
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
-      <p>Please provide evidence to answer the following question:</p>
-      <div className="sidebar-header">
-        <TriangleLeftFilled
-          className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
-          onClick={
-            disablePrev
-              ? undefined
-              : dispatchUnlessError({ type: "prevQuestion" })
-          }
-        />
-        <div className="question">
-          <span className="question-prefix">
-            {prefix ? <>{prefix}. </> : null}
-          </span>
-          <span className="question-text">{text}</span>
+      <div id="sidebar-header">
+        <p>Please provide evidence for the following question:</p>
+        <div id="sidebar-question-nav">
+          <TriangleLeftFilled
+            className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
+            onClick={
+              disablePrev
+                ? undefined
+                : dispatchUnlessError({ type: "prevQuestion" })
+            }
+          />
+          <div className="question">
+            <span className="question-prefix">
+              {prefix ? <>{prefix}. </> : null}
+            </span>
+            <span className="question-text">{text}</span>
+          </div>
+          <TriangleRightFilled
+            className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
+            onClick={
+              disableNext
+                ? undefined
+                : dispatchUnlessError({ type: "nextQuestion" })
+            }
+          />
         </div>
-        <TriangleRightFilled
-          className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
-          onClick={
-            disableNext
-              ? undefined
-              : dispatchUnlessError({ type: "nextQuestion" })
-          }
-        />
+        <br />
       </div>
+      <div className="sidebar-divider" />
       <div id="citation-groups">
         {groupedCitations.map(({ doc, pageGroups }) => {
           const docSelected = doc == ux.doc;
           return (
-            <div
-              className={`doc-parent ${
-                docSelected ? "selected" : "unselected"
-              }`}
-            >
+            <>
+              {docSelected && (
+                <div className="doc-group-prefix-outer">
+                  <div className="doc-group-prefix-inner" />
+                </div>
+              )}
               <div
                 className={`doc-group ${
                   docSelected ? "selected" : "unselected"
@@ -174,15 +179,14 @@ export function Sidebar() {
                       : dispatchUnlessError({ type: "goto", doc })
                   }
                 >
-                  <div>
-                    {docSelected ? (
-                      <DocumentRegular className="icon" />
-                    ) : (
-                      <DocumentRegular className="icon" />
-                    )}
-                    {doc.name ?? doc.pdfUrl}
-                  </div>
+                  <DocumentRegular className="icon" />
+                  {doc.name ?? doc.pdfUrl}
                 </div>
+                {docSelected && (
+                  <div className="doc-header-suffix-outer">
+                    <div className="doc-header-suffix-inner" />
+                  </div>
+                )}
                 {pageGroups.map(({ firstPage, lastPage, citationIndices }) => {
                   const pageSelected =
                     docSelected &&
@@ -212,33 +216,21 @@ export function Sidebar() {
                       >
                         {firstPage == lastPage ? (
                           firstPage == unlocatedPage ? (
-                            <div>
-                              {pageSelected ? (
-                                <DocumentOnePageAddRegular className="icon" />
-                              ) : (
-                                <DocumentOnePageAddRegular className="icon" />
-                              )}
+                            <>
+                              <DocumentOnePageAddRegular className="icon" />
                               Unable to locate citation
-                            </div>
+                            </>
                           ) : (
-                            <div>
-                              {pageSelected ? (
-                                <DocumentOnePageRegular className="icon" />
-                              ) : (
-                                <DocumentOnePageRegular className="icon" />
-                              )}
+                            <>
+                              <DocumentOnePageRegular className="icon" />
                               Page {firstPage}
-                            </div>
+                            </>
                           )
                         ) : (
-                          <div>
-                            {pageSelected ? (
-                              <DocumentOnePageMultipleRegular className="icon" />
-                            ) : (
-                              <DocumentOnePageMultipleRegular className="icon" />
-                            )}
+                          <>
+                            <DocumentOnePageMultipleRegular className="icon" />
                             Pages {firstPage}-{lastPage}
-                          </div>
+                          </>
                         )}
                       </div>
                       {citationIndices.map((citationIndex) => {
@@ -260,37 +252,50 @@ export function Sidebar() {
                   );
                 })}
               </div>
-              <div
-                className={`doc-right ${
-                  docSelected ? "selected" : "unselected"
-                }`}
-              />
-            </div>
+              {docSelected && (<>
+                <div className="doc-group-suffix-left" />
+                <div className="doc-group-suffix-right">
+                  <div className="doc-group-suffix-right-inner" />
+                </div>
+                </>)}
+              {!docSelected && <div className="sidebar-divider" />}
+            </>
           );
         })}
-        <div className="doc-parent unselected tall">
-          <div>
-            <button
-              onClick={addSelection}
-              disabled={isAsyncing || ux.range == undefined}
+        <div className="doc-group unselected" key="buttons">
+          {/* <button
+            onClick={addSelection}
+            disabled={isAsyncing || ux.range == undefined}
             >
-              add selection
-            </button>
-            {asyncState.status == "error" && (
-              <div>
-                &nbsp;
-                <button onClick={dispatch({ type: "asyncRetry" })}>
-                  Retry
-                </button>
-                &nbsp;
-                <button onClick={dispatch({ type: "asyncRevert" })}>
-                  Revert
-                </button>
-              </div>
-            )}
-          </div>
-          <div className="doc-right unselected" />
+            add selection
+          </button> */}
+          {asyncState.status == "error" && (
+            <div>
+              &nbsp;
+              <button onClick={dispatch({ type: "asyncRetry" })}>Retry</button>
+              &nbsp;
+              <button onClick={dispatch({ type: "asyncRevert" })}>
+                Revert
+              </button>
+            </div>
+          )}
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
         </div>
+        <div className="sidebar-divider" />
       </div>
     </div>
   );
