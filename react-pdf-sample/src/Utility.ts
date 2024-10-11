@@ -451,19 +451,24 @@ const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   bounds: Bounds[]
 ) => {
-  // page numbers are 1-indexed, thus the subtraction
-  const page = response.analyzeResult.pages[bounds[0].pageNumber - 1];
-  const lines = page.lines;
-  const columns = splitIntoColumns(lines);
-  const col = getRelevantColumn(columns, bounds[0].polygon);
-  const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bounds[0].polygon);
+  let excerpt = "";
+  for (const bound of bounds) {
+    console.log(`searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`)
+    // page numbers are 1-indexed, thus the subtraction
+    const page = response.analyzeResult.pages[bound.pageNumber - 1];
+    const lines = page.lines;
+    const columns = splitIntoColumns(lines);
+    const col = getRelevantColumn(columns, bound.polygon);
+    const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon);
 
-  if (intersectingLines.length == 0) {
-    console.log("nothing found for user selection");
-    return 'ERR';
+    if (intersectingLines.length == 0) {
+      console.log("nothing found for user selection");
+      return 'ERR';
+    }
+    const contents = intersectingLines.map((line) => line.content);
+    excerpt += contents.join(' ') + ' ';
   }
-  const contents = intersectingLines.map((line) => line.content);
-  return contents.join(' ');
+  return excerpt;
 }
 
 export function findUserSelection(
