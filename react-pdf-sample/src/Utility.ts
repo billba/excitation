@@ -436,8 +436,10 @@ const splitIntoColumns = (lines: Line[]) => {
   }
 
   console.log(`split ${lines.length} lines into ${cols.length} columns`);
-  for (let index = 0; index < cols.length; index++)
-    console.log(`col [${index}]: "${cols[index].lines[0].content}" and ${cols[index].lines.length - 1} more lines`);
+  for (let index = 0; index < cols.length; index++) {
+    let col = cols[index];
+    console.log(`col [${index}]: "${col.lines[0].content}" ... ${col.lines.length - 2} more lines ... "${col.lines[col.lines.length - 1].content}"`);
+  }
 
   return cols;
 }
@@ -451,7 +453,7 @@ const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   bounds: Bounds[]
 ) => {
-  let excerpt = '';
+  let excerpts = [];
   for (const bound of bounds) {
     console.log(`searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`)
     // page numbers are 1-indexed, thus the subtraction
@@ -463,13 +465,16 @@ const findTextFromBoundingRegions = (
 
     const intersectingLines = [];
     for (let index = 0; index < relevantColumns.length; index++) {
-      console.log(`searching col ${index}`);
-      intersectingLines.push(...polygonBinarySearch(relevantColumns[index].lines, 0, relevantColumns[index].lines.length, bound.polygon));
+      console.log(`SEARCHING col [${index}]`);
+
+      let col = relevantColumns[index];
+      intersectingLines.push(...polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon));
     }
 
     const contents = intersectingLines.map((line) => line.content);
-    excerpt += contents.join(' ') + ' ';
+    excerpts.push(contents.join(' '));
   }
+  let excerpt = excerpts.join(' ');
   if (excerpt === '') excerpt = 'ERR';
   return excerpt;
 }
