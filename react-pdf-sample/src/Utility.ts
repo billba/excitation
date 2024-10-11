@@ -402,9 +402,17 @@ const getLastIntersectionIndex = (lines: Line[], poly: number[], axis: number) =
 // searches lines[start, end) (that is, inclusive of start and exclusive of end)
 // for poly, in a binary search - compare against midpoint and move from there
 const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: number[]) => {
+  // no intersections :(
+  if (start == end) {
+    console.log("no further lines to search; closest guess returned");
+    return lines.slice(start, start + 1);
+  }
+
+  // find the midpoint of the given range [start, end)
   let axis = Math.floor((end - start) / 2) + start;
   console.log(`axis [${axis}]:`, lines[axis].content);
 
+  // compare poly to the midpoint
   switch (comparePolygons(poly, lines[axis].polygon)) {
     case -1:
       console.log("looking farther up the page...");
