@@ -451,7 +451,7 @@ const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   bounds: Bounds[]
 ) => {
-  let excerpt = "";
+  let excerpt = '';
   for (const bound of bounds) {
     console.log(`searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`)
     // page numbers are 1-indexed, thus the subtraction
@@ -461,13 +461,10 @@ const findTextFromBoundingRegions = (
     const col = getRelevantColumn(columns, bound.polygon);
     const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon);
 
-    if (intersectingLines.length == 0) {
-      console.log("nothing found for user selection");
-      return 'ERR';
-    }
     const contents = intersectingLines.map((line) => line.content);
     excerpt += contents.join(' ') + ' ';
   }
+  if (excerpt === '') excerpt = 'ERR';
   return excerpt;
 }
 
