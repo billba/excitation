@@ -118,6 +118,11 @@ interface Span {
   length: number;
 }
 
+interface Column {
+  polygon: number[],
+  lines: Line[]
+}
+
 export const createCitationId = (formId: number, creator: string) => {
   return formId + '-' + creator + '-' + Date.now();
 }
@@ -148,19 +153,6 @@ const adjacent = (poly0: number[], poly1: number[], delta = 0.2) => {
   return !noOverlap;
 };
 
-// Similar to above, but only returns true if the polygons are adjacent in
-// such a way that they are on the same line (or thereabouts; basically the 
-// y-data needs to overlap)
-const onSameLine = (poly0: number[], poly1: number[], delta= 0.2) => {
-  const y0 = [round(poly0[1], 1), round(poly0[5], 1)];
-  const y1 = [round(poly1[1], 1), round(poly1[5], 1)];
-
-  const noOverlap = 
-    y0[0] > y1[1] + delta ||
-    y1[0] > y0[1] + delta;
-  return !noOverlap;
-}
-
 // from x(x0, x1) and y(y0, y1) create an 8 value polygon
 const polygonize = (x: number[], y: number[]) => {
   return [x[0], y[0], x[1], y[0], x[1], y[1], x[0], y[1]];
@@ -168,11 +160,23 @@ const polygonize = (x: number[], y: number[]) => {
 
 // Combine two squared up polygons and return the combination
 // if the two polygons are NOT adjacent you will get weird results!!!
-const combinePolygons = (poly0: number[], poly1: number[]) => {
+const combineTwoPolygons = (poly0: number[], poly1: number[]) => {
   const x = [Math.min(poly0[0], poly1[0]), Math.max(poly0[2], poly1[2])];
   const y = [Math.min(poly0[1], poly1[1]), Math.max(poly0[5], poly1[5])];
   return polygonize(x, y);
 };
+
+// Combine an array of polygons using combineTwoPolygons
+const combinePolygons = (polygons: number[][]) => {
+  if (polygons.length == 0) return [];
+
+  while (polygons.length > 1) {
+    let lastPoly = polygons.pop();
+    if (lastPoly) polygons[polygons.length - 1] = combineTwoPolygons(polygons[polygons.length - 1], lastPoly);
+  }
+
+  return polygons[0];
+}
 
 // Return a polygon with sides that are parallel to the major axes
 const squareUp = (poly: number[]) => {
@@ -204,7 +208,7 @@ export const condenseRegions = (boundingRegions: Bounds[]) => {
         adjacent(condensedRegions[last].polygon, boundingRegions[index].polygon)
       ) {
         // adding to existing polygon
-        condensedRegions[last].polygon = combinePolygons(
+        condensedRegions[last].polygon = combineTwoPolygons(
           condensedRegions[last].polygon,
           boundingRegions[index].polygon
         );
@@ -222,53 +226,13 @@ export const condenseRegions = (boundingRegions: Bounds[]) => {
   return condensedRegions;
 };
 
-// creates a polygon on provided canvas using provided scale and polygon data
-export const drawPolygon = (
-  context: CanvasRenderingContext2D,
-  scale: number = 1,
-  polygon: number[]
-): void => {
-  const multiplier = 72 * (window.devicePixelRatio || 1) * scale;
-  context.fillStyle = "rgba(252, 207, 8, 0.3)";
-  context.strokeStyle = "#fccf08";
-  context.lineWidth = 1;
-  context.beginPath();
-  context.moveTo(polygon[0] * multiplier, polygon[1] * multiplier);
-  for (let i = 2; i < polygon.length; i += 2) {
-    context.lineTo(polygon[i] * multiplier, polygon[i + 1] * multiplier);
-  }
-  context.closePath();
-  context.fill();
-  context.stroke();
-};
-
 // Simple matching
 // special cases:
 //  - case is irrelevant
-//  - strip trailing periods
-//  - strip trailing semicolons
-//  - strip dollar signs
-//  - strip leading quotes
 const match = (str0: string, str1: string) => {
   // lower case
   str0 = str0.toLocaleLowerCase();
   str1 = str1.toLocaleLowerCase();
-
-  // // Strip trailing periods
-  // if (str0.slice(-1) == ".") str0 = str0.slice(0, -1);
-  // if (str1.slice(-1) == ".") str1 = str1.slice(0, -1);
-
-  // // Strip trailing semicolons
-  // if (str0.slice(-1) == ";") str0 = str0.slice(0, -1);
-  // if (str1.slice(-1) == ";") str1 = str1.slice(0, -1);
-
-  // // strip dollar signs
-  // if (str0.slice(0, 1) == "$") str0 = str0.slice(1);
-  // if (str1.slice(0, 1) == "$") str1 = str1.slice(1);
-
-  // // strip leading quotes
-  // if (str0.slice(0, 1) == '"') str0 = str0.slice(1);
-  // if (str1.slice(0, 1) == '"') str1 = str1.slice(1);
 
   if (str0 === str1) return true;
 
@@ -353,9 +317,7 @@ export const returnTextPolygonsFromDI = (
 };
 
 // compares a bounding regions polygon to a reference polygon
-// refPoly MUST be a full-width line (full column width, not 
-// necessarily full page width)
-// poly may be of any width
+// both polys are assumed to be in the same column
 // returns:
 // -1 if poly is situated earlier in the page than refPoly
 // 0 if poly is sitatued within/about refPoly
@@ -367,17 +329,17 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
   const refX = [ refPoly[0], refPoly[2] ];
   const refY = [ refPoly[1], refPoly[5] ];
 
-  // first: are they in the same column?
-  // no, poly is an earlier column
-  if (x[1] < refX[0]) return -1;
-  // no, poly is a later column
-  if (x[0] > refX[1]) return 1;
-
-  // then: how do they compare vertically within a column?
+  // first: how do they compare vertically?
   // poly is earlier in the column
   if (y[1] < refY[0]) return -1;
   // poly is later in the column
   if (y[0] > refY[1]) return 1;
+
+  // then: how do they compare horizontally within the line?
+  // poly is earlier in the line
+  if (x[1] < refX[0]) return -1;
+  // poly is later in the line
+  if (x[0] > refX[1]) return 1;
 
   // if we're still here, poly overlaps refPoly
   return 0;
@@ -397,35 +359,113 @@ const getLastIntersectionIndex = (lines: Line[], poly: number[], axis: number) =
   return --axis;
 }
 
-const polygonBinarySearch = (lines: Line[], poly: number[]) => {
-  let axis = Math.floor(lines.length / 2);
-  console.log(`axis [${axis}]`, lines[axis].content);
+// searches lines[start, end) (that is, inclusive of start and exclusive of end)
+// for poly, in a binary search - compare against midpoint and move from there
+const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: number[]) => {
+  // no data whatsoever
+  if (end == 0) {
+    console.log("no lines to search");
+    return lines;
+  }
+  // no intersections :(
+  if (start == end) {
+    console.log("no further lines to search; closest guess returned");
+    return lines.slice(start, start + 1);
+  }
 
+  // find the midpoint of the given range [start, end)
+  let axis = Math.floor((end - start) / 2) + start;
+  console.log(`axis [${axis}]:`, lines[axis].content);
+
+  // compare poly to the midpoint
   switch (comparePolygons(poly, lines[axis].polygon)) {
     case -1:
       console.log("looking farther up the page...");
-      return polygonBinarySearch(lines.slice(0, axis), poly);
+      return polygonBinarySearch(lines, start, axis, poly);
+
     case 0:
       return lines.slice(
         getFirstIntersectionIndex(lines, poly, axis),
         getLastIntersectionIndex(lines, poly, axis) + 1);
+
     case 1:
       console.log("looking farther down the page...")
-      return polygonBinarySearch(lines.slice(axis + 1), poly);
+      return polygonBinarySearch(lines, axis + 1, end, poly);
   }
+}
+
+// Takes an array of lines and returns an array of Column items
+// each of which is a polygon and an array of lines
+const splitIntoColumns = (lines: Line[]) => {
+  // no lines
+  if (lines.length == 0) return [{
+    polygon: [],
+    lines: []
+  }];
+  // single line
+  if (lines.length == 1) return [{
+    polygon: lines[0].polygon,
+    lines: lines
+  }];
+
+  let cols = [];
+  let firstLineOfCol = 0;
+
+  for (let currentLine = 0; currentLine < lines.length; currentLine++) {
+    // is this the last line and therefore the end of the last column?
+    // OR, is lines[currentLine + 1] a new column?
+    if (currentLine == lines.length - 1
+        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) < 0) {
+      // let's wrap up the current column.
+      const colLines = lines.slice(firstLineOfCol, currentLine + 1);
+      // we combine all polys to make sure we capture the full width of the column
+      // and don't accidentally just grab, say, a header (short) and a last line of
+      // a paragraph (also short)
+      const polygon = combinePolygons(colLines.map((line) => line.polygon));
+      cols.push({
+        polygon: polygon,
+        lines: colLines
+      });
+      firstLineOfCol = currentLine + 1;
+    }
+  }
+
+  console.log(`split ${lines.length} lines into ${cols.length} columns`)
+  return cols;
+}
+
+// from an array of Columns, find the first where col.polygon intersects with poly
+const getRelevantColumn = (columns: Column[], poly: number[]) => {
+  for (const col of columns) {
+    if (comparePolygons(col.polygon, poly) == 0) return col;
+  }
+
+  // if there's no match or no columns
+  return {
+    polygon: [],
+    lines: []
+  };
 }
 
 const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
-  boundingRegions: Bounds[]
+  bounds: Bounds[]
 ) => {
-  // page numbers are 1-indexed, thus the subtraction
-  const page = response.analyzeResult.pages[boundingRegions[0].pageNumber - 1];
-  const lines = page.lines;
-  const intersectingLines = polygonBinarySearch(lines, boundingRegions[0].polygon);
-  let ret = "";
-  for (const line of intersectingLines) ret += line.content + ' ';
-  return ret;
+  let excerpt = '';
+  for (const bound of bounds) {
+    console.log(`searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`)
+    // page numbers are 1-indexed, thus the subtraction
+    const page = response.analyzeResult.pages[bound.pageNumber - 1];
+    const lines = page.lines;
+    const columns = splitIntoColumns(lines);
+    const col = getRelevantColumn(columns, bound.polygon);
+    const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon);
+
+    const contents = intersectingLines.map((line) => line.content);
+    excerpt += contents.join(' ') + ' ';
+  }
+  if (excerpt === '') excerpt = 'ERR';
+  return excerpt;
 }
 
 export function findUserSelection(
@@ -445,6 +485,11 @@ export function findUserSelection(
   left = round((left - dx) / multiplier, 4);
   right = round((right - dx) / multiplier, 4);
 
+  if (top < 1) console.log("bounds:top is curiously small for a standard document", top);
+  if (bottom > 10) console.log("bounds:bottom is curiously large for a standard document", bottom);
+  if (left < 1) console.log("bounds:left is curiously small for a standard document", left);
+  if (right > 7.5) console.log("bounds:right is curiously large for a standard document", right);
+
   const bounds = [
     {
       pageNumber,
@@ -454,5 +499,6 @@ export function findUserSelection(
 
   const excerpt = findTextFromBoundingRegions(response, bounds);
   console.log("found excerpt:", excerpt);
+
   return { excerpt, bounds };
 }
