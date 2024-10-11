@@ -462,6 +462,7 @@ const findTextFromBoundingRegions = (
 
     const columns = splitIntoColumns(lines);
     const relevantColumns = getRelevantColumns(columns, bound.polygon);
+    if (relevantColumns.length == 0) console.log("no relevant columns to search");
 
     const intersectingLines = [];
     for (let index = 0; index < relevantColumns.length; index++) {
