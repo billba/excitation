@@ -65,10 +65,7 @@ button:focus-visible {
 
 #app {
   display: grid;
-  grid-template-columns: 400px auto;
-  grid-template-rows: 1;
-  grid-auto-rows: 95vh;
-  /* gap: 10px; */
+  grid-template-columns: repeat(2, auto);
 }
 
 #viewer {
@@ -99,6 +96,23 @@ button:focus-visible {
 
 .navbar-column {
   margin: 0 auto;
+}
+
+.navbar-icon {
+  margin-bottom: -3pt;
+  margin-right: 2pt;
+  font-size: 18pt;
+  &.enabled {
+    color: grey
+  }
+  &.disabled {
+    color: lightgrey;
+  }
+}
+
+.navbar-icon.enabled:hover {
+  color: black;
+  cursor: pointer;
 }
 
 #sidebar {
@@ -132,14 +146,14 @@ button:focus-visible {
   font-size: 30pt;
   vertical-align: top;
   &.enabled {
-    color: steelblue;
+    color: grey;
     :hover {
       color: black;
       cursor: pointer;
     }
   }
   &.disabled {
-    color: grey;
+    color: #b6b6b6;
   }
 }
 
@@ -288,17 +302,4 @@ button:focus-visible {
 
 .large-icon {
   font-size: 36pt;
-}
-
-
-.navbar-icon {
-  margin-bottom: -3pt;
-  margin-right: 2pt;
-  font-size: 18pt;
-  &.enabled {
-
-  }
-  &.disabled {
-    color: grey;
-  }
 }
