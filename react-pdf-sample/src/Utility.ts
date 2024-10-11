@@ -383,6 +383,20 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
   return 0;
 }
 
+// starting from lines[axis] and working backward, find the first entry
+// in lines that intersects with poly
+const getFirstIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
+  do axis--; while (axis >= 0 && comparePolygons(poly, lines[axis].polygon) == 0);
+  return ++axis;
+}
+
+// starting from lines[axis] and working forward, find the last entry in
+// lines that intersects with poly
+const getLastIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
+  do axis++; while (axis < lines.length && comparePolygons(poly, lines[axis].polygon) == 0);
+  return --axis;
+}
+
 const polygonBinarySearch = (lines: Line[], poly: number[]) => {
   let axis = Math.floor(lines.length / 2);
   console.log(`axis [${axis}]`, lines[axis].content);
@@ -392,8 +406,9 @@ const polygonBinarySearch = (lines: Line[], poly: number[]) => {
       console.log("looking farther up the page...");
       return polygonBinarySearch(lines.slice(0, axis), poly);
     case 0:
-      // TODO spread out and find *all* intersecting lines
-      return lines[axis];
+      return lines.slice(
+        getFirstIntersectionIndex(lines, poly, axis),
+        getLastIntersectionIndex(lines, poly, axis) + 1);
     case 1:
       console.log("looking farther down the page...")
       return polygonBinarySearch(lines.slice(axis + 1), poly);
@@ -407,8 +422,10 @@ const findTextFromBoundingRegions = (
   // page numbers are 1-indexed, thus the subtraction
   const page = response.analyzeResult.pages[boundingRegions[0].pageNumber - 1];
   const lines = page.lines;
-  const intersectingLine = polygonBinarySearch(lines, boundingRegions[0].polygon)
-  return intersectingLine.content;
+  const intersectingLines = polygonBinarySearch(lines, boundingRegions[0].polygon);
+  let ret = "";
+  for (const line of intersectingLines) ret += line.content + ' ';
+  return ret;
 }
 
 export function findUserSelection(
