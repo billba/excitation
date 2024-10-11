@@ -67,21 +67,29 @@ export interface SerializedRange {
   endOffset: number;
 }
 
+const rootClassName = "react-pdf__Page__textContent textLayer";
+
 function calculateSerializedContainer(
   container: Node
 ): SerializedContainer | undefined {
   const { parentElement } = container;
 
-  if (!parentElement) return undefined;
+  console.assert(parentElement != undefined);
 
-  const parentId = parentElement.parentElement?.id;
+  const grandparentElement = parentElement!.parentElement!;
 
-  if (!parentId) return undefined;
+  console.assert(grandparentElement != undefined);
 
-  const { top, left } = parentElement.style;
+  const { id, className } = grandparentElement;
+
+  const parentId = id == null || id.length == 0 ? className : id;
+
+  console.assert(parentId != undefined);
+
+  const { top, left } = parentElement!.style;
 
   return {
-    parentId,
+    parentId: parentId!,
     style: {
       top,
       left,
@@ -139,10 +147,15 @@ export function calculateRange(
     endOffset,
   } = serializedRange;
 
-  const startParent = document.getElementById(
-    startSerializedContainer.parentId
-  );
-  const endParent = document.getElementById(endSerializedContainer.parentId);
+  const startParent = 
+    startSerializedContainer.parentId === rootClassName
+      ? document.getElementsByClassName(rootClassName)[0]
+      : document.getElementById(startSerializedContainer.parentId);
+
+  const endParent =
+    endSerializedContainer.parentId === rootClassName
+      ? document.getElementsByClassName(rootClassName)[0]
+      : document.getElementById(endSerializedContainer.parentId);
 
   if (!startParent || !endParent) return undefined;
 
