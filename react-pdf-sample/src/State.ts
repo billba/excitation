@@ -148,7 +148,9 @@ export const stateAtom = atom<State, [Action], void>(
 
   (get, set, action: Action) => {
     const prevState = get(_stateAtom);
-    console.log("dispatching", action, prevState);
+    if (action.type != "setSelectedText") {
+      console.log("dispatching", action, prevState);
+    }
 
     const newState =
       action.type === "asyncRevert"
