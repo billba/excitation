@@ -29,6 +29,7 @@ async function loadForm(url: string): Promise<State> {
 
     for await (const doc of form.documents) {
       doc.response = await (await fetch(doc.diUrl)).json();
+      doc.pages = doc.response?.analyzeResult.pages.length
     }
 
     form.defaultDoc = form.documents[0];
