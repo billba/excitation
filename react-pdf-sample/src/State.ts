@@ -155,47 +155,56 @@ export const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-            const { metadata, defaultDoc, questions, ux, asyncState, viewer } =
-              state;
-            const { doc, pageNumber, questionIndex, selectedCitation } = ux;
-            const isAsyncing = asyncState.status != "idle";
-            const isError = isAsyncing && !!asyncState.uxAtError;
+          const { metadata, defaultDoc, questions, ux, asyncState, viewer } =
+            state;
+          const { doc, pageNumber, questionIndex, selectedCitation } = ux;
+          const isAsyncing = asyncState.status != "idle";
+          const isError = isAsyncing && !!asyncState.uxAtError;
 
-            function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
-              ux.pageNumber = gotoPageNumber;
-              ux.range = undefined;
+          function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
+            ux.pageNumber = gotoPageNumber;
+            ux.range = undefined;
 
-              if (gotoDoc && gotoDoc !== doc) {
-                ux.doc = gotoDoc;
+            if (gotoDoc && gotoDoc !== doc) {
+              ux.doc = gotoDoc;
+              ux.selectedCitation = undefined;
+            } else {
+              // Deselect the current citation, unless moving to
+              // a different page of the same multi-page citation.
+              if (
+                !selectedCitation?.citationHighlights.find(
+                  ({ pageNumber }) => pageNumber == gotoPageNumber
+                )
+              ) {
                 ux.selectedCitation = undefined;
-              } else {
-                // Deselect the current citation, unless moving to
-                // a different page of the same multi-page citation.
-                if (
-                  !selectedCitation?.citationHighlights.find(
-                    ({ pageNumber }) => pageNumber == gotoPageNumber
-                  )
-                ) {
-                  ux.selectedCitation = undefined;
-                }
               }
             }
+          }
 
-            function setAsync({
+          function setAsync({
+            event,
+            onError,
+          }: {
+            event: Event;
+            onError: Action;
+          }) {
+            state.asyncState = {
+              status: "pending",
+              prevState,
               event,
               onError,
-            }: {
-              event: Event;
-              onError: Action;
-            }) {
-              state.asyncState = {
-                status: "pending",
-                prevState,
-                event,
-                onError,
-              };
-            }
+            };
+          }
 
+          function firstCitedPage(doc: FormDocument): number | undefined {
+            return questions[questionIndex].citations
+              .filter(citation => citation.doc === doc && citation.bounds)
+              .flatMap(({ bounds }) => bounds!.map(({ pageNumber }) => pageNumber))
+              .sort()[0];
+          }
+            
+          console.log("first page", firstCitedPage(doc));
+          
             switch (action.type) {
               case "selectCitation": {
                 const { citationIndex } = action;
@@ -238,7 +247,7 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "goto":
-                goto(action.pageNumber ?? 1, action.doc);
+                goto(action.pageNumber ?? firstCitedPage(action.doc ?? doc) ?? 1, action.doc);
                 break;
 
               case "setSelectedText":

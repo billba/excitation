@@ -34,7 +34,7 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
   return review * 1000 + citationIndex;
 };
 
-const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
+const groupCitations = (docs: FormDocument[], citations: Citation[], docCurrent: FormDocument, pageNumber: number) =>
   docs.map((doc) => ({
     doc,
     pageGroups: citations
@@ -64,7 +64,7 @@ const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
           pageGroups.push(pageGroup);
         }
         return pageGroups;
-      }, [] as PageGroup[])
+      }, doc === docCurrent ? [{firstPage: pageNumber, lastPage: pageNumber, citationIndices: []}] : [] as PageGroup[])
       .map(({ firstPage, lastPage, citationIndices }) => ({
         firstPage,
         lastPage,
@@ -78,15 +78,14 @@ const groupCitations = (docs: FormDocument[], citations: Citation[]) =>
 export function Sidebar() {
   const [state, _dispatch] = useAtom(stateAtom);
   const { documents, questions, ux, asyncState } = state;
-  const { pageNumber, questionIndex, selectedCitation } = ux;
-  const question = questions[questionIndex];
-  const { prefix, text, citations } = question;
+  const { pageNumber, doc, questionIndex, selectedCitation } = ux;
+  const { prefix, text } = questions[questionIndex];
 
   const { isAsyncing, isError } = useAsyncHelper();
 
   const groupedCitations = useMemo(
-    () => groupCitations(documents, citations),
-    [documents, citations]
+    () => groupCitations(documents, questions[questionIndex].citations, doc, pageNumber),
+    [documents, questions, questionIndex, doc, pageNumber]
   );
 
   const { dispatch, dispatchUnlessError } = useDispatchHandler(_dispatch);
@@ -146,7 +145,7 @@ export function Sidebar() {
               >
                 <div>
                   {docSelected ? (
-                    <DocumentFilled className="icon" />
+                    <DocumentRegular className="icon" />
                   ) : (
                     <DocumentRegular className="icon" />
                   )}
@@ -184,7 +183,7 @@ export function Sidebar() {
                         firstPage == unlocatedPage ? (
                           <div>
                             {pageSelected ? (
-                              <DocumentOnePageAddFilled className="icon" />
+                              <DocumentOnePageAddRegular className="icon" />
                             ) : (
                               <DocumentOnePageAddRegular className="icon" />
                             )}
@@ -193,7 +192,7 @@ export function Sidebar() {
                         ) : (
                           <div>
                             {pageSelected ? (
-                              <DocumentOnePageFilled className="icon" />
+                              <DocumentOnePageRegular className="icon" />
                             ) : (
                               <DocumentOnePageRegular className="icon" />
                             )}
@@ -203,7 +202,7 @@ export function Sidebar() {
                       ) : (
                         <div>
                           {pageSelected ? (
-                            <DocumentOnePageMultipleFilled className="icon" />
+                            <DocumentOnePageMultipleRegular className="icon" />
                           ) : (
                             <DocumentOnePageMultipleRegular className="icon" />
                           )}
