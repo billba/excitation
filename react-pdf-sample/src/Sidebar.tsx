@@ -111,8 +111,8 @@ export function Sidebar() {
       <SidebarHeader/>
       <div className="sidebar-divider" />
       <div id="citation-groups">
-        {groupedCitations.map(({ document: doc, pageGroups }) => {
-          const docSelected = doc == ux.doc;
+        {groupedCitations.map(({ document, pageGroups }) => {
+          const docSelected = document == ux.doc;
           return (
             <>
               {docSelected && (
@@ -124,7 +124,7 @@ export function Sidebar() {
                 className={`doc-group ${
                   docSelected ? "selected" : "unselected"
                 }`}
-                key={doc.documentId}
+                key={document.documentId}
               >
                 <div
                   className={`doc-header ${
@@ -133,11 +133,11 @@ export function Sidebar() {
                   onClick={
                     docSelected
                       ? undefined
-                      : dispatchUnlessError({ type: "goto", doc })
+                      : dispatchUnlessError({ type: "goto", doc: document })
                   }
                 >
                   <DocumentRegular className="icon" />
-                  {doc.name ?? doc.pdfUrl}
+                  {document.name ?? document.pdfUrl}
                 </div>
                 {docSelected && (
                   <div className="doc-header-suffix">
@@ -167,7 +167,7 @@ export function Sidebar() {
                             : dispatchUnlessError({
                                 type: "goto",
                                 pageNumber: firstPage,
-                                doc,
+                                doc: document,
                               })
                         }
                       >
