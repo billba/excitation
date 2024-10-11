@@ -353,9 +353,7 @@ export const returnTextPolygonsFromDI = (
 };
 
 // compares a bounding regions polygon to a reference polygon
-// refPoly MUST be a full-width line (full column width, not 
-// necessarily full page width)
-// poly may be of any width
+// both polys are assumed to be in the same column
 // returns:
 // -1 if poly is situated earlier in the page than refPoly
 // 0 if poly is sitatued within/about refPoly
@@ -367,19 +365,17 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
   const refX = [ refPoly[0], refPoly[2] ];
   const refY = [ refPoly[1], refPoly[5] ];
 
-  // first: are they in the same column?
-  console.log("\tCOL comparing x values:", x, refX);
-  // no, poly is an earlier column
-  if (x[1] < refX[0]) return -1;
-  // no, poly is a later column
-  if (x[0] > refX[1]) return 1;
-
-  // then: how do they compare vertically within a column?
-  console.log("\tROW comparing y values:", y, refY);
+  // first: how do they compare vertically?
   // poly is earlier in the column
   if (y[1] < refY[0]) return -1;
   // poly is later in the column
   if (y[0] > refY[1]) return 1;
+
+  // then: how do they compare horizontally within the line?
+  // poly is earlier in the line
+  if (x[1] < refX[0]) return -1;
+  // poly is later in the line
+  if (x[0] > refX[1]) return 1;
 
   // if we're still here, poly overlaps refPoly
   return 0;
