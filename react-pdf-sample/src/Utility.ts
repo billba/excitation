@@ -239,15 +239,15 @@ const match = (str0: string, str1: string) => {
   return false;
 };
 
-const matchArray = (strArr0: string[], strArr1: string[]) => {
-  if (strArr0.length != strArr1.length) return false;
+// const matchArray = (strArr0: string[], strArr1: string[]) => {
+//   if (strArr0.length != strArr1.length) return false;
 
-  for (let index = 0; index < strArr0.length; index++) {
-    if (!match(strArr0[index], strArr1[index])) return false;
-  }
+//   for (let index = 0; index < strArr0.length; index++) {
+//     if (!match(strArr0[index], strArr1[index])) return false;
+//   }
 
-  return true;
-}
+//   return true;
+// }
 
 // Given a docint response and reference text (array of words), find
 // the relevant BoundingRegions (per-word)
@@ -262,21 +262,21 @@ const findBoundingRegions = (
 
   for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
     const page = pages[pageIndex];
-    let lineIndex = 0;
-    const line = page.lines[lineIndex];
-    let wordsInLine = line.content.split(' ');
+    // let lineIndex = 0;
+    // const line = page.lines[lineIndex];
+    // let wordsInLine = line.content.split(' ');
     for (let wordIndex = 0; wordIndex < page.words.length; wordIndex++) {
       const word = page.words[wordIndex];
-      if (matchArray(wordsInLine, text.slice(textIndex, textIndex + wordsInLine.length))) {
-        console.log("array equals succeeded for line", wordsInLine);
-        textIndex += wordsInLine.length;
-        boundingRegions.push({
-          pageNumber: pageIndex + 1,
-          polygon: line.polygon
-        });
-        if (textIndex == text.length) return boundingRegions;
-      }
-      else if (match(word.content, text[textIndex])) {
+      // if (matchArray(wordsInLine, text.slice(textIndex, textIndex + wordsInLine.length))) {
+      //   console.log("array equals succeeded for line", wordsInLine);
+      //   textIndex += wordsInLine.length;
+      //   boundingRegions.push({
+      //     pageNumber: pageIndex + 1,
+      //     polygon: line.polygon
+      //   });
+      //   if (textIndex == text.length) return boundingRegions;
+      // }
+      if (match(word.content, text[textIndex])) {
         textIndex++;
         boundingRegions.push({
           pageNumber: pageIndex + 1,
