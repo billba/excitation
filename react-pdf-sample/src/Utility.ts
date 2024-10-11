@@ -458,6 +458,8 @@ const findTextFromBoundingRegions = (
     const page = response.analyzeResult.pages[bound.pageNumber - 1];
     const lines = page.lines;
     const columns = splitIntoColumns(lines);
+    for (let index = 0; index < columns.length; index++)
+      console.log(`col [${index}]: "${columns[index].lines[0].content}" and ${columns[index].lines.length - 1} more lines`);
     const col = getRelevantColumn(columns, bound.polygon);
     const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon);
 
