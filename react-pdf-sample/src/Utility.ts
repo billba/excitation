@@ -399,21 +399,23 @@ const getLastIntersectionIndex = (lines: Line[], poly: number[], axis: number) =
   return --axis;
 }
 
-const polygonBinarySearch = (lines: Line[], poly: number[]) => {
-  let axis = Math.floor(lines.length / 2);
-  console.log(`axis [${axis}]`, lines[axis].content);
+// searches lines[start, end) (that is, inclusive of start and exclusive of end)
+// for poly, in a binary search - compare against midpoint and move from there
+const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: number[]) => {
+  let axis = Math.floor((end - start) / 2) + start;
+  console.log(`axis [${axis}]:`, lines[axis].content);
 
   switch (comparePolygons(poly, lines[axis].polygon)) {
     case -1:
       console.log("looking farther up the page...");
-      return polygonBinarySearch(lines.slice(0, axis), poly);
+      return polygonBinarySearch(lines, start, axis, poly);
     case 0:
       return lines.slice(
         getFirstIntersectionIndex(lines, poly, axis),
         getLastIntersectionIndex(lines, poly, axis) + 1);
     case 1:
       console.log("looking farther down the page...")
-      return polygonBinarySearch(lines.slice(axis + 1), poly);
+      return polygonBinarySearch(lines, axis + 1, end, poly);
   }
 }
 
@@ -424,7 +426,7 @@ const findTextFromBoundingRegions = (
   // page numbers are 1-indexed, thus the subtraction
   const page = response.analyzeResult.pages[boundingRegions[0].pageNumber - 1];
   const lines = page.lines;
-  const intersectingLines = polygonBinarySearch(lines, boundingRegions[0].polygon);
+  const intersectingLines = polygonBinarySearch(lines, 0, lines.length, boundingRegions[0].polygon);
   const contents = intersectingLines.map((line) => line.content);
   return contents.join(' ');
 }
