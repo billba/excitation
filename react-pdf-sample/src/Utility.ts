@@ -417,10 +417,12 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
     case -1:
       console.log("looking farther up the page...");
       return polygonBinarySearch(lines, start, axis, poly);
+
     case 0:
       return lines.slice(
         getFirstIntersectionIndex(lines, poly, axis),
         getLastIntersectionIndex(lines, poly, axis) + 1);
+
     case 1:
       console.log("looking farther down the page...")
       return polygonBinarySearch(lines, axis + 1, end, poly);
@@ -470,5 +472,6 @@ export function findUserSelection(
 
   const excerpt = findTextFromBoundingRegions(response, bounds);
   console.log("found excerpt:", excerpt);
+
   return { excerpt, bounds };
 }
