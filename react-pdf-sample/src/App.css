@@ -26,10 +26,6 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
@@ -69,19 +65,20 @@ button:focus-visible {
 
 #app {
   display: grid;
-  grid-template-columns: 400px;
+  grid-template-columns: 400px auto;
   grid-template-rows: 1;
   grid-auto-rows: 95vh;
-  gap: 10px;
+  /* gap: 10px; */
 }
 
 #viewer {
-  grid-column: 2;
 }
 
 #navbar {
+  padding: 5px 0 5px 0;
   width: 100%;
-  background-color: skyblue;
+  background-color: #ebebeb;
+
   .selected {
     background-color: white;
     border-radius: 2px;
@@ -105,9 +102,6 @@ button:focus-visible {
 }
 
 #sidebar {
-  display: flex;
-  flex-direction: column;
-  padding: 0px;
   background-color: #d6d6d6;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -217,17 +211,38 @@ button:focus-visible {
   display: none;
 }
 
+.doc-parent {
+  &.unselected {
+    padding: 0px 0 0 0;
+    display: grid;
+    grid-template-columns: auto 10px;
+  }
+  &.tall {
+    height: 800px;
+  }
+}
+
+.doc-right {
+  &.unselected {
+    background-color: #ebebeb;
+  }
+}
+
 .doc-group {
-  margin: 4px 0 0 10px;
+  margin: 0px 0 0 10px;
   padding: 0px 0 10px 2px;
   border-radius: 5px 0 0 5px;
   &.selected {
     background-color: #ebebeb;
   }
+  &.unselected {
+    margin-top: 4px;
+  }
 }
 
 .doc-group.unselected:hover {
   background-color: #e3e3e3;
+  border: 2x solid black;
   cursor: pointer;
 }
 
@@ -273,4 +288,17 @@ button:focus-visible {
 
 .large-icon {
   font-size: 36pt;
+}
+
+
+.navbar-icon {
+  margin-bottom: -3pt;
+  margin-right: 2pt;
+  font-size: 18pt;
+  &.enabled {
+
+  }
+  &.disabled {
+    color: grey;
+  }
 }

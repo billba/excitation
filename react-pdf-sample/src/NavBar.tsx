@@ -1,6 +1,11 @@
 import { useAtom } from "jotai";
 import { stateAtom } from "./State";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
+import {
+  TriangleLeftFilled,
+  TriangleRightFilled,
+} from "@fluentui/react-icons";
+
 
 export const NavBar = () => {
   const [state, _dispatch] = useAtom(stateAtom);
@@ -36,12 +41,10 @@ export const NavBar = () => {
           </span>
         </div>
         <div className="navbar-column">
-          <button
+          <TriangleLeftFilled
+            className={`navbar-icon ${disablePrev ? "disabled" : "enabled"}`}
             onClick={dispatchUnlessError({ type: "prevPage" })}
-            disabled={disablePrev}
-          >
-            &lt;
-          </button>
+          />
           <span
             className={
               pageNumbers.includes(pageNumber) ? "selected" : undefined
@@ -50,12 +53,10 @@ export const NavBar = () => {
             {pageNumber}
           </span>{" "}
           / {pages}
-          <button
+          <TriangleRightFilled
+            className={`navbar-icon ${disableNext ? "disabled" : "enabled"}`}
             onClick={dispatchUnlessError({ type: "nextPage" })}
-            disabled={disableNext}
-          >
-            &gt;
-          </button>
+          />
         </div>
         <div className="navbar-column">
           <span
