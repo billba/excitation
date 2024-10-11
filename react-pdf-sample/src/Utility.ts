@@ -319,9 +319,12 @@ export const returnTextPolygonsFromDI = (
 // compares a bounding regions polygon to a reference polygon
 // both polys are assumed to be in the same column
 // returns:
-// -1 if poly is situated earlier in the page than refPoly
+// - if poly is situated earlier in the page than refPoly
 // 0 if poly is sitatued within/about refPoly
-// 1 if poly is situated later in the page than refPoly
+// + if poly is situated later in the page than refPoly
+// this can also be used to check if something starts a new column
+// by looking specifically for +/-1 in sequential polygons
+// or starts a new word by looking for +/-2
 const comparePolygons = (poly: number[], refPoly: number[]) => {
   const x = [ poly[0], poly[2] ];
   const y = [ poly[1], poly[5] ];
@@ -337,9 +340,9 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
 
   // then: how do they compare horizontally within the line?
   // poly is earlier in the line
-  if (x[1] < refX[0]) return -1;
+  if (x[1] < refX[0]) return -2;
   // poly is later in the line
-  if (x[0] > refX[1]) return 1;
+  if (x[0] > refX[1]) return 2;
 
   // if we're still here, poly overlaps refPoly
   return 0;
@@ -379,6 +382,7 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
 
   // compare poly to the midpoint
   switch (comparePolygons(poly, lines[axis].polygon)) {
+    case -2:
     case -1:
       console.log("looking farther up the page...");
       return polygonBinarySearch(lines, start, axis, poly);
@@ -389,6 +393,7 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
         getLastIntersectionIndex(lines, poly, axis) + 1);
 
     case 1:
+    case 2:
       console.log("looking farther down the page...")
       return polygonBinarySearch(lines, axis + 1, end, poly);
   }
@@ -415,7 +420,7 @@ const splitIntoColumns = (lines: Line[]) => {
     // is this the last line and therefore the end of the last column?
     // OR, is lines[currentLine + 1] a new column?
     if (currentLine == lines.length - 1
-        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) < 0) {
+        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) == -1) {
       // let's wrap up the current column.
       const colLines = lines.slice(firstLineOfCol, currentLine + 1);
       // we combine all polys to make sure we capture the full width of the column
