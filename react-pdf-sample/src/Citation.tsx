@@ -95,7 +95,7 @@ export const CitationUX = ({
       ) : (
         <>
           {icons}
-          <div>{excerpt}</div>
+          <span>{excerpt}</span>
         </>
       )}
     </div>
