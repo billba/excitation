@@ -108,7 +108,6 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   padding: 0px;
-  /* border-right: skyblue solid 4px; */
   background-color: #d6d6d6;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -151,35 +150,32 @@ button:focus-visible {
 }
 
 #citation-groups {
-  margin-top: 10px;
+  margin-top: 20px;
 }
 
 .citation-group {
-  margin-top: 5px;
-  padding-left: 30px;
+  margin: 2px 0px 0 15px;
+  padding: 2px 0 2px 2px;
   &.unselected {
     display: grid;
     grid-template-columns: min-content auto;
-    :hover {
-      cursor: pointer;
-    }
     div {
       line-height: 1.1;
       height: 1.2em;
       overflow: hidden;
       border: transparent 2px solid;
     }
-    div:hover {
-      border-radius: 4px;
-      border: blue 2px solid;
-    }
   }
   &.selected {
     border: solid 2px blue;
     border-radius: 7px;
-    padding: 4px;
-    background-color: white;
   }
+}
+.citation-group.unselected:hover {
+  div {
+    border-radius: 4px;
+    border: blue 2px solid;
+  }  
 }
 
 .citation-icon {
@@ -222,55 +218,43 @@ button:focus-visible {
 }
 
 .doc-group {
-  padding-left: 10px;
+  margin: 4px 0 0 10px;
+  padding: 0px 0 10px 2px;
+  border-radius: 5px 0 0 5px;
   &.selected {
-    background-color: #e0e0e0;
+    background-color: #ebebeb;
   }
-  &.unselected {
-    :hover {
-      background-color: #e0e0e0;
-    }
-  }
+}
+
+.doc-group.unselected:hover {
+  background-color: #e3e3e3;
+  cursor: pointer;
 }
 
 .doc-header {
-  margin-top: 10px;
-  padding-left: 10px;
-  &.selected {
-    color: darkblue;
-  }
-  &.unselected {
-    :hover {
-      color: darkblue;
-      cursor: pointer;
-    }
-  }
+  margin: 0 0 0 px;
+  padding: 3px 0 3px 0px;
+}
+
+.doc-header.unselected:hover {
+  /* color: darkblue; */
+  cursor: pointer;
 }
 
 .page-group {
-  padding-top: 5px;
+  margin: 0 0 0 10px;
+  padding: 2px 0 5px 1px;
+  border-radius: 5px 0 0 5px;
   &.selected {
     background-color: #ffffff
   }
-  &.unselected {
-    :hover {
-      background-color: #f0f0f0;
-    }
-  }
+}
+
+.page-group.unselected:hover {
+  background-color: #f2f2f2;
 }
 
 .page-header {
-  padding-left: 20px;
-  padding-right: 20px;
-  &.selected {
-    color: darkblue;
-  }
-  &.unselected {
-    :hover {
-      color: darkblue;
-      cursor: pointer;
-    }
-  }
 }
 
 .error {
