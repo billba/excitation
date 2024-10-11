@@ -11,6 +11,11 @@ export const documents: FormDocument[] = [
     name: "Microsoft Form 10Q FY24Q3",
     diUrl: "http://localhost:8000/file/Microsoft 10Q FY24Q3 1.pdf.json",
   },
+  {
+    pdfUrl: "compressed.tracemonkey-pldi-09.pdf",
+    name: "compressed.tracemonkey-pldi-09",
+    diUrl: "http://localhost:8000/file/compressed.tracemonkey-pldi-09.pdf.json",
+  },
 ];
 
 export const templates: Template[] = [
@@ -107,6 +112,31 @@ export const templates: Template[] = [
               excerpt:
                 "· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage; · claims against us that may result in adverse outcomes in legal disputes;",
               documentId: 0,
+              review: 0,
+            },
+          ],
+        ],
+      },
+    ],
+  },
+  {
+    name: "sample with columns",
+    questions: [
+      {
+        text: "question",
+      },
+    ],
+    formBootstraps: [
+      {
+        name: "1",
+        documentIds: [
+          2
+        ],
+        citations: [
+          [
+            {
+              excerpt: "We present a trace-based compilation technique for dynamic languages",
+              documentId: 2,
               review: 0,
             },
           ],
