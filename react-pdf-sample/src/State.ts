@@ -242,7 +242,6 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "setSelectedText":
-                console.log(!isError);
                 ux.range = action.range;
                 break;
 
