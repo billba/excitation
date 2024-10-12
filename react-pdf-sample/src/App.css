@@ -16,19 +16,14 @@
   --color-button-enabled: light-dark(#808080, #b6b6b6);
   --color-button-hover: light-dark(#353535, #e4e4e4);
 
+  --color-approve: #00ac00;
+  --color-reject: lightcoral;
+  --color-highlight: blue;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
 }
 
 body {
@@ -87,9 +82,10 @@ button:focus-visible {
   user-select: none;
 
   .selected {
-    background-color: white;
+    background-color: var(--color-page-active);
+    color: var(--color-text-page-active);
     border-radius: 2px;
-    border: blue 2px solid;
+    border: var(--color-highlight) 2px solid;
   }
 }
 
@@ -193,14 +189,14 @@ button:focus-visible {
   &.unselected:hover {
     span {
       border-radius: 4px;
-      border: blue 2px solid;
+      border: var(--color-highlight) 2px solid;
     }
   }
   &.selected {
     margin: 2px 0 3px 0;
     padding: 0 0 0 4px;
     grid-column-end: 5;
-    border: solid 2px blue;
+    border: solid 2px var(--color-highlight);
     border-radius: 7px;
   }
 }
@@ -210,34 +206,34 @@ button:focus-visible {
   pointer-events: all;
   &.approved {
     &.on {
-      color: rgb(0, 172, 0);
+      color: var(--color-approve);
       :hover {
-        color: grey;
+        color: var(--color-button-enabled);
       }
     }
     &.off {
-      color: grey;
+      color: var(--color-button-enabled);
       :hover {
-        color: rgb(0, 172, 0);
+        color: var(--color-approve);
       }
     }
   }
   &.rejected {
     &.on {
-      color: lightcoral;
+      color: var(--color-reject);
       :hover {
-        color: grey;
+        color: var(--color-button-enabled);
       }
     }
     &.off {
-      color: grey;
+      color: var(--color-button-enabled);
       :hover {
-        color: lightcoral;
+        color: var(--color-reject);
       }
     }
   }
   &.unreviewed {
-    color: blue;
+    color: var(--color-highlight);
   }
 }
 
@@ -280,7 +276,6 @@ button:focus-visible {
   }
   &.unselected:hover {
     background-color: var(--color-doc-hover);
-    border: 2x solid black;
     cursor: pointer;
   }
 }
@@ -292,7 +287,7 @@ button:focus-visible {
 }
 
 .doc-group-suffix-top-right {
-  background-color: white;
+  background-color: var(--color-page-active);
 
   div {
     height: 7px;
@@ -319,7 +314,7 @@ button:focus-visible {
 
 .doc-header-suffix {
   display: grid;
-  background-color: white;
+  background-color: var(--color-page-active);
 
   div {
     background-color: var(--color-doc-active);
