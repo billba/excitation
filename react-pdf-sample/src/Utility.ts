@@ -472,7 +472,7 @@ const findTextFromBoundingRegions = (
     excerpts.push(contents.join(' '));
   }
   let excerpt = excerpts.join(' ');
-  if (excerpt === '') excerpt = 'ERR';
+  if (excerpt === '') excerpt = 'could not find matching line(s)';
   return excerpt;
 }
 
@@ -496,10 +496,10 @@ export function findUserSelection(
   left = round((left - dx) / multiplier, 4);
   right = round((right - dx) / multiplier, 4);
 
-  if (top < 1) console.log("bounds:top is curiously small for a standard document", top);
-  if (bottom > 10) console.log("bounds:bottom is curiously large for a standard document", bottom);
-  if (left < 1) console.log("bounds:left is curiously small for a standard document", left);
-  if (right > 7.5) console.log("bounds:right is curiously large for a standard document", right);
+  if (top < 1) console.log(`bounds:top [${top}] is curiously small for a standard document`);
+  if (bottom > 10) console.log(`bounds:bottom [${bottom}] is curiously large for a standard document`);
+  if (left < 1) console.log(`bounds:left [${left}] is curiously small for a standard document`);
+  if (right > 7.5) console.log(`bounds:right [${right}] is curiously large for a standard document`);
 
   const bounds = [
     {
