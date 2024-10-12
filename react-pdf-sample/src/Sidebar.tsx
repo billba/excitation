@@ -8,10 +8,9 @@ import {
   DocumentOnePageRegular,
   DocumentOnePageMultipleRegular,
   DocumentOnePageAddRegular,
-  TriangleLeftFilled,
-  TriangleRightFilled,
 } from "@fluentui/react-icons";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
+import { SidebarHeader } from "./SidebarHeader";
 
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
@@ -30,88 +29,73 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
   return review * 1000 + citationIndex;
 };
 
-const groupCitations = (
-  docs: FormDocument[],
-  citations: Citation[],
-  docCurrent: FormDocument,
-  pageNumber: number
-) =>
-  docs.map((doc) => ({
-    document: doc,
-    pageGroups: citations
-      .map<[Citation, number[]]>((citation, citationIndex) => [
-        citation,
-        [citationIndex],
-      ])
-      .filter(([citation]) => citation.doc === doc)
-      .map(([citation, citationIndices]) => {
-        const pageNumbers = (citation.bounds ?? [{ pageNumber: unlocatedPage }])
-          .map(({ pageNumber }) => pageNumber)
-          .sort();
-        return {
-          firstPage: pageNumbers[0],
-          lastPage: pageNumbers[pageNumbers.length - 1],
-          citationIndices,
-        };
-      })
-      .reduce(
-        (pageGroups, pageGroup) => {
-          const matchingPageGroup = pageGroups.find(
-            ({ firstPage, lastPage }) =>
-              firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
-          );
-          if (matchingPageGroup) {
-            matchingPageGroup.citationIndices.push(
-              pageGroup.citationIndices[0]
-            );
-          } else {
-            pageGroups.push(pageGroup);
-          }
-          return pageGroups;
-        },
-        doc === docCurrent
-          ? [
-              {
-                firstPage: pageNumber,
-                lastPage: pageNumber,
-                citationIndices: [],
-              },
-            ]
-          : ([] as PageGroup[])
-      )
-      .map(({ firstPage, lastPage, citationIndices }) => ({
-        firstPage,
-        lastPage,
-        citationIndices: citationIndices.sort(
-          (a, b) => sortCitation(citations, a) - sortCitation(citations, b)
-        ),
-      }))
-      .sort((a, b) => sortIndex(a) - sortIndex(b)),
-  }));
-
 export function Sidebar() {
   const [state, _dispatch] = useAtom(stateAtom);
-  const { documents, questions, ux, asyncState } = state;
-  const { pageNumber, doc, questionIndex, selectedCitation } = ux;
-  const { prefix, text } = questions[questionIndex];
+  const { documents, questions, ux } = state;
+  const { doc, pageNumber, questionIndex, selectedCitation } = ux;
+
+  const { citations }  = questions[questionIndex];
 
   const { isAsyncing, isError } = useAsyncHelper();
 
   const groupedCitations = useMemo(
-    () =>
-      groupCitations(
-        documents,
-        questions[questionIndex].citations,
-        doc,
-        pageNumber
-      ),
-    [documents, questions, questionIndex, doc, pageNumber]
+    () => documents.map((document) => ({
+      document,
+      pageGroups: citations
+        .map<[Citation, number[]]>((citation, citationIndex) => [
+          citation,
+          [citationIndex],
+        ])
+        .filter(([citation]) => citation.doc === document)
+        .map(([citation, citationIndices]) => {
+          const pageNumbers = (citation.bounds ?? [{ pageNumber: unlocatedPage }])
+            .map(({ pageNumber }) => pageNumber)
+            .sort();
+          return {
+            firstPage: pageNumbers[0],
+            lastPage: pageNumbers[pageNumbers.length - 1],
+            citationIndices,
+          };
+        })
+        .reduce(
+          (pageGroups, pageGroup) => {
+            const matchingPageGroup = pageGroups.find(
+              ({ firstPage, lastPage }) =>
+                firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
+            );
+            if (matchingPageGroup) {
+              matchingPageGroup.citationIndices.push(
+                pageGroup.citationIndices[0]
+              );
+            } else {
+              pageGroups.push(pageGroup);
+            }
+            return pageGroups;
+          },
+          document === doc
+            ? [
+                {
+                  firstPage: pageNumber,
+                  lastPage: pageNumber,
+                  citationIndices: [],
+                },
+              ]
+            : ([] as PageGroup[])
+        )
+        .map(({ firstPage, lastPage, citationIndices }) => ({
+          firstPage,
+          lastPage,
+          citationIndices: citationIndices.sort(
+            (a, b) => sortCitation(citations, a) - sortCitation(citations, b)
+          ),
+        }))
+        .sort((a, b) => sortIndex(a) - sortIndex(b)),
+      }))
+    ,
+    [documents, citations, doc, pageNumber]
   );
 
   const { dispatch, dispatchUnlessError } = useDispatchHandler(_dispatch);
-
-  const disablePrev = isError || questionIndex === 0;
-  const disableNext = isError || questionIndex === questions.length - 1;
 
   const addSelection = useCallback(
     (event: React.MouseEvent) => {
@@ -124,34 +108,7 @@ export function Sidebar() {
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
-      <div id="sidebar-header">
-        <p>Please provide evidence for the following question:</p>
-        <div id="sidebar-question-nav">
-          <TriangleLeftFilled
-            className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
-            onClick={
-              disablePrev
-                ? undefined
-                : dispatchUnlessError({ type: "prevQuestion" })
-            }
-          />
-          <div className="question">
-            <span className="question-prefix">
-              {prefix ? <>{prefix}. </> : null}
-            </span>
-            <span className="question-text">{text}</span>
-          </div>
-          <TriangleRightFilled
-            className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
-            onClick={
-              disableNext
-                ? undefined
-                : dispatchUnlessError({ type: "nextQuestion" })
-            }
-          />
-        </div>
-        <br />
-      </div>
+      <SidebarHeader/>
       <div className="sidebar-divider" />
       <div id="citation-groups">
         {groupedCitations.map(({ document: doc, pageGroups }) => {
@@ -269,7 +226,7 @@ export function Sidebar() {
             >
             add selection
           </button> */}
-          {asyncState.status == "error" && (
+          {isError && (
             <div>
               &nbsp;
               <button onClick={dispatch({ type: "asyncRetry" })}>Retry</button>
