@@ -182,6 +182,7 @@ button:focus-visible {
   grid-column-start: 2;
   &.unselected {
     grid-column-end: 4;
+    padding-bottom: 3px;
     span {
       line-height: 1.1;
       height: 1.2em;
