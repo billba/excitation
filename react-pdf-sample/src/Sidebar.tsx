@@ -1,5 +1,4 @@
-import { useAtom } from "jotai";
-import { stateAtom } from "./State";
+import { docs, useAppState } from "./State";
 import { useCallback, useMemo } from "react";
 import { Citation } from "./Types";
 import { CitationUX } from "./Citation";
@@ -30,9 +29,14 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
 };
 
 export function Sidebar() {
-  const [state, _dispatch] = useAtom(stateAtom);
-  const { documents, questions, ux } = state;
-  const { doc, pageNumber, questionIndex, selectedCitation } = ux;
+  const [state, _dispatch] = useAppState();
+  const { questions, ux } = state;
+  const {
+    pageNumber,
+    questionIndex,
+    selectedCitation,
+    documentId: uxDocumentId,
+  } = ux;
 
   const { citations } = questions[questionIndex];
 
@@ -40,14 +44,14 @@ export function Sidebar() {
 
   const groupedCitations = useMemo(
     () =>
-      documents.map((document) => ({
-        document,
+      docs.map((doc) => ({
+        doc,
         pageGroups: citations
           .map<[Citation, number[]]>((citation, citationIndex) => [
             citation,
             [citationIndex],
           ])
-          .filter(([citation]) => citation.documentId === document.documentId)
+          .filter(([{ documentId }]) => documentId === doc.documentId)
           .map(([citation, citationIndices]) => {
             const pageNumbers = (
               citation.bounds ?? [{ pageNumber: unlocatedPage }]
@@ -60,7 +64,7 @@ export function Sidebar() {
               citationIndices,
             };
           })
-          .reduce(
+          .reduce<PageGroup[]>(
             (pageGroups, pageGroup) => {
               const matchingPageGroup = pageGroups.find(
                 ({ firstPage, lastPage }) =>
@@ -76,7 +80,7 @@ export function Sidebar() {
               }
               return pageGroups;
             },
-            document === doc
+            doc.documentId == uxDocumentId
               ? [
                   {
                     firstPage: pageNumber,
@@ -84,7 +88,7 @@ export function Sidebar() {
                     citationIndices: [],
                   },
                 ]
-              : ([] as PageGroup[])
+              : []
           )
           .map(({ firstPage, lastPage, citationIndices }) => ({
             firstPage,
@@ -95,7 +99,7 @@ export function Sidebar() {
           }))
           .sort((a, b) => sortIndex(a) - sortIndex(b)),
       })),
-    [documents, citations, doc, pageNumber]
+    [citations, pageNumber, uxDocumentId]
   );
 
   const { dispatch, dispatchUnlessError } = useDispatchHandler(_dispatch);
@@ -114,118 +118,127 @@ export function Sidebar() {
       <SidebarHeader />
       <div className="sidebar-divider" />
       <div id="citation-groups">
-        {groupedCitations.map(({ document, pageGroups }) => {
-          const docSelected = document.documentId == ux.doc.documentId;
-          return (
-            <div className="doc-group" key={document.documentId}>
-              {docSelected && (
-                <div className="doc-group-prefix">
-                  <div />
-                </div>
-              )}
-              <div
-                className={`doc-group-main ${
-                  docSelected ? "selected" : "unselected"
-                }`}
-              >
-                <div
-                  className={`doc-header ${
-                    docSelected ? "selected" : "unselected"
-                  }`}
-                  onClick={
-                    docSelected
-                      ? undefined
-                      : dispatchUnlessError({ type: "goto", doc: document })
-                  }
-                >
-                  <DocumentRegular className="icon" />
-                  {document.name ?? document.pdfUrl}
-                </div>
+        {groupedCitations.map(
+          ({ doc: { documentId, pdfUrl, name }, pageGroups }) => {
+            const docSelected = documentId == uxDocumentId;
+            return (
+              <div className="doc-group" key={documentId}>
                 {docSelected && (
-                  <div className="doc-header-suffix">
+                  <div className="doc-group-prefix">
                     <div />
                   </div>
                 )}
-                {pageGroups.map(({ firstPage, lastPage, citationIndices }) => {
-                  const pageSelected =
-                    docSelected &&
-                    (selectedCitation
-                      ? citationIndices.includes(selectedCitation.citationIndex)
-                      : pageNumber >= firstPage && pageNumber <= lastPage);
-                  return (
-                    <div
-                      className={`page-group ${
-                        pageSelected ? "selected" : "unselected"
-                      }`}
-                      key={firstPage * maxPageNumber + lastPage}
-                    >
-                      <div
-                        className={`page-header ${
-                          pageSelected ? "selected" : "unselected"
-                        }`}
-                        onClick={
-                          pageSelected
-                            ? undefined
-                            : dispatchUnlessError({
-                                type: "goto",
-                                pageNumber: firstPage,
-                                doc: document,
-                              })
-                        }
-                      >
-                        {firstPage == lastPage ? (
-                          firstPage == unlocatedPage ? (
-                            <>
-                              <DocumentOnePageAddRegular className="icon" />
-                              Unable to locate citation
-                            </>
-                          ) : (
-                            <>
-                              <DocumentOnePageRegular className="icon" />
-                              Page {firstPage}
-                            </>
-                          )
-                        ) : (
-                          <>
-                            <DocumentOnePageMultipleRegular className="icon" />
-                            Pages {firstPage}-{lastPage}
-                          </>
-                        )}
-                      </div>
-                      {citationIndices.map((citationIndex) => {
-                        const { excerpt, review } =
-                          questions[questionIndex].citations[citationIndex];
-                        return (
-                          <CitationUX
-                            key={citationIndex}
-                            citationIndex={citationIndex}
-                            excerpt={excerpt}
-                            review={review}
-                            selected={
-                              selectedCitation?.citationIndex == citationIndex
-                            }
-                          />
-                        );
-                      })}
+                <div
+                  className={`doc-group-main ${
+                    docSelected ? "selected" : "unselected"
+                  }`}
+                >
+                  <div
+                    className={`doc-header ${
+                      docSelected ? "selected" : "unselected"
+                    }`}
+                    onClick={
+                      docSelected
+                        ? undefined
+                        : dispatchUnlessError({ type: "goto", documentId })
+                    }
+                  >
+                    <DocumentRegular className="icon" />
+                    {name ?? pdfUrl}
+                  </div>
+                  {docSelected && (
+                    <div className="doc-header-suffix">
+                      <div />
                     </div>
-                  );
-                })}
+                  )}
+                  {pageGroups.map(
+                    ({ firstPage, lastPage, citationIndices }) => {
+                      const pageSelected =
+                        docSelected &&
+                        (selectedCitation
+                          ? citationIndices.includes(
+                              selectedCitation.citationIndex
+                            )
+                          : pageNumber >= firstPage && pageNumber <= lastPage);
+                      return (
+                        <div
+                          className={`page-group ${
+                            pageSelected ? "selected" : "unselected"
+                          }`}
+                          key={firstPage * maxPageNumber + lastPage}
+                        >
+                          <div
+                            className={`page-header ${
+                              pageSelected ? "selected" : "unselected"
+                            }`}
+                            onClick={
+                              pageSelected
+                                ? undefined
+                                : dispatchUnlessError({
+                                    type: "goto",
+                                    pageNumber: firstPage,
+                                    documentId,
+                                  })
+                            }
+                          >
+                            {firstPage == lastPage ? (
+                              firstPage == unlocatedPage ? (
+                                <>
+                                  <DocumentOnePageAddRegular className="icon" />
+                                  Unable to locate citation
+                                </>
+                              ) : (
+                                <>
+                                  <DocumentOnePageRegular className="icon" />
+                                  Page {firstPage}
+                                </>
+                              )
+                            ) : (
+                              <>
+                                <DocumentOnePageMultipleRegular className="icon" />
+                                Pages {firstPage}-{lastPage}
+                              </>
+                            )}
+                          </div>
+                          {citationIndices.length > 0 ?
+                          citationIndices.map((citationIndex) => {
+                            const { excerpt, review } =
+                              questions[questionIndex].citations[citationIndex];
+                            return (
+                              <CitationUX
+                                key={citationIndex}
+                                citationIndex={citationIndex}
+                                excerpt={excerpt}
+                                review={review}
+                                selected={
+                                  selectedCitation?.citationIndex ==
+                                  citationIndex
+                                }
+                              />
+                            );
+                          }) : 
+                          <div className="no-citations">No citations currently exist on this page.<br/>Select document text to manually add a citation</div>}
+                        </div>
+                      );
+                    }
+                  )}
+                </div>
+                {docSelected && (
+                  <>
+                    <div className="doc-group-suffix-top-left" />
+                    <div className="doc-group-suffix-top-right">
+                      <div />
+                    </div>
+                    <div className="doc-group-suffix-bottom">
+                      <div />
+                    </div>
+                  </>
+                )}
+                <div className="sidebar-divider" />
               </div>
-              {docSelected && (
-                <>
-                  <div className="doc-group-suffix-top-left" />
-                  <div className="doc-group-suffix-top-right">
-                    <div />
-                  </div>
-                  <div className="doc-group-suffix-bottom">
-                    <div />
-                  </div>
-                </>
-              )}
-              <div className="sidebar-divider" />
-            </div>
-          );
-        })}
+            );
+          }
+        )}
         <div className="doc-group-main unselected" key="buttons">
           <button
             onClick={addSelection}

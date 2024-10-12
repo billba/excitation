@@ -1,8 +1,7 @@
-import { useAtom } from "jotai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page } from "react-pdf";
 
-import { stateAtom } from "./State";
+import { docFromId, useAppState } from "./State";
 import {
   calculateRange,
   calculateSerializedRange,
@@ -12,12 +11,12 @@ import {
 import { useAsyncHelper } from "./Hooks";
 
 export function Viewer() {
-  const [state, dispatch] = useAtom(stateAtom);
+  const [state, dispatch] = useAppState();
   const {
     ux,
   } = state;
-  const { doc, pageNumber, range, selectedCitation } = ux;
-  const { pdfUrl } = doc;
+  const { documentId, pageNumber, range, selectedCitation } = ux;
+  const { pdfUrl } = docFromId[documentId];
 
   const { isError } = useAsyncHelper();
 

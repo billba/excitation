@@ -1,5 +1,4 @@
-import { useAtom } from "jotai";
-import { stateAtom } from "./State";
+import { useAppState } from "./State";
 import {
   TriangleLeftFilled,
   TriangleRightFilled,
@@ -7,7 +6,7 @@ import {
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
 
 export const SidebarHeader = () => {
-  const [state, _dispatch] = useAtom(stateAtom);
+  const [state, _dispatch] = useAppState();
   const { questions, ux } = state;
   const { questionIndex } = ux;
   const { prefix, text } = questions[questionIndex];

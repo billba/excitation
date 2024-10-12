@@ -354,6 +354,10 @@ button:focus-visible {
   }
 }
 
+.no-citations {
+  grid-column: 2 / 6;
+}
+
 .error {
   color: red;
 }

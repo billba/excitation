@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { atom, useAtom } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { create } from "mutative";
 import {
   Citation,
@@ -11,8 +11,8 @@ import {
   State,
   AsyncSuccessState,
   AsyncErrorState,
-  Form,
   FormDocument,
+  LoadForm,
 } from "./Types";
 import {
   createCitationId,
@@ -21,31 +21,29 @@ import {
 } from "./Utility";
 import { calculateRange } from "./Range";
 
+export const docs: FormDocument[] = [];
+export const docFromId: { [id: number]: FormDocument } = {};
+
 async function loadForm(url: string): Promise<State> {
   try {
-    const form: Form = await (await fetch(url)).json();
+    const form: LoadForm = await (await fetch(url)).json();
 
     console.log("raw form", form);
 
     for await (const doc of form.documents) {
-      doc.response = await (await fetch(doc.diUrl)).json();
-      doc.pages = doc.response?.analyzeResult.pages.length
+      doc.di = await (await fetch(doc.diUrl)).json();
+      doc.pages = doc.di.analyzeResult.pages.length;
+      docs.push(doc);
+      docFromId[doc.documentId] = doc;
     }
-
-    form.defaultDoc = form.documents[0];
 
     const updatedCitations: Event[] = [];
 
     for (const question of form.questions) {
       for (const citation of question.citations) {
-        const doc = form.documents.find(
-          ({ documentId }) => documentId === citation.documentId
-        );
-        citation.doc = doc;
-        const { bounds, citationId } = citation;
+        const { bounds, citationId, documentId } = citation;
         if (!bounds) {
-          const { response } = doc!;
-          const bounds = returnTextPolygonsFromDI(citation.excerpt, response!);
+          const bounds = returnTextPolygonsFromDI(citation.excerpt, docFromId[documentId].di);
           if (bounds) {
             citation.bounds = bounds;
             updatedCitations.push({
@@ -65,9 +63,12 @@ async function loadForm(url: string): Promise<State> {
       await dispatchEvents(updatedCitations);
     }
 
+    const defaultDocumentId = docs[0].documentId;
+
     return {
       ...form,
-      ux: inferUXState(form.defaultDoc, 0, form.questions[0].citations, 0),
+      defaultDocumentId,
+      ux: inferUXState(defaultDocumentId, 0, form.questions[0].citations, 0),
       asyncState: { status: "idle" },
       viewer: { top: 0, left: 0, width: 1024, height: 768 },
     };
@@ -93,7 +94,7 @@ const citationHighlightsFor = (citation?: Citation) => {
 // when citationIndex !== undefined && keepCurrentCitation == false, we keep citationIndex if there are no unreviewed citations
 // when citationIndex !== undefined && keepCurrentCitation == true, we keep citationIndex no matter what
 function inferUXState(
-  defaultDoc: FormDocument,
+  defaultDocumentId: number,
   questionIndex: number,
   citations: Citation[],
   citationIndex?: number,
@@ -111,13 +112,13 @@ function inferUXState(
   }
 
   let pageNumber = 1;
-  let doc = defaultDoc;
+  let documentId = defaultDocumentId;
 
   if (citationIndex == undefined)
     return {
       questionIndex,
       pageNumber,
-      doc,
+      documentId,
     };
 
   const citation = citations[citationIndex];
@@ -127,13 +128,13 @@ function inferUXState(
     [pageNumber] = citationHighlights
       .map(({ pageNumber }) => pageNumber)
       .sort();
-    doc = citation.doc!;
+    ({ documentId } = citation);
   }
 
   return {
     questionIndex,
     pageNumber,
-    doc: doc,
+    documentId,
     selectedCitation: { citationIndex, citationHighlights },
   };
 }
@@ -143,7 +144,7 @@ console.log(formId);
 const _stateAtom = atom<State>(
   await loadForm("http://localhost:8000/form/" + formId)
 );
-export const stateAtom = atom<State, [Action], void>(
+const stateAtom = atom<State, [Action], void>(
   (get) => get(_stateAtom),
 
   (get, set, action: Action) => {
@@ -156,62 +157,74 @@ export const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-          const { metadata, defaultDoc, questions, ux, asyncState, viewer } =
-            state;
-          const { doc, pageNumber, questionIndex, selectedCitation } = ux;
-          const isAsyncing = asyncState.status != "idle";
-          const isError = isAsyncing && !!asyncState.uxAtError;
+            const {
+              metadata,
+              defaultDocumentId,
+              questions,
+              ux,
+              asyncState,
+              viewer,
+            } = state;
+            const { documentId, pageNumber, questionIndex, selectedCitation } =
+              ux;
+            const isAsyncing = asyncState.status != "idle";
+            const isError = isAsyncing && !!asyncState.uxAtError;
 
-          function goto(gotoPageNumber: number, gotoDoc?: FormDocument) {
-            ux.pageNumber = gotoPageNumber;
-            ux.range = undefined;
+            function goto(gotoPageNumber: number, gotoDocumentId?: number) {
+              ux.pageNumber = gotoPageNumber;
+              ux.range = undefined;
 
-            if (gotoDoc && gotoDoc !== doc) {
-              ux.doc = gotoDoc;
-              ux.selectedCitation = undefined;
-            } else {
-              // Deselect the current citation, unless moving to
-              // a different page of the same multi-page citation.
-              if (
-                !selectedCitation?.citationHighlights.find(
-                  ({ pageNumber }) => pageNumber == gotoPageNumber
-                )
-              ) {
+              if (gotoDocumentId && gotoDocumentId !== documentId) {
+                ux.documentId = gotoDocumentId;
                 ux.selectedCitation = undefined;
+              } else {
+                // Deselect the current citation, unless moving to
+                // a different page of the same multi-page citation.
+                if (
+                  !selectedCitation?.citationHighlights.find(
+                    ({ pageNumber }) => pageNumber == gotoPageNumber
+                  )
+                ) {
+                  ux.selectedCitation = undefined;
+                }
               }
             }
-          }
 
-          function setAsync({
-            event,
-            onError,
-          }: {
-            event: Event;
-            onError: Action;
-          }) {
-            state.asyncState = {
-              status: "pending",
-              prevState,
+            function setAsync({
               event,
               onError,
-            };
-          }
+            }: {
+              event: Event;
+              onError: Action;
+            }) {
+              state.asyncState = {
+                status: "pending",
+                prevState,
+                event,
+                onError,
+              };
+            }
 
-          function firstCitedPage(doc: FormDocument): number | undefined {
-            return questions[questionIndex].citations
-              .filter(citation => citation.doc === doc && citation.bounds)
-              .flatMap(({ bounds }) => bounds!.map(({ pageNumber }) => pageNumber))
-              .sort()[0];
-          }
-            
-          console.log("first page", firstCitedPage(doc));
-          
+            function firstCitedPage(documentId: number): number | undefined {
+              return questions[questionIndex].citations
+                .filter(
+                  (citation) =>
+                    citation.documentId === documentId && citation.bounds
+                )
+                .flatMap(({ bounds }) =>
+                  bounds!.map(({ pageNumber }) => pageNumber)
+                )
+                .sort()[0];
+            }
+
+            console.log("first page", firstCitedPage(documentId));
+
             switch (action.type) {
               case "selectCitation": {
                 const { citationIndex } = action;
                 if (citationIndex !== undefined) {
                   state.ux = inferUXState(
-                    defaultDoc!,
+                    defaultDocumentId,
                     questionIndex,
                     questions[questionIndex].citations,
                     citationIndex,
@@ -225,7 +238,7 @@ export const stateAtom = atom<State, [Action], void>(
 
               case "prevQuestion":
                 state.ux = inferUXState(
-                  defaultDoc!,
+                  defaultDocumentId,
                   questionIndex - 1,
                   questions[questionIndex - 1].citations
                 );
@@ -233,7 +246,7 @@ export const stateAtom = atom<State, [Action], void>(
 
               case "nextQuestion":
                 state.ux = inferUXState(
-                  defaultDoc!,
+                  defaultDocumentId,
                   questionIndex + 1,
                   questions[questionIndex + 1].citations
                 );
@@ -248,7 +261,12 @@ export const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "goto":
-                goto(action.pageNumber ?? firstCitedPage(action.doc ?? doc) ?? 1, action.doc);
+                goto(
+                  action.pageNumber ??
+                    firstCitedPage(action.documentId ?? documentId) ??
+                    1,
+                  action.documentId
+                );
                 break;
 
               case "setSelectedText":
@@ -265,7 +283,6 @@ export const stateAtom = atom<State, [Action], void>(
               case "addSelection": {
                 console.assert(!isAsyncing);
                 const { range } = ux;
-                const { documentId } = doc;
                 console.assert(range !== undefined);
                 const realRange = calculateRange(range);
                 console.assert(realRange !== undefined);
@@ -274,12 +291,11 @@ export const stateAtom = atom<State, [Action], void>(
                   pageNumber,
                   realRange!,
                   viewer,
-                  doc.response!
+                  docFromId[documentId].di
                 );
 
                 questions[questionIndex].citations.push({
                   documentId,
-                  doc,
                   citationId: createCitationId(metadata.formId, "client"),
                   bounds,
                   excerpt,
@@ -310,7 +326,7 @@ export const stateAtom = atom<State, [Action], void>(
                 const { questionIndex } = action;
                 const { citations } = questions[questionIndex];
                 state.ux = inferUXState(
-                  defaultDoc!,
+                  defaultDocumentId,
                   questionIndex,
                   citations,
                   citations.length - 1,
@@ -333,7 +349,7 @@ export const stateAtom = atom<State, [Action], void>(
                   // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
                   if (targetCitation.review! != Review.Unreviewed) {
                     state.ux = inferUXState(
-                      defaultDoc!,
+                      defaultDocumentId,
                       questionIndex,
                       citations,
                       action.citationIndex
@@ -366,7 +382,7 @@ export const stateAtom = atom<State, [Action], void>(
                 const { questionIndex, citationIndex } = action;
                 const { citations } = questions[questionIndex];
                 state.ux = inferUXState(
-                  defaultDoc!,
+                  defaultDocumentId,
                   questionIndex,
                   citations,
                   citationIndex,
@@ -419,19 +435,7 @@ export const stateAtom = atom<State, [Action], void>(
                 console.log("unhandled action", action);
                 break;
             }
-        },
-          {
-            mark: (state) => {
-              // don't proxy the DI response. It's not a class so we can't identify it with instanceof
-              // so instead we check for what seems like a unique field.
-              
-              if (state?.analyzeResult) {
-                console.assert(state.status && state.createdDateTime && state.lastUpdatedDateTime);
-                return () => state;
-              }
-            },
-          }
-        );
+          });
 
     if (prevState === newState) {
       console.log("no state change");
@@ -441,6 +445,18 @@ export const stateAtom = atom<State, [Action], void>(
     }
   }
 );
+
+export function useAppState() {
+  return useAtom(stateAtom);
+}
+
+export function useDispatchAppState() {
+  return useSetAtom(stateAtom);
+}
+
+export function useAppStateValue() {
+  return useAtomValue(stateAtom);
+}
 
 export const useAsyncStateMachine = () => {
   const [state, dispatch] = useAtom(stateAtom);
