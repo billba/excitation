@@ -1,7 +1,7 @@
 import { useAtom } from "jotai";
 import { stateAtom } from "./State";
 import { useCallback, useMemo } from "react";
-import { Citation, FormDocument } from "./Types";
+import { Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
@@ -116,8 +116,8 @@ export function Sidebar() {
           return (
             <>
               {docSelected && (
-                <div className="doc-group-prefix-outer">
-                  <div className="doc-group-prefix-inner" />
+                <div className="doc-group-prefix">
+                  <div/>
                 </div>
               )}
               <div
@@ -140,8 +140,8 @@ export function Sidebar() {
                   {doc.name ?? doc.pdfUrl}
                 </div>
                 {docSelected && (
-                  <div className="doc-header-suffix-outer">
-                    <div className="doc-header-suffix-inner" />
+                  <div className="doc-header-suffix">
+                    <div />
                   </div>
                 )}
                 {pageGroups.map(({ firstPage, lastPage, citationIndices }) => {
@@ -210,22 +210,26 @@ export function Sidebar() {
                 })}
               </div>
               {docSelected && (<>
-                <div className="doc-group-suffix-left" />
-                <div className="doc-group-suffix-right">
-                  <div className="doc-group-suffix-right-inner" />
+                <div className="doc-group-suffix-top-left" />
+                <div className="doc-group-suffix-top-right">
+                  <div />
                 </div>
+                <div className="doc-group-suffix-bottom">
+                  <div />
+                </div>
+                <div className="sidebar-divider" />
                 </>)}
               {!docSelected && <div className="sidebar-divider" />}
             </>
           );
         })}
         <div className="doc-group unselected" key="buttons">
-          {/* <button
+          <button
             onClick={addSelection}
             disabled={isAsyncing || ux.range == undefined}
             >
             add selection
-          </button> */}
+          </button>
           {isError && (
             <div>
               &nbsp;
@@ -236,9 +240,6 @@ export function Sidebar() {
               </button>
             </div>
           )}
-          <br />
-          <br />
-          <br />
           <br />
           <br />
           <br />
