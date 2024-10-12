@@ -11,7 +11,7 @@ export const NavBar = () => {
   const [state, _dispatch] = useAtom(stateAtom);
   const { ux } = state;
   const { pageNumber, selectedCitation, doc: document } = ux;
-  const { name, pdfUrl, pages } = document;
+  const { pages } = document;
   const { isError } = useAsyncHelper();
 
   const { dispatchUnlessError } = useDispatchHandler(_dispatch);
