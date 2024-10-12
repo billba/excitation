@@ -20,7 +20,7 @@ export type Action =
     }
   | {
       type: "goto";
-      doc?: FormDocument;
+      documentId?: number;
       pageNumber?: number;
     }
   | {
@@ -115,7 +115,7 @@ export interface CitationHighlight {
 
 export interface UXState {
   questionIndex: number;
-  doc: FormDocument;
+  documentId: number;
   pageNumber: number;
   range?: SerializedRange;
   selectedCitation?: {
@@ -135,14 +135,13 @@ export interface FormDocument {
   name?: string;
   pdfUrl: string;
   documentId: number;
-  pages?: number;
-  response?: DocumentIntelligenceResponse;
+  pages: number;
+  di: DocumentIntelligenceResponse;
 }
 
 export interface Citation {
   excerpt: string;
   documentId: number;
-  doc?: FormDocument;
   review: Review;
   citationId: string;
   bounds?: Bounds[];
@@ -169,12 +168,15 @@ export interface FormMetadata {
 
 export interface Form {
   metadata: FormMetadata;
-  documents: FormDocument[];
   questions: Question[];
-  defaultDoc?: FormDocument;
+}
+
+export interface LoadForm extends Form {
+  documents: FormDocument[];
 }
 
 export interface State extends Form {
+  defaultDocumentId: number;
   ux: UXState;
   asyncState: AsyncState;
   viewer: ViewerState;
