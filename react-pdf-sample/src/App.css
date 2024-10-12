@@ -246,6 +246,12 @@ button:focus-visible {
   display: none;
 }
 
+.doc-group { 
+  grid-column: 1 / 7;;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
 .doc-group-prefix {
   grid-column: 5 / 7;
   display: grid;
@@ -259,7 +265,7 @@ button:focus-visible {
 }
 }
 
-.doc-group {
+.doc-group-main {
   grid-column-start: 2;
   display: grid;
   grid-template-columns: subgrid;

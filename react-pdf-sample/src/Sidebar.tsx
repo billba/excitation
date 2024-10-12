@@ -34,64 +34,67 @@ export function Sidebar() {
   const { documents, questions, ux } = state;
   const { doc, pageNumber, questionIndex, selectedCitation } = ux;
 
-  const { citations }  = questions[questionIndex];
+  const { citations } = questions[questionIndex];
 
   const { isAsyncing, isError } = useAsyncHelper();
 
   const groupedCitations = useMemo(
-    () => documents.map((document) => ({
-      document,
-      pageGroups: citations
-        .map<[Citation, number[]]>((citation, citationIndex) => [
-          citation,
-          [citationIndex],
-        ])
-        .filter(([citation]) => citation.documentId === document.documentId)
-        .map(([citation, citationIndices]) => {
-          const pageNumbers = (citation.bounds ?? [{ pageNumber: unlocatedPage }])
-            .map(({ pageNumber }) => pageNumber)
-            .sort();
-          return {
-            firstPage: pageNumbers[0],
-            lastPage: pageNumbers[pageNumbers.length - 1],
-            citationIndices,
-          };
-        })
-        .reduce(
-          (pageGroups, pageGroup) => {
-            const matchingPageGroup = pageGroups.find(
-              ({ firstPage, lastPage }) =>
-                firstPage == pageGroup.firstPage && lastPage == pageGroup.lastPage
-            );
-            if (matchingPageGroup) {
-              matchingPageGroup.citationIndices.push(
-                pageGroup.citationIndices[0]
+    () =>
+      documents.map((document) => ({
+        document,
+        pageGroups: citations
+          .map<[Citation, number[]]>((citation, citationIndex) => [
+            citation,
+            [citationIndex],
+          ])
+          .filter(([citation]) => citation.documentId === document.documentId)
+          .map(([citation, citationIndices]) => {
+            const pageNumbers = (
+              citation.bounds ?? [{ pageNumber: unlocatedPage }]
+            )
+              .map(({ pageNumber }) => pageNumber)
+              .sort();
+            return {
+              firstPage: pageNumbers[0],
+              lastPage: pageNumbers[pageNumbers.length - 1],
+              citationIndices,
+            };
+          })
+          .reduce(
+            (pageGroups, pageGroup) => {
+              const matchingPageGroup = pageGroups.find(
+                ({ firstPage, lastPage }) =>
+                  firstPage == pageGroup.firstPage &&
+                  lastPage == pageGroup.lastPage
               );
-            } else {
-              pageGroups.push(pageGroup);
-            }
-            return pageGroups;
-          },
-          document === doc
-            ? [
-                {
-                  firstPage: pageNumber,
-                  lastPage: pageNumber,
-                  citationIndices: [],
-                },
-              ]
-            : ([] as PageGroup[])
-        )
-        .map(({ firstPage, lastPage, citationIndices }) => ({
-          firstPage,
-          lastPage,
-          citationIndices: citationIndices.sort(
-            (a, b) => sortCitation(citations, a) - sortCitation(citations, b)
-          ),
-        }))
-        .sort((a, b) => sortIndex(a) - sortIndex(b)),
-      }))
-    ,
+              if (matchingPageGroup) {
+                matchingPageGroup.citationIndices.push(
+                  pageGroup.citationIndices[0]
+                );
+              } else {
+                pageGroups.push(pageGroup);
+              }
+              return pageGroups;
+            },
+            document === doc
+              ? [
+                  {
+                    firstPage: pageNumber,
+                    lastPage: pageNumber,
+                    citationIndices: [],
+                  },
+                ]
+              : ([] as PageGroup[])
+          )
+          .map(({ firstPage, lastPage, citationIndices }) => ({
+            firstPage,
+            lastPage,
+            citationIndices: citationIndices.sort(
+              (a, b) => sortCitation(citations, a) - sortCitation(citations, b)
+            ),
+          }))
+          .sort((a, b) => sortIndex(a) - sortIndex(b)),
+      })),
     [documents, citations, doc, pageNumber]
   );
 
@@ -108,23 +111,22 @@ export function Sidebar() {
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
-      <SidebarHeader/>
+      <SidebarHeader />
       <div className="sidebar-divider" />
       <div id="citation-groups">
         {groupedCitations.map(({ document, pageGroups }) => {
-          const docSelected = document == ux.doc;
+          const docSelected = document.documentId == ux.doc.documentId;
           return (
-            <>
+            <div className="doc-group" key={document.documentId}>
               {docSelected && (
                 <div className="doc-group-prefix">
-                  <div/>
+                  <div />
                 </div>
               )}
               <div
-                className={`doc-group ${
+                className={`doc-group-main ${
                   docSelected ? "selected" : "unselected"
                 }`}
-                key={document.documentId}
               >
                 <div
                   className={`doc-header ${
@@ -209,25 +211,26 @@ export function Sidebar() {
                   );
                 })}
               </div>
-              {docSelected && (<>
-                <div className="doc-group-suffix-top-left" />
-                <div className="doc-group-suffix-top-right">
-                  <div />
-                </div>
-                <div className="doc-group-suffix-bottom">
-                  <div />
-                </div>
-                <div className="sidebar-divider" />
-                </>)}
-              {!docSelected && <div className="sidebar-divider" />}
-            </>
+              {docSelected && (
+                <>
+                  <div className="doc-group-suffix-top-left" />
+                  <div className="doc-group-suffix-top-right">
+                    <div />
+                  </div>
+                  <div className="doc-group-suffix-bottom">
+                    <div />
+                  </div>
+                </>
+              )}
+              <div className="sidebar-divider" />
+            </div>
           );
         })}
-        <div className="doc-group unselected" key="buttons">
+        <div className="doc-group-main unselected" key="buttons">
           <button
             onClick={addSelection}
             disabled={isAsyncing || ux.range == undefined}
-            >
+          >
             add selection
           </button>
           {isError && (
