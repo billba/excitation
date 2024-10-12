@@ -265,6 +265,7 @@ export const stateAtom = atom<State, [Action], void>(
               case "addSelection": {
                 console.assert(!isAsyncing);
                 const { range } = ux;
+                const { documentId } = doc;
                 console.assert(range !== undefined);
                 const realRange = calculateRange(range);
                 console.assert(realRange !== undefined);
@@ -275,8 +276,9 @@ export const stateAtom = atom<State, [Action], void>(
                   viewer,
                   doc.response!
                 );
+
                 questions[questionIndex].citations.push({
-                  documentId: doc.documentId,
+                  documentId,
                   doc,
                   citationId: createCitationId(metadata.formId, "client"),
                   bounds,
@@ -289,7 +291,7 @@ export const stateAtom = atom<State, [Action], void>(
                     type: "addCitation",
                     formId: metadata.formId,
                     questionId: questionIndex,
-                    documentId: doc.documentId,
+                    documentId,
                     citationId: createCitationId(metadata.formId, "client"),
                     excerpt,
                     bounds,
