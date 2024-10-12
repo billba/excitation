@@ -319,9 +319,12 @@ export const returnTextPolygonsFromDI = (
 // compares a bounding regions polygon to a reference polygon
 // both polys are assumed to be in the same column
 // returns:
-// -1 if poly is situated earlier in the page than refPoly
+// - if poly is situated earlier in the page than refPoly
 // 0 if poly is sitatued within/about refPoly
-// 1 if poly is situated later in the page than refPoly
+// + if poly is situated later in the page than refPoly
+// this can also be used to check if something starts a new column
+// by looking specifically for +/-1 in sequential polygons
+// or starts a new word by looking for +/-2
 const comparePolygons = (poly: number[], refPoly: number[]) => {
   const x = [ poly[0], poly[2] ];
   const y = [ poly[1], poly[5] ];
@@ -337,9 +340,9 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
 
   // then: how do they compare horizontally within the line?
   // poly is earlier in the line
-  if (x[1] < refX[0]) return -1;
+  if (x[1] < refX[0]) return -2;
   // poly is later in the line
-  if (x[0] > refX[1]) return 1;
+  if (x[0] > refX[1]) return 2;
 
   // if we're still here, poly overlaps refPoly
   return 0;
@@ -365,12 +368,12 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
   // no data whatsoever
   if (end == 0) {
     console.log("no lines to search");
-    return lines;
+    return [];
   }
   // no intersections :(
   if (start == end) {
-    console.log("no further lines to search; closest guess returned");
-    return lines.slice(start, start + 1);
+    console.log("no further lines to search");
+    return [];
   }
 
   // find the midpoint of the given range [start, end)
@@ -379,6 +382,7 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
 
   // compare poly to the midpoint
   switch (comparePolygons(poly, lines[axis].polygon)) {
+    case -2:
     case -1:
       console.log("looking farther up the page...");
       return polygonBinarySearch(lines, start, axis, poly);
@@ -389,6 +393,7 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
         getLastIntersectionIndex(lines, poly, axis) + 1);
 
     case 1:
+    case 2:
       console.log("looking farther down the page...")
       return polygonBinarySearch(lines, axis + 1, end, poly);
   }
@@ -415,7 +420,7 @@ const splitIntoColumns = (lines: Line[]) => {
     // is this the last line and therefore the end of the last column?
     // OR, is lines[currentLine + 1] a new column?
     if (currentLine == lines.length - 1
-        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) < 0) {
+        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) == -1) {
       // let's wrap up the current column.
       const colLines = lines.slice(firstLineOfCol, currentLine + 1);
       // we combine all polys to make sure we capture the full width of the column
@@ -430,21 +435,18 @@ const splitIntoColumns = (lines: Line[]) => {
     }
   }
 
-  console.log(`split ${lines.length} lines into ${cols.length} columns`)
+  console.log(`split ${lines.length} lines into ${cols.length} columns`);
+  for (let index = 0; index < cols.length; index++) {
+    let col = cols[index];
+    console.log(`col [${index}]: "${col.lines[0].content}" ... ${col.lines.length - 2} more lines ... "${col.lines[col.lines.length - 1].content}"`);
+  }
+
   return cols;
 }
 
 // from an array of Columns, find the first where col.polygon intersects with poly
-const getRelevantColumn = (columns: Column[], poly: number[]) => {
-  for (const col of columns) {
-    if (comparePolygons(col.polygon, poly) == 0) return col;
-  }
-
-  // if there's no match or no columns
-  return {
-    polygon: [],
-    lines: []
-  };
+const getRelevantColumns = (columns: Column[], poly: number[]) => {
+  return columns.filter((col) => comparePolygons(col.polygon, poly) == 0)
 }
 
 // Given bounds and a doc int response, find the most likely excerpt text
@@ -452,19 +454,29 @@ const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   bounds: Bounds[]
 ) => {
-  let excerpt = '';
+  let excerpts = [];
   for (const bound of bounds) {
     console.log(`searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`)
     // page numbers are 1-indexed, thus the subtraction
     const page = response.analyzeResult.pages[bound.pageNumber - 1];
     const lines = page.lines;
+
     const columns = splitIntoColumns(lines);
-    const col = getRelevantColumn(columns, bound.polygon);
-    const intersectingLines = polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon);
+    const relevantColumns = getRelevantColumns(columns, bound.polygon);
+    if (relevantColumns.length == 0) console.log("no relevant columns to search");
+
+    const intersectingLines = [];
+    for (let index = 0; index < relevantColumns.length; index++) {
+      console.log(`SEARCHING col [${index}]`);
+
+      let col = relevantColumns[index];
+      intersectingLines.push(...polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon));
+    }
 
     const contents = intersectingLines.map((line) => line.content);
-    excerpt += contents.join(' ') + ' ';
+    excerpts.push(contents.join(' '));
   }
+  let excerpt = excerpts.join(' ');
   if (excerpt === '') excerpt = 'ERR';
   return excerpt;
 }
