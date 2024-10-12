@@ -531,7 +531,8 @@ const findTextFromBoundingRegions = (
     const intersectingWords = offsetBinarySearch(words, 0, words.length, [offsetStart, offsetEnd]);
     excerptWords.push(...intersectingWords.filter((word) => comparePolygons(word.polygon, bound.polygon) == 0));
   }
-  let excerpts = excerptWords.map((word) => word.content);
+
+  const excerpts = excerptWords.map((word) => word.content);
   let excerpt = excerpts.join(' ');
   if (excerpt === '') excerpt = 'could not find matching line(s)';
   return excerpt;
