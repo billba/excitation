@@ -106,9 +106,8 @@ export function Viewer() {
     const context = highlightCanvas.getContext("2d")!;
     
     context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    // context.fillStyle = "yellow";
     context.strokeStyle = "blue";
-    context.lineWidth = 4;
+    context.lineWidth = 2;
 
     const multiplier = 72 * (window.devicePixelRatio || 1);
     const padding = 3;
