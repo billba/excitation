@@ -4,15 +4,22 @@
   font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --color-base: light-dark(#d6d6d6, #424242);
+  --color-doc-hover: light-dark(#e3e3e3, #535353);
+  --color-doc-active: light-dark(#ebebeb, #646464);
+  --color-page-hover: light-dark(#f2f2f2, #757575);
+  --color-page-active: #ffffff;
+  --color-text: light-dark(#242424, #e8e8e8);
+  --color-text-page-active: #242424;
+  --color-text-button: light-dark(#e8e8e8, #242424);
+  --color-button-disabled: light-dark(#b6b6b6, #808080);
+  --color-button-enabled: light-dark(#808080, #b6b6b6);
+  --color-button-hover: light-dark(#353535, #e4e4e4);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  /* --var-col: 1fr; */
 }
 
 a {
@@ -38,16 +45,17 @@ button {
   height: 50px;
   width: 100px;
   border: 1px solid transparent;
-  padding: 0.6em 1.2em;
+  padding: 0.4em 1.2em;
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  background-color: rgba(135, 207, 235, 0.457);
+  background-color: var(--color-button-enabled);
+  color: var(--color-text-button);
   cursor: pointer;
   transition: border-color 0.25s;
 }
 button:hover {
-  background-color: skyblue;
+  background-color: var(--color-button-hover);
   transition: 0.25s;
 }
 button:focus,
@@ -55,20 +63,12 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-}
-
 #app {
   display: grid;
   grid-template-columns: 400px auto;
   align-items: start;
+  background-color: var(--color-base);
+  color: var(--color-text);
 }
 
 #viewer {
@@ -77,7 +77,7 @@ button:focus-visible {
 #navbar {
   padding: 5px 0 5px 0;
   width: 100%;
-  background-color: #ebebeb;
+  background-color: var(--color-doc-active);
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -113,22 +113,21 @@ button:focus-visible {
   margin-right: 2pt;
   font-size: 18pt;
   &.enabled {
-    color: grey
+    color: var(--color-button-enabled);
+    :hover {
+      color: var(--color-button-hover);
+      cursor: pointer;
+    }
   }
   &.disabled {
-    color: lightgrey;
+    color: var(--color-button-disabled);
   }
-}
-
-.navbar-icon.enabled:hover {
-  color: black;
-  cursor: pointer;
 }
 
 #sidebar {
   display: grid;
   grid-template-columns: 10px 10px 15px 10px auto 10px;
-  background-color: #d6d6d6;
+  background-color: var(--color-base);
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -149,8 +148,7 @@ button:focus-visible {
 }
 
 .sidebar-divider {
-  /* grid-column: 6; */
-  background-color: #ebebeb;
+  background-color: var(--color-doc-active);
 }
 
 .question-text {
@@ -161,14 +159,14 @@ button:focus-visible {
   font-size: 30pt;
   vertical-align: top;
   &.enabled {
-    color: grey;
+    color: var(--color-button-enabled);
     :hover {
-      color: black;
+      color: var(--color-button-hover);
       cursor: pointer;
     }
   }
   &.disabled {
-    color: #b6b6b6;
+    color: var(--color-button-disabled);
   }
 }
 
@@ -257,11 +255,11 @@ button:focus-visible {
   grid-column: 5 / 7;
   display: grid;
   grid-template-columns: subgrid;
-  background-color: #ebebeb;
+  background-color: var(--color-doc-active);
 
   div {
     height: 5px;
-    background-color: #d6d6d6;
+    background-color: var(--color-base);
     border-radius: 0 0 5px 0px;
 }
 }
@@ -273,7 +271,7 @@ button:focus-visible {
   border-radius: 5px 0 0px 0px;
   &.selected {
     grid-column-end: 7;
-    background-color: #ebebeb;
+    background-color: var(--color-doc-active);
   }
   &.unselected {
     border-radius: 5px 0 0 5px;
@@ -281,7 +279,7 @@ button:focus-visible {
     margin-top: 4px;
   }
   &.unselected:hover {
-    background-color: #e3e3e3;
+    background-color: var(--color-doc-hover);
     border: 2x solid black;
     cursor: pointer;
   }
@@ -289,7 +287,7 @@ button:focus-visible {
 
 .doc-group-suffix-top-left {
   grid-column: 2 / 6;
-  background-color: #ebebeb;
+  background-color: var(--color-doc-active);
   border-radius: 0 0 0 5px;
 }
 
@@ -298,18 +296,18 @@ button:focus-visible {
 
   div {
     height: 7px;
-    background-color: #ebebeb;
+    background-color: var(--color-doc-active);
     border-radius: 0 5px 0 0px;
   }
 }
 
 .doc-group-suffix-bottom {
   grid-column: 2 / 6;
-  background-color: #ebebeb;
+  background-color: var(--color-doc-active);
 
   div {
     height: 5px;
-    background-color: #d6d6d6;
+    background-color: var(--color-base);
     border-radius: 0 5px 0 0;
   }
 }
@@ -324,7 +322,7 @@ button:focus-visible {
   background-color: white;
 
   div {
-    background-color: #ebebeb;
+    background-color: var(--color-doc-active);
     border-radius: 0 0 5px 0;  
   }
 }
@@ -337,13 +335,14 @@ button:focus-visible {
   border-radius: 5px 0 0 5px;
   &.selected {
     grid-column-end: 6;
-    background-color: #ffffff
+    background-color: var(--color-page-active);
+    color: var(--color-text-page-active);
   }
   &.unselected {
     grid-column-end: 5;
   }
   &.unselected:hover {
-    background-color: #f2f2f2;
+    background-color: var(--color-page-hover);
   }
 }
 
