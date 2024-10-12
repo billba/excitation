@@ -439,7 +439,7 @@ const splitIntoColumns = (lines: Line[]) => {
   return cols;
 }
 
-// from an array of Columns, find the first where col.polygon intersects with poly
+// from an array of Columns, find any where col.polygon intersects with poly
 const getRelevantColumns = (columns: Column[], poly: number[]) => {
   return columns.filter((col) => comparePolygons(col.polygon, poly) == 0)
 }
