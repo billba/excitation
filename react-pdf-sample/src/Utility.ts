@@ -521,19 +521,15 @@ const findTextFromBoundingRegions = (
       intersectingLines.push(...polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon));
     }
 
-    console.log("intersecting lines:", intersectingLines);
+    if (intersectingLines.length == 0) continue;
 
     const offsetStart = intersectingLines[0].spans[0].offset;
-
     const lastLine = intersectingLines[intersectingLines.length - 1];
     const offsetEnd = lastLine.spans[0].offset + lastLine.spans[0].length;
-
     console.log("offset range for search:", offsetStart, offsetEnd);
 
     const intersectingWords = offsetBinarySearch(words, 0, words.length, [offsetStart, offsetEnd]);
-
     excerptWords.push(...intersectingWords.filter((word) => comparePolygons(word.polygon, bound.polygon) == 0));
-
   }
   let excerpts = excerptWords.map((word) => word.content);
   let excerpt = excerpts.join(' ');
