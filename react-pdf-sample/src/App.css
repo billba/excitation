@@ -4,14 +4,17 @@
   font-weight: 400;
 
   color-scheme: light dark;
+
   --color-base: light-dark(#d6d6d6, #424242);
   --color-doc-hover: light-dark(#e3e3e3, #535353);
   --color-doc-active: light-dark(#ebebeb, #646464);
   --color-page-hover: light-dark(#f2f2f2, #757575);
   --color-page-active: #ffffff;
+
   --color-text: light-dark(#242424, #e8e8e8);
   --color-text-page-active: #242424;
   --color-text-button: light-dark(#e8e8e8, #242424);
+
   --color-button-disabled: light-dark(#b6b6b6, #808080);
   --color-button-enabled: light-dark(#808080, #b6b6b6);
   --color-button-hover: light-dark(#353535, #e4e4e4);
@@ -95,7 +98,6 @@ button:focus-visible {
 }
 
 .navbar-page {
-  /* width: 100%; */
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
 }
