@@ -46,7 +46,7 @@ export function Sidebar() {
           citation,
           [citationIndex],
         ])
-        .filter(([citation]) => citation.doc === document)
+        .filter(([citation]) => citation.documentId === document.documentId)
         .map(([citation, citationIndices]) => {
           const pageNumbers = (citation.bounds ?? [{ pageNumber: unlocatedPage }])
             .map(({ pageNumber }) => pageNumber)
