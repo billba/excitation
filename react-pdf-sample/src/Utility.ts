@@ -320,9 +320,6 @@ export const returnTextPolygonsFromDI = (
 // - if poly is situated earlier in the page than refPoly
 // 0 if poly is sitatued within/about refPoly
 // + if poly is situated later in the page than refPoly
-// this can also be used to check if something starts a new column
-// by looking specifically for +/-1 in sequential polygons
-// or starts a new word by looking for +/-2
 const comparePolygons = (poly: number[], refPoly: number[]) => {
   const x = [ poly[0], poly[2] ];
   const y = [ poly[1], poly[5] ];
@@ -348,14 +345,14 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
 
 // starting from lines[axis] and working backward, find the first entry
 // in lines that intersects with poly
-const getFirstIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
+const getFirstPolyIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
   do axis--; while (axis >= 0 && comparePolygons(poly, lines[axis].polygon) == 0);
   return ++axis;
 }
 
 // starting from lines[axis] and working forward, find the last entry in
 // lines that intersects with poly
-const getLastIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
+const getLastPolyIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
   do axis++; while (axis < lines.length && comparePolygons(poly, lines[axis].polygon) == 0);
   return --axis;
 }
@@ -365,35 +362,87 @@ const getLastIntersectionIndex = (lines: Line[], poly: number[], axis: number) =
 const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: number[]) => {
   // no data whatsoever
   if (end == 0) {
-    console.log("no lines to search");
+    console.log("polygon search | no lines to search");
     return [];
   }
   // no intersections :(
   if (start == end) {
-    console.log("no further lines to search");
+    console.log("polygon search | no further lines to search");
     return [];
   }
 
   // find the midpoint of the given range [start, end)
-  let axis = Math.floor((end - start) / 2) + start;
-  console.log(`axis [${axis}]:`, lines[axis].content);
+  const axis = Math.floor((end - start) / 2) + start;
+  console.log(`polygon search | axis [${axis}]:`, lines[axis].content);
 
   // compare poly to the midpoint
   switch (comparePolygons(poly, lines[axis].polygon)) {
     case -2:
     case -1:
-      console.log("looking farther up the page...");
       return polygonBinarySearch(lines, start, axis, poly);
 
     case 0:
       return lines.slice(
-        getFirstIntersectionIndex(lines, poly, axis),
-        getLastIntersectionIndex(lines, poly, axis) + 1);
+        getFirstPolyIntersectionIndex(lines, poly, axis),
+        getLastPolyIntersectionIndex(lines, poly, axis) + 1);
 
     case 1:
     case 2:
-      console.log("looking farther down the page...")
       return polygonBinarySearch(lines, axis + 1, end, poly);
+  }
+}
+
+// compares offsetRange against refOffset. returns:
+// - if offsetRange is earlier in the page than refOffset
+// 0 if offsetRange contains refOffset
+// + if offsetRange is later in the page than refOffset
+const compareOffsets = (offsetRange: number[], refOffset: number) => {
+  if (offsetRange[1] < refOffset) return -1;
+  if (offsetRange[0] > refOffset) return 1;
+  return 0;
+}
+
+// starting from words[axis] and working backward, find the first entry
+// in words that overlaps with offsetRange
+const getFirstOffsetIntersectionIndex = (words: Word[], axis: number, offsetRange: number[]) => {
+  do axis--; while (axis >= 0 && compareOffsets(offsetRange, words[axis].span.offset) == 0);
+  return ++axis;
+}
+
+// starting from words[axis] and working forward, find the last entry
+// in words that overlaps with offsetRange
+const getLastOffsetIntersectionIndex = (words: Word[], axis: number, offsetRange: number[]) => {
+  do axis++; while (axis < words.length && compareOffsets(offsetRange, words[axis].span.offset) == 0);
+  return --axis;
+}
+
+// searches words[start, end) (that is, inclusive of start and exclusive of end)
+// for the words contained within the offset range
+const offsetBinarySearch = (words: Word[], start: number, end: number, offsetRange: number[]) => {
+  if (end == 0) {
+    console.log("offset search | no words to search");
+    return [];
+  }
+
+  if (start == end) {
+    console.log("offset search | no further words to search");
+    return [];
+  }
+
+  const axis = Math.floor((end - start) / 2) + start;
+  console.log(`offset search | axis [${axis}]: offset ${words[axis].span.offset}`);
+
+  switch (compareOffsets(offsetRange, words[axis].span.offset)) {
+    case -1:
+      return offsetBinarySearch(words, start, axis, offsetRange);
+
+    case 0:
+      return words.slice(
+        getFirstOffsetIntersectionIndex(words, axis, offsetRange),
+        getLastOffsetIntersectionIndex(words, axis, offsetRange) + 1);
+
+    case 1:
+      return offsetBinarySearch(words, axis + 1, end, offsetRange);
   }
 }
 
@@ -416,9 +465,9 @@ const splitIntoColumns = (lines: Line[]) => {
 
   for (let currentLine = 0; currentLine < lines.length; currentLine++) {
     // is this the last line and therefore the end of the last column?
-    // OR, is lines[currentLine + 1] a new column?
-    if (currentLine == lines.length - 1
-        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) == -1) {
+    // OR, is lines[currentLine + 1] a new column/section?
+    if (currentLine == lines.length - 1 ||
+        !adjacent(lines[currentLine + 1].polygon, lines[currentLine].polygon)) {
       // let's wrap up the current column.
       const colLines = lines.slice(firstLineOfCol, currentLine + 1);
       // we combine all polys to make sure we capture the full width of the column
@@ -442,7 +491,7 @@ const splitIntoColumns = (lines: Line[]) => {
   return cols;
 }
 
-// from an array of Columns, find the first where col.polygon intersects with poly
+// from an array of Columns, find any where col.polygon intersects with poly
 const getRelevantColumns = (columns: Column[], poly: number[]) => {
   return columns.filter((col) => comparePolygons(col.polygon, poly) == 0)
 }
@@ -452,30 +501,40 @@ const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   bounds: Bounds[]
 ) => {
-  let excerpts = [];
+  let excerptWords = [];
   for (const bound of bounds) {
     console.log(`searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`)
     // page numbers are 1-indexed, thus the subtraction
     const page = response.analyzeResult.pages[bound.pageNumber - 1];
     const lines = page.lines;
+    const words = page.words;
 
     const columns = splitIntoColumns(lines);
     const relevantColumns = getRelevantColumns(columns, bound.polygon);
     if (relevantColumns.length == 0) console.log("no relevant columns to search");
 
     const intersectingLines = [];
-    for (let index = 0; index < relevantColumns.length; index++) {
+    for (const col of relevantColumns) {
+      let index = columns.indexOf(col);
       console.log(`SEARCHING col [${index}]`);
 
-      let col = relevantColumns[index];
       intersectingLines.push(...polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon));
     }
 
-    const contents = intersectingLines.map((line) => line.content);
-    excerpts.push(contents.join(' '));
+    if (intersectingLines.length == 0) continue;
+
+    const offsetStart = intersectingLines[0].spans[0].offset;
+    const lastLine = intersectingLines[intersectingLines.length - 1];
+    const offsetEnd = lastLine.spans[0].offset + lastLine.spans[0].length;
+    console.log("offset range for search:", offsetStart, offsetEnd);
+
+    const intersectingWords = offsetBinarySearch(words, 0, words.length, [offsetStart, offsetEnd]);
+    excerptWords.push(...intersectingWords.filter((word) => comparePolygons(word.polygon, bound.polygon) == 0));
   }
+
+  const excerpts = excerptWords.map((word) => word.content);
   let excerpt = excerpts.join(' ');
-  if (excerpt === '') excerpt = 'ERR';
+  if (excerpt === '') excerpt = 'could not find matching line(s)';
   return excerpt;
 }
 
@@ -499,10 +558,10 @@ export function findUserSelection(
   left = round((left - dx) / multiplier, 4);
   right = round((right - dx) / multiplier, 4);
 
-  if (top < 1) console.log("bounds:top is curiously small for a standard document", top);
-  if (bottom > 10) console.log("bounds:bottom is curiously large for a standard document", bottom);
-  if (left < 1) console.log("bounds:left is curiously small for a standard document", left);
-  if (right > 7.5) console.log("bounds:right is curiously large for a standard document", right);
+  if (top < 1) console.log(`bounds:top [${top}] is curiously small for a standard document`);
+  if (bottom > 10) console.log(`bounds:bottom [${bottom}] is curiously large for a standard document`);
+  if (left < 1) console.log(`bounds:left [${left}] is curiously small for a standard document`);
+  if (right > 7.5) console.log(`bounds:right [${right}] is curiously large for a standard document`);
 
   const bounds = [
     {
