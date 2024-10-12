@@ -447,6 +447,7 @@ const getRelevantColumn = (columns: Column[], poly: number[]) => {
   };
 }
 
+// Given bounds and a doc int response, find the most likely excerpt text
 const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   bounds: Bounds[]
@@ -468,6 +469,9 @@ const findTextFromBoundingRegions = (
   return excerpt;
 }
 
+// Takes in user selection information and a doc int response
+// creates bounds from selection info
+// and finds the most likely excerpt text
 export function findUserSelection(
   pageNumber: number,
   range: Range,
