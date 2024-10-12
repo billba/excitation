@@ -320,9 +320,6 @@ export const returnTextPolygonsFromDI = (
 // - if poly is situated earlier in the page than refPoly
 // 0 if poly is sitatued within/about refPoly
 // + if poly is situated later in the page than refPoly
-// this can also be used to check if something starts a new column
-// by looking specifically for +/-1 in sequential polygons
-// or starts a new word by looking for +/-2
 const comparePolygons = (poly: number[], refPoly: number[]) => {
   const x = [ poly[0], poly[2] ];
   const y = [ poly[1], poly[5] ];
@@ -416,9 +413,9 @@ const splitIntoColumns = (lines: Line[]) => {
 
   for (let currentLine = 0; currentLine < lines.length; currentLine++) {
     // is this the last line and therefore the end of the last column?
-    // OR, is lines[currentLine + 1] a new column?
-    if (currentLine == lines.length - 1
-        || comparePolygons(lines[currentLine + 1].polygon, lines[currentLine].polygon) == -1) {
+    // OR, is lines[currentLine + 1] a new column/section?
+    if (currentLine == lines.length - 1 ||
+        !adjacent(lines[currentLine + 1].polygon, lines[currentLine].polygon)) {
       // let's wrap up the current column.
       const colLines = lines.slice(firstLineOfCol, currentLine + 1);
       // we combine all polys to make sure we capture the full width of the column
@@ -464,10 +461,10 @@ const findTextFromBoundingRegions = (
     if (relevantColumns.length == 0) console.log("no relevant columns to search");
 
     const intersectingLines = [];
-    for (let index = 0; index < relevantColumns.length; index++) {
+    for (const col of relevantColumns) {
+      let index = columns.indexOf(col);
       console.log(`SEARCHING col [${index}]`);
 
-      let col = relevantColumns[index];
       intersectingLines.push(...polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon));
     }
 
