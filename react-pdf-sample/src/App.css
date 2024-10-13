@@ -295,7 +295,6 @@ button:focus-visible {
   div {
     height: 7px;
     background-color: var(--color-doc-active);
-    border-radius: 0 0 0 0px;
     &.last-page-group-selected {
       border-radius: 0 5px 0 0px;
     }
@@ -318,8 +317,17 @@ button:focus-visible {
   padding: 3px 0 3px 0px;
 }
 
-.doc-header-suffix {
-  grid-column: 5;
+.top-right {
+  display: grid;
+  background-color: var(--color-page-active);
+
+  div {
+    background-color: var(--color-doc-active);
+    border-radius: 0 5px 0 0;  
+  }
+}
+
+.bottom-right {
   display: grid;
   background-color: var(--color-page-active);
 
@@ -329,15 +337,7 @@ button:focus-visible {
   }
 }
 
-.page-group-main {
-  grid-column: 2 /6;
-  display: grid;
-  grid-template-columns: subgrid;
-  &.unselected:hover {
-    background-color: var(--color-page-hover);
-  }
-}
-
+/* 
 .page-group-prologue {
   grid-column: 1 / 5;
   background-color: var(--color-page-active);
@@ -347,12 +347,10 @@ button:focus-visible {
     background-color: var(--color-doc-active);
     border-radius: 0 0 5px 0;
   }
-}
+} */
 
 .page-group {
-  /* background-color: green;; */
-  grid-column: 1 / 5;
-  padding: 2px 0 0px 1px;
+  grid-column: 2 / 6;
   border-radius: 5px 0 0 5px;
   display: grid;
   grid-template-columns: subgrid;
@@ -363,9 +361,12 @@ button:focus-visible {
   &.previous-page-group-selected {
     border-radius: 0 0 5px 0;
   }
+  &.unselected:hover {
+    background-color: var(--color-page-hover);
+  }
 }
 
-.page-group-epilogue {
+/* .page-group-epilogue {
   grid-column: 1 / 5;
   background-color: var(--color-page-active);
 
@@ -374,7 +375,7 @@ button:focus-visible {
     background-color: var(--color-doc-active);
     border-radius: 0 5px 0 0;
   }
-}
+} */
 
 .page-header {
   /* background-color: blue; */
@@ -388,9 +389,10 @@ button:focus-visible {
   }
 }
 
+/* 
 .no-citations {
   grid-column: 2 / 6;
-}
+} */
 
 .error {
   color: red;
