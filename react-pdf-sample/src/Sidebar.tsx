@@ -171,7 +171,7 @@ export function Sidebar() {
                     {name ?? pdfUrl}
                   </div>
                   {firstPageGroupSelected && (
-                    <div className="doc-header-suffix">
+                    <div className="bottom-right">
                       <div />
                     </div>
                   )}
@@ -181,7 +181,7 @@ export function Sidebar() {
                       pageGroupIndex
                     ) => (
                       <div
-                        className={`page-group-main ${
+                        className={`page-group ${
                           pageSelected
                             ? "selected"
                             : pageGroups[pageGroupIndex]?.pageSelected
@@ -191,70 +191,68 @@ export function Sidebar() {
                         key={firstPage * maxPageNumber + lastPage}
                       >
                         <div
-                          className={`page-group ${
+                          className={`page-header ${
                             pageSelected ? "selected" : "unselected"
                           }`}
+                          onClick={
+                            pageSelected
+                              ? undefined
+                              : dispatchUnlessError({
+                                  type: "goto",
+                                  pageNumber: firstPage,
+                                  documentId,
+                                })
+                          }
                         >
-                          <div
-                            className={`page-header ${
-                              pageSelected ? "selected" : "unselected"
-                            }`}
-                            onClick={
-                              pageSelected
-                                ? undefined
-                                : dispatchUnlessError({
-                                    type: "goto",
-                                    pageNumber: firstPage,
-                                    documentId,
-                                  })
-                            }
-                          >
-                            {firstPage == lastPage ? (
-                              firstPage == unlocatedPage ? (
-                                <>
-                                  <DocumentOnePageAddRegular className="icon" />
-                                  Unable to locate citation
-                                </>
-                              ) : (
-                                <>
-                                  <DocumentOnePageRegular className="icon" />
-                                  Page {firstPage}
-                                </>
-                              )
+                          {firstPage == lastPage ? (
+                            firstPage == unlocatedPage ? (
+                              <>
+                                <DocumentOnePageAddRegular className="icon" />
+                                Unable to locate citation
+                              </>
                             ) : (
                               <>
-                                <DocumentOnePageMultipleRegular className="icon" />
-                                Pages {firstPage}-{lastPage}
+                                <DocumentOnePageRegular className="icon" />
+                                Page {firstPage}
                               </>
-                            )}
-                          </div>
-                          {citationIndices.length > 0 ? (
-                            citationIndices.map((citationIndex) => {
-                              const { excerpt, review } =
-                                questions[questionIndex].citations[
-                                  citationIndex
-                                ];
-                              return (
-                                <CitationUX
-                                  key={citationIndex}
-                                  citationIndex={citationIndex}
-                                  excerpt={excerpt}
-                                  review={review}
-                                  selected={
-                                    selectedCitation?.citationIndex ==
-                                    citationIndex
-                                  }
-                                />
-                              );
-                            })
+                            )
                           ) : (
-                            <div className="no-citations">
-                              No citations currently exist on this page.
-                              <br />
-                              Select document text to manually add a citation
-                            </div>
-                          )}{" "}
+                            <>
+                              <DocumentOnePageMultipleRegular className="icon" />
+                              Pages {firstPage}-{lastPage}
+                            </>
+                          )}
                         </div>
+                        {pageGroups[pageGroupIndex - 1]?.pageSelected && (
+                          <div className="top-right"><div/></div>
+                        )}
+                        {citationIndices.length > 0 ? (
+                          citationIndices.map((citationIndex) => {
+                            const { excerpt, review } =
+                            questions[questionIndex].citations[citationIndex];
+                            return (
+                              <CitationUX
+                              key={citationIndex}
+                              citationIndex={citationIndex}
+                              excerpt={excerpt}
+                              review={review}
+                              selected={
+                                selectedCitation?.citationIndex ==
+                                citationIndex
+                              }
+                              />
+                            );
+                          })
+                        ) : (
+                          <div className="no-citations">
+                            No citations currently exist on this page.
+                            <br />
+                            Select document text to manually add a citation
+                          </div>
+                        )}{" "}
+                        {pageGroups[pageGroupIndex + 1]?.pageSelected && (
+                          <div className="bottom-right"><div/></div>
+                        )}
                       </div>
                     )
                   )}
