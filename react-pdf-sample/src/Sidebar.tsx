@@ -279,7 +279,7 @@ export function Sidebar() {
             );
           }
         )}
-        <div className="doc-group-main unselected" key="buttons">
+        <div className="buttons" key="buttons">
           <button
             onClick={addSelection}
             disabled={isAsyncing || ux.range == undefined}
@@ -296,6 +296,7 @@ export function Sidebar() {
               </button>
             </div>
           )}
+          <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
         </div>
         <div className="sidebar-divider" />
       </div>
