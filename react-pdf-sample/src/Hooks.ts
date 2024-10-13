@@ -1,5 +1,4 @@
-import { stateAtom } from "./State";
-import { useAtomValue } from "jotai";
+import { useAppStateValue } from "./State";
 import { useCallback } from "react";
 import { Action } from "./Types";
 
@@ -40,7 +39,7 @@ export const useDispatchHandler = (dispatch: (action: Action) => void) => {
 };
 
 export const useAsyncHelper = () => {
-  const { asyncState } = useAtomValue(stateAtom);
+  const { asyncState } = useAppStateValue();
   const isAsyncing = asyncState.status != "idle";
   const isError = isAsyncing && !!asyncState.uxAtError;
   return { isAsyncing, isError };

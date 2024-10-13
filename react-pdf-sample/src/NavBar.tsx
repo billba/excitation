@@ -1,12 +1,16 @@
-import { useAtom } from "jotai";
-import { stateAtom } from "./State";
+import { docFromId, useAppState } from "./State";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
+import {
+  TriangleLeftFilled,
+  TriangleRightFilled,
+} from "@fluentui/react-icons";
+
 
 export const NavBar = () => {
-  const [state, _dispatch] = useAtom(stateAtom);
+  const [state, _dispatch] = useAppState();
   const { ux } = state;
-  const { pageNumber, selectedCitation, doc: document } = ux;
-  const { name, pdfUrl, pages } = document;
+  const { pageNumber, selectedCitation, documentId } = ux;
+  const { pages } = docFromId[documentId];
   const { isError } = useAsyncHelper();
 
   const { dispatchUnlessError } = useDispatchHandler(_dispatch);
@@ -19,14 +23,13 @@ export const NavBar = () => {
           .sort();
 
   const disablePrev = isError || pageNumber === 1;
-  const disableNext = isError || pageNumber === pages! - 1;
+  const disableNext = isError || pageNumber === pages - 1;
 
   const citationPrev = isError || pageNumbers.includes(pageNumber - 1);
   const citationNext = pageNumbers.includes(pageNumber + 1);
 
   return (
     <div id="navbar">
-      <div className="navbar-filename">{name ?? pdfUrl}</div>
       <div className="navbar-page">
         <div className="navbar-column">
           <span
@@ -37,26 +40,17 @@ export const NavBar = () => {
           </span>
         </div>
         <div className="navbar-column">
-          <button
+          <TriangleLeftFilled
+            className={`navbar-icon ${disablePrev ? "disabled" : "enabled"}`}
             onClick={dispatchUnlessError({ type: "prevPage" })}
-            disabled={disablePrev}
-          >
-            &lt;
-          </button>
-          <span
-            className={
-              pageNumbers.includes(pageNumber) ? "selected" : undefined
-            }
-          >
-            {pageNumber}
-          </span>{" "}
-          / {pages}
-          <button
+          />
+          <span>
+            {pageNumber}&nbsp;/&nbsp;{pages}
+          </span>
+          <TriangleRightFilled
+            className={`navbar-icon ${disableNext ? "disabled" : "enabled"}`}
             onClick={dispatchUnlessError({ type: "nextPage" })}
-            disabled={disableNext}
-          >
-            &gt;
-          </button>
+          />
         </div>
         <div className="navbar-column">
           <span

@@ -1,6 +1,5 @@
-import { useSetAtom } from "jotai";
 import { Review } from "./Types";
-import { stateAtom } from "./State";
+import { useDispatchAppState } from "./State";
 import {
   CircleRegular,
   CheckmarkCircleFilled,
@@ -63,7 +62,7 @@ export const CitationUX = ({
   review,
   selected,
 }: Props) => {
-  const _dispatch = useSetAtom(stateAtom);
+  const _dispatch = useDispatchAppState();
   const { dispatchUnlessAsyncing } = useDispatchHandler(_dispatch);
 
   const icons = (
@@ -95,7 +94,7 @@ export const CitationUX = ({
       ) : (
         <>
           {icons}
-          <div>{excerpt}</div>
+          <span>{excerpt}</span>
         </>
       )}
     </div>
