@@ -295,7 +295,10 @@ button:focus-visible {
   div {
     height: 7px;
     background-color: var(--color-doc-active);
-    border-radius: 0 5px 0 0px;
+    border-radius: 0 0 0 0px;
+    &.last-page-group-selected {
+      border-radius: 0 5px 0 0px;
+    }
   }
 }
 
@@ -316,6 +319,7 @@ button:focus-visible {
 }
 
 .doc-header-suffix {
+  grid-column: 5;
   display: grid;
   background-color: var(--color-page-active);
 
@@ -325,26 +329,55 @@ button:focus-visible {
   }
 }
 
-.page-group {
-  grid-column-start: 2;
+.page-group-main {
+  grid-column: 2 /6;
   display: grid;
   grid-template-columns: subgrid;
-  padding: 2px 0 0px 1px;
-  border-radius: 5px 0 0 5px;
-  &.selected {
-    grid-column-end: 6;
-    background-color: var(--color-page-active);
-    color: var(--color-text-page-active);
-  }
-  &.unselected {
-    grid-column-end: 5;
-  }
   &.unselected:hover {
     background-color: var(--color-page-hover);
   }
 }
 
+.page-group-prologue {
+  grid-column: 1 / 5;
+  background-color: var(--color-page-active);
+
+  div {
+    height: 5px;
+    background-color: var(--color-doc-active);
+    border-radius: 0 0 5px 0;
+  }
+}
+
+.page-group {
+  /* background-color: green;; */
+  grid-column: 1 / 5;
+  padding: 2px 0 0px 1px;
+  border-radius: 5px 0 0 5px;
+  display: grid;
+  grid-template-columns: subgrid;
+  &.selected {
+    background-color: var(--color-page-active);
+    color: var(--color-text-page-active);
+  }
+  &.previous-page-group-selected {
+    border-radius: 0 0 5px 0;
+  }
+}
+
+.page-group-epilogue {
+  grid-column: 1 / 5;
+  background-color: var(--color-page-active);
+
+  div {
+    height: 5px;
+    background-color: var(--color-doc-active);
+    border-radius: 0 5px 0 0;
+  }
+}
+
 .page-header {
+  /* background-color: blue; */
   padding: 0 0 5px 0;
   grid-column-start: 1;
   &.selected {
