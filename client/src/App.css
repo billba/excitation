@@ -263,7 +263,7 @@ button:focus-visible {
 }
 
 .page-header {
-  padding: 0 0 5px 0;
+  padding: 3px 0 5px 0;
   grid-column-start: 1;
   &.selected {
     grid-column-end: 5;
