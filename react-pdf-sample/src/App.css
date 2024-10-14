@@ -70,9 +70,6 @@ button:focus-visible {
   color: var(--color-text);
 }
 
-#viewer {
-}
-
 #navbar {
   padding: 5px 0 5px 0;
   width: 100%;
@@ -350,18 +347,13 @@ button:focus-visible {
     background-color: var(--color-page-active);
     color: var(--color-text-page-active);
   }
-  &.previous-page-group-selected {
-    border-radius: 0 0 5px 0;
-  }
   &.unselected:hover {
     background-color: var(--color-page-hover);
-
     .top-right {
       div {
         background-color: var(--color-page-hover);
       }
     }
-
     .bottom-right {
       div {
         background-color: var(--color-page-hover);

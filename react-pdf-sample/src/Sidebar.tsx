@@ -31,12 +31,7 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
 export function Sidebar() {
   const [state, dispatch] = useAppState();
   const { questions, ux } = state;
-  const {
-    pageNumber,
-    questionIndex,
-    selectedCitation,
-    documentId,
-  } = ux;
+  const { pageNumber, questionIndex, selectedCitation, documentId } = ux;
 
   const { citations } = questions[questionIndex];
 
@@ -97,7 +92,7 @@ export function Sidebar() {
           .sort((a, b) => sortIndex(a) - sortIndex(b))
           // note whether a given page group is selected
           .map(({ firstPage, lastPage, citationIndices }) => {
-            const pageSelected =
+            const pageGroupSelected =
               docSelected &&
               (selectedCitation
                 ? citationIndices.includes(selectedCitation.citationIndex)
@@ -106,16 +101,23 @@ export function Sidebar() {
               firstPage,
               lastPage,
               citationIndices,
-              pageSelected,
+              pageGroupSelected,
             };
           });
         return {
           doc,
           docSelected,
-          pageGroups,
-          firstPageGroupSelected: docSelected && pageGroups[0].pageSelected,
+          pageGroups: pageGroups.map((pageGroup, pageGroupIndex) => ({
+            ...pageGroup,
+            prevPageGroupSelected:
+              pageGroups[pageGroupIndex - 1]?.pageGroupSelected,
+            nextPageGroupSelected:
+              pageGroups[pageGroupIndex + 1]?.pageGroupSelected,
+          })),
+          firstPageGroupSelected:
+            docSelected && pageGroups[0].pageGroupSelected,
           lastPageGroupSelected:
-            docSelected && pageGroups[pageGroups.length - 1].pageSelected,
+            docSelected && pageGroups[pageGroups.length - 1].pageGroupSelected,
         };
       }),
     [citations, pageNumber, documentId, selectedCitation]
@@ -176,26 +178,26 @@ export function Sidebar() {
                     </div>
                   )}
                   {pageGroups.map(
-                    (
-                      { firstPage, lastPage, citationIndices, pageSelected },
-                      pageGroupIndex
-                    ) => (
+                    ({
+                      firstPage,
+                      lastPage,
+                      citationIndices,
+                      pageGroupSelected,
+                      prevPageGroupSelected,
+                      nextPageGroupSelected,
+                    }) => (
                       <div
                         className={`page-group ${
-                          pageSelected
-                            ? "selected"
-                            : pageGroups[pageGroupIndex]?.pageSelected
-                            ? "previous-page-group-selected"
-                            : "unselected"
+                          pageGroupSelected ? "selected" : "unselected"
                         }`}
                         key={firstPage * maxPageNumber + lastPage}
                       >
                         <div
                           className={`page-header ${
-                            pageSelected ? "selected" : "unselected"
+                            pageGroupSelected ? "selected" : "unselected"
                           }`}
                           onClick={
-                            pageSelected
+                            pageGroupSelected
                               ? undefined
                               : dispatchUnlessError({
                                   type: "goto",
@@ -223,23 +225,25 @@ export function Sidebar() {
                             </>
                           )}
                         </div>
-                        {pageGroups[pageGroupIndex - 1]?.pageSelected && (
-                          <div className="top-right"><div/></div>
+                        {prevPageGroupSelected && (
+                          <div className="top-right">
+                            <div />
+                          </div>
                         )}
-                        {citationIndices.length > 0 ? (
+                        {citationIndices.length ? (
                           citationIndices.map((citationIndex) => {
                             const { excerpt, review } =
-                            questions[questionIndex].citations[citationIndex];
+                              questions[questionIndex].citations[citationIndex];
                             return (
                               <CitationUX
-                              key={citationIndex}
-                              citationIndex={citationIndex}
-                              excerpt={excerpt}
-                              review={review}
-                              selected={
-                                selectedCitation?.citationIndex ==
-                                citationIndex
-                              }
+                                key={citationIndex}
+                                citationIndex={citationIndex}
+                                excerpt={excerpt}
+                                review={review}
+                                selected={
+                                  selectedCitation?.citationIndex ==
+                                  citationIndex
+                                }
                               />
                             );
                           })
@@ -250,8 +254,10 @@ export function Sidebar() {
                             Select document text to manually add a citation
                           </div>
                         )}{" "}
-                        {pageGroups[pageGroupIndex + 1]?.pageSelected && (
-                          <div className="bottom-right"><div/></div>
+                        {nextPageGroupSelected && (
+                          <div className="bottom-right">
+                            <div />
+                          </div>
                         )}
                       </div>
                     )
@@ -289,14 +295,29 @@ export function Sidebar() {
           {isError && (
             <div>
               &nbsp;
-              <button onClick={dispatchHandler({ type: "asyncRetry" })}>Retry</button>
+              <button onClick={dispatchHandler({ type: "asyncRetry" })}>
+                Retry
+              </button>
               &nbsp;
               <button onClick={dispatchHandler({ type: "asyncRevert" })}>
                 Revert
               </button>
             </div>
           )}
-          <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
+          <br />
         </div>
         <div className="sidebar-divider" />
       </div>
