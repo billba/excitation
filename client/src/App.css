@@ -21,8 +21,8 @@
   --color-button-hover: light-dark(#353535, #e4e4e4);
 
   --color-approve: #00ac00;
-  --color-reject: lightcoral;
-  --color-highlight: blue;
+  --color-reject: #f07070;
+  --color-highlight: #00acdc;
 
   --rounding-height: 3px;
 
@@ -306,7 +306,7 @@ button:focus-visible {
     margin: 2px 0 3px 0;
     padding: 0 0 0 4px;
     grid-column-end: 5;
-    border: solid 2px var(--color-highlight);
+    border: solid 1.5px var(--color-highlight);
     border-radius: 7px;
   }
 }
