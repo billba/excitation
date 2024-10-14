@@ -24,6 +24,8 @@
   --color-reject: lightcoral;
   --color-highlight: blue;
 
+  --rounding-height: 3px;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -189,9 +191,9 @@ button:focus-visible {
   background-color: var(--color-doc-active);
 
   div {
-    height: 5px;
+    height: var(--rounding-height);
     background-color: var(--color-base);
-    border-radius: 0 0 5px 0px;
+    border-radius: 0 0 var(--rounding-height) 0px;
   }
 }
 
@@ -199,13 +201,13 @@ button:focus-visible {
   grid-column-start: 2;
   display: grid;
   grid-template-columns: subgrid;
-  border-radius: 5px 0 0px 5px;
+  border-radius: var(--rounding-height) 0 0px var(--rounding-height);
   &.selected {
     grid-column-end: 7;
     background-color: var(--color-doc-active);
   }
   &.unselected {
-    border-radius: 5px 0 0 5px;
+    border-radius: var(--rounding-height) 0 0 var(--rounding-height);
     grid-column-end: 6;
     margin-top: 4px;
   }
@@ -232,13 +234,13 @@ button:focus-visible {
 
   div {
     background-color: var(--color-doc-active);
-    border-radius: 0 0 5px 0;
+    border-radius: 0 0 var(--rounding-height) 0;
   }
 }
 
 .page-group {
   grid-column: 2 / 6;
-  border-radius: 5px 0 0 5px;
+  border-radius: var(--rounding-height) 0 0 var(--rounding-height);
   display: grid;
   grid-template-columns: subgrid;
   &.selected {
@@ -277,7 +279,7 @@ button:focus-visible {
 
   div {
     background-color: var(--color-doc-active);
-    border-radius: 0 5px 0 0;
+    border-radius: 0 var(--rounding-height) 0 0;
   }
 }
 
@@ -285,7 +287,6 @@ button:focus-visible {
   grid-column-start: 2;
   &.unselected {
     grid-column-end: 4;
-    padding-bottom: 3px;
     span {
       line-height: 1.1;
       height: 1.2em;
@@ -351,10 +352,10 @@ button:focus-visible {
   background-color: var(--color-page-active);
 
   div {
-    height: 7px;
+    height: 5px;
     background-color: var(--color-doc-active);
     &.last-page-group-selected {
-      border-radius: 0 5px 0 0px;
+      border-radius: 0 var(--rounding-height) 0 0px;
     }
     &.unselected {
       background-color: var(--color-base);
@@ -367,9 +368,9 @@ button:focus-visible {
   background-color: var(--color-doc-active);
 
   div {
-    height: 5px;
+    height: var(--rounding-height);
     background-color: var(--color-base);
-    border-radius: 0 5px 0 0;
+    border-radius: 0 var(--rounding-height) 0 0;
   }
 }
 
