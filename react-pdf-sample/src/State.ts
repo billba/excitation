@@ -184,7 +184,7 @@ const stateAtom = atom<State, [Action], void>(
               ux.pageNumber = gotoPageNumber;
               ux.range = undefined;
 
-              if (gotoDocumentId && gotoDocumentId !== documentId) {
+              if (gotoDocumentId != undefined && gotoDocumentId !== documentId) {
                 ux.documentId = gotoDocumentId;
                 ux.selectedCitation = undefined;
               } else {
@@ -226,8 +226,6 @@ const stateAtom = atom<State, [Action], void>(
                 )
                 .sort()[0];
             }
-
-            console.log("first page", firstCitedPage(documentId));
 
             switch (action.type) {
               case "selectCitation": {
