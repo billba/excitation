@@ -115,9 +115,9 @@ export function Sidebar() {
               pageGroups[pageGroupIndex + 1]?.pageGroupSelected,
           })),
           firstPageGroupSelected:
-            docSelected && pageGroups[0].pageGroupSelected,
+            docSelected && pageGroups[0]?.pageGroupSelected,
           lastPageGroupSelected:
-            docSelected && pageGroups[pageGroups.length - 1].pageGroupSelected,
+            docSelected && pageGroups[pageGroups.length - 1]?.pageGroupSelected,
         };
       }),
     [citations, pageNumber, documentId, selectedCitation]
