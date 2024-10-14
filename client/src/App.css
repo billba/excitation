@@ -184,7 +184,7 @@ button:focus-visible {
   grid-template-columns: subgrid;
 }
 
-.doc-prefix {
+.doc-spacer {
   grid-column: 5 / 7;
   display: grid;
   grid-template-columns: subgrid;
@@ -193,7 +193,12 @@ button:focus-visible {
   div {
     height: var(--rounding-height);
     background-color: var(--color-base);
-    border-radius: 0 0 var(--rounding-height) 0px;
+    &.prefix {
+      border-radius: 0 0 var(--rounding-height) 0px;
+    }
+    &.suffix {
+      border-radius: 0 var(--rounding-height) 0 0;
+    }
   }
 }
 
@@ -209,7 +214,6 @@ button:focus-visible {
   &.unselected {
     border-radius: var(--rounding-height) 0 0 var(--rounding-height);
     grid-column-end: 6;
-    margin-top: 4px;
   }
   &.unselected:hover {
     background-color: var(--color-doc-hover);
@@ -360,17 +364,6 @@ button:focus-visible {
     &.unselected {
       background-color: var(--color-base);
     }
-  }
-}
-
-.doc-suffix {
-  grid-column: 2 / 6;
-  background-color: var(--color-doc-active);
-
-  div {
-    height: var(--rounding-height);
-    background-color: var(--color-base);
-    border-radius: 0 var(--rounding-height) 0 0;
   }
 }
 

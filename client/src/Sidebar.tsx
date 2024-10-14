@@ -151,11 +151,9 @@ export function Sidebar() {
           }) => {
             return (
               <div className="doc" key={documentId}>
-                {docSelected && (
-                  <div className="doc-prefix">
-                    <div />
-                  </div>
-                )}
+                <div className="doc-spacer">
+                  <div className={docSelected ? "prefix" : ""} />
+                </div>
                 <div
                   className={`doc-main ${
                     docSelected ? "selected" : "unselected"
@@ -268,21 +266,19 @@ export function Sidebar() {
                   <div className="doc-footer">
                     <div
                       className={
-                        docSelected ?
-                          lastPageGroupSelected
+                        docSelected
+                          ? lastPageGroupSelected
                             ? "last-page-group-selected"
                             : "selected"
-                        : "unselected"
+                          : "unselected"
                       }
                     />
                   </div>
                 </div>
-                {docSelected && (
-                    <div className="doc-suffix">
-                      <div />
-                    </div>
-                )}
-                <div className="sidebar-divider" />
+                {!docSelected && <div className="sidebar-divider" />}
+                <div className="doc-spacer">
+                  <div className={docSelected ? "suffix" : ""} />
+                </div>
               </div>
             );
           }
