@@ -138,7 +138,7 @@ export function Sidebar() {
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
       <SidebarHeader />
       <div className="sidebar-divider" />
-      <div id="citation-groups">
+      <div id="docs">
         {groupedCitations.map(
           ({
             doc: { documentId, pdfUrl, name },
@@ -148,14 +148,14 @@ export function Sidebar() {
             lastPageGroupSelected,
           }) => {
             return (
-              <div className="doc-group" key={documentId}>
+              <div className="doc" key={documentId}>
                 {docSelected && (
-                  <div className="doc-group-prefix">
+                  <div className="doc-prefix">
                     <div />
                   </div>
                 )}
                 <div
-                  className={`doc-group-main ${
+                  className={`doc-main ${
                     docSelected ? "selected" : "unselected"
                   }`}
                 >
@@ -262,23 +262,22 @@ export function Sidebar() {
                       </div>
                     )
                   )}
-                </div>
-                {docSelected && (
-                  <>
-                    <div className="doc-group-suffix-top-left" />
-                    <div className="doc-group-suffix-top-right">
-                      <div
-                        className={
+                  <div className="doc-footer">
+                    <div
+                      className={
+                        docSelected ?
                           lastPageGroupSelected
                             ? "last-page-group-selected"
-                            : ""
-                        }
-                      />
-                    </div>
-                    <div className="doc-group-suffix-bottom">
+                            : "selected"
+                        : "unselected"
+                      }
+                    />
+                  </div>
+                </div>
+                {docSelected && (
+                    <div className="doc-suffix">
                       <div />
                     </div>
-                  </>
                 )}
                 <div className="sidebar-divider" />
               </div>

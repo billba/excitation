@@ -80,7 +80,7 @@ export const CitationUX = ({
 
   return (
     <div
-      className={`citation-group ${selected ? "selected" : "unselected"}`}
+      className={`citation ${selected ? "selected" : "unselected"}`}
       key={citationIndex}
       onClick={dispatchUnlessAsyncing({ type: "selectCitation", citationIndex })}
     >
