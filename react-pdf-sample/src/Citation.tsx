@@ -1,5 +1,4 @@
 import { Review } from "./Types";
-import { useDispatchAppState } from "./State";
 import {
   CircleRegular,
   CheckmarkCircleFilled,
@@ -62,8 +61,7 @@ export const CitationUX = ({
   review,
   selected,
 }: Props) => {
-  const _dispatch = useDispatchAppState();
-  const { dispatchUnlessAsyncing } = useDispatchHandler(_dispatch);
+  const { dispatchUnlessAsyncing } = useDispatchHandler();
 
   const icons = (
     review == Review.Unreviewed && selected ? reviewIcons : [review]

@@ -29,13 +29,13 @@ const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
 };
 
 export function Sidebar() {
-  const [state, _dispatch] = useAppState();
+  const [state, dispatch] = useAppState();
   const { questions, ux } = state;
   const {
     pageNumber,
     questionIndex,
     selectedCitation,
-    documentId: uxDocumentId,
+    documentId,
   } = ux;
 
   const { citations } = questions[questionIndex];
@@ -45,7 +45,7 @@ export function Sidebar() {
   const groupedCitations = useMemo(
     () =>
       docs.map((doc) => {
-        const docSelected = doc.documentId == uxDocumentId;
+        const docSelected = doc.documentId == documentId;
 
         const pageGroups = citations
           // we bind each citation to its index, because filter will change the index
@@ -55,7 +55,7 @@ export function Sidebar() {
             [citationIndex],
           ])
           // one document at a time
-          .filter(([{ documentId }]) => documentId === doc.documentId)
+          .filter(([citation]) => citation.documentId === doc.documentId)
           // some citations span pages, so we gather first and alst pages
           .map(([citation, citationIndices]) => {
             const pageNumbers = (
@@ -118,18 +118,18 @@ export function Sidebar() {
             docSelected && pageGroups[pageGroups.length - 1].pageSelected,
         };
       }),
-    [citations, pageNumber, uxDocumentId, selectedCitation]
+    [citations, pageNumber, documentId, selectedCitation]
   );
 
-  const { dispatch, dispatchUnlessError } = useDispatchHandler(_dispatch);
+  const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
 
   const addSelection = useCallback(
     (event: React.MouseEvent) => {
-      _dispatch({ type: "addSelection" });
+      dispatch({ type: "addSelection" });
       document.getSelection()?.empty();
       event.stopPropagation();
     },
-    [_dispatch]
+    [dispatch]
   );
 
   return (
@@ -289,9 +289,9 @@ export function Sidebar() {
           {isError && (
             <div>
               &nbsp;
-              <button onClick={dispatch({ type: "asyncRetry" })}>Retry</button>
+              <button onClick={dispatchHandler({ type: "asyncRetry" })}>Retry</button>
               &nbsp;
-              <button onClick={dispatch({ type: "asyncRevert" })}>
+              <button onClick={dispatchHandler({ type: "asyncRevert" })}>
                 Revert
               </button>
             </div>

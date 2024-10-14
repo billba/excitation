@@ -1,19 +1,16 @@
-import { docFromId, useAppState } from "./State";
+import { docFromId, useAppStateValue } from "./State";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
 import {
   TriangleLeftFilled,
   TriangleRightFilled,
 } from "@fluentui/react-icons";
 
-
 export const NavBar = () => {
-  const [state, _dispatch] = useAppState();
-  const { ux } = state;
-  const { pageNumber, selectedCitation, documentId } = ux;
+  const { ux: { pageNumber, selectedCitation, documentId } }  = useAppStateValue();
   const { pages } = docFromId[documentId];
-  const { isError } = useAsyncHelper();
 
-  const { dispatchUnlessError } = useDispatchHandler(_dispatch);
+  const { isError } = useAsyncHelper();
+  const { dispatchUnlessError } = useDispatchHandler();
 
   const pageNumbers =
     selectedCitation == undefined

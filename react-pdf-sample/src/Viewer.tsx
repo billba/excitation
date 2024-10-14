@@ -11,11 +11,7 @@ import {
 import { useAsyncHelper } from "./Hooks";
 
 export function Viewer() {
-  const [state, dispatch] = useAppState();
-  const {
-    ux,
-  } = state;
-  const { documentId, pageNumber, range, selectedCitation } = ux;
+  const [{ ux: { documentId, pageNumber, range, selectedCitation} }, dispatch] = useAppState();
   const { pdfUrl } = docFromId[documentId];
 
   const { isError } = useAsyncHelper();

@@ -13,6 +13,7 @@ import {
   AsyncErrorState,
   FormDocument,
   LoadForm,
+  AsyncState,
 } from "./Types";
 import {
   createCitationId,
@@ -43,7 +44,10 @@ async function loadForm(url: string): Promise<State> {
       for (const citation of question.citations) {
         const { bounds, citationId, documentId } = citation;
         if (!bounds) {
-          const bounds = returnTextPolygonsFromDI(citation.excerpt, docFromId[documentId].di);
+          const bounds = returnTextPolygonsFromDI(
+            citation.excerpt,
+            docFromId[documentId].di
+          );
           if (bounds) {
             citation.bounds = bounds;
             updatedCitations.push({
@@ -139,11 +143,18 @@ function inferUXState(
   };
 }
 
+export const asyncHelpers = (asyncState: AsyncState) => {
+  const isAsyncing = asyncState.status != "idle";
+  const isError = isAsyncing && !!asyncState.uxAtError;
+  return { isAsyncing, isError };
+};
+
 const formId = window.location.pathname.split("/")[1];
 console.log("form id:", formId);
 const _stateAtom = atom<State>(
   await loadForm("http://localhost:8000/form/" + formId)
 );
+
 const stateAtom = atom<State, [Action], void>(
   (get) => get(_stateAtom),
 
@@ -167,8 +178,7 @@ const stateAtom = atom<State, [Action], void>(
             } = state;
             const { documentId, pageNumber, questionIndex, selectedCitation } =
               ux;
-            const isAsyncing = asyncState.status != "idle";
-            const isError = isAsyncing && !!asyncState.uxAtError;
+            const { isAsyncing } = asyncHelpers(asyncState);
 
             function goto(gotoPageNumber: number, gotoDocumentId?: number) {
               ux.pageNumber = gotoPageNumber;

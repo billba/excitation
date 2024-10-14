@@ -1,4 +1,4 @@
-import { useAppStateValue } from "./State";
+import { useDispatchAppState, asyncHelpers, useAppStateValue } from "./State";
 import { useCallback } from "react";
 import { Action } from "./Types";
 
@@ -7,7 +7,8 @@ export enum DispatchBehavior {
   UnlessAsyncing,
   UnlessError,
 }
-export const useDispatchHandler = (dispatch: (action: Action) => void) => {
+export const useDispatchHandler = () => {
+  const dispatch = useDispatchAppState();
   const { isAsyncing, isError } = useAsyncHelper();
   const dispatchHandler = useCallback(
     (
@@ -30,7 +31,7 @@ export const useDispatchHandler = (dispatch: (action: Action) => void) => {
   );
 
   return {
-    dispatch: dispatchHandler,
+    dispatchHandler,
     dispatchUnlessAsyncing: (action: Action) =>
       dispatchHandler(action, { when: DispatchBehavior.UnlessAsyncing }),
     dispatchUnlessError: (action: Action) =>
@@ -40,7 +41,5 @@ export const useDispatchHandler = (dispatch: (action: Action) => void) => {
 
 export const useAsyncHelper = () => {
   const { asyncState } = useAppStateValue();
-  const isAsyncing = asyncState.status != "idle";
-  const isError = isAsyncing && !!asyncState.uxAtError;
-  return { isAsyncing, isError };
+  return asyncHelpers(asyncState);
 }
