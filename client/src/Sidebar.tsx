@@ -118,6 +118,7 @@ export function Sidebar() {
             docSelected && pageGroups[0]?.pageGroupSelected,
           lastPageGroupSelected:
             docSelected && pageGroups[pageGroups.length - 1]?.pageGroupSelected,
+          noCitations: docSelected && !pageGroups.length,
         };
       }),
     [citations, pageNumber, documentId, selectedCitation]
@@ -146,6 +147,7 @@ export function Sidebar() {
             pageGroups,
             firstPageGroupSelected,
             lastPageGroupSelected,
+            noCitations,
           }) => {
             return (
               <div className="doc" key={documentId}>
@@ -177,6 +179,7 @@ export function Sidebar() {
                       <div />
                     </div>
                   )}
+                  {noCitations && <div className="sidebar-divider" />}
                   {pageGroups.map(
                     ({
                       firstPage,
