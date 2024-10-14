@@ -81,13 +81,6 @@ button:focus-visible {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-
-  .selected {
-    background-color: var(--color-page-active);
-    color: var(--color-text-page-active);
-    border-radius: 2px;
-    border: var(--color-highlight) 2px solid;
-  }
 }
 
 .navbar-filename {
@@ -102,6 +95,17 @@ button:focus-visible {
 
 .navbar-column {
   margin: 0 auto;
+  .visible {
+    background-color: var(--color-page-active);
+    color: var(--color-text-page-active);
+    border-radius: 2px;
+    border: var(--color-highlight) 2px solid;
+    cursor: pointer;
+  }
+  .hidden {
+    display: none;
+  }
+
 }
 
 .navbar-icon {

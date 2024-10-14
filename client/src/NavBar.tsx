@@ -30,7 +30,7 @@ export const NavBar = () => {
       <div className="navbar-page">
         <div className="navbar-column">
           <span
-            className={citationPrev ? "selected clickable" : "hidden"}
+            className={citationPrev ? "visible" : "hidden"}
             onClick={citationPrev ? dispatchUnlessError({ type: "prevPage" }) : undefined}
           >
             Citation continues from previous page
@@ -51,7 +51,7 @@ export const NavBar = () => {
         </div>
         <div className="navbar-column">
           <span
-            className={citationNext ? "selected clickable" : "hidden"}
+            className={citationNext ? "visible" : "hidden"}
             onClick={citationNext ? dispatchUnlessError({ type: "nextPage" }) : undefined}
           >
             Citation continues on next page
