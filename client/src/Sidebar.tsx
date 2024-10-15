@@ -1,5 +1,5 @@
 import { docs, useAppState } from "./State";
-import { useCallback, useMemo } from "react";
+import { ReactNode, useCallback, useMemo } from "react";
 import { Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import {
@@ -151,33 +151,19 @@ export function Sidebar() {
           }) => {
             return (
               <div className="doc" key={documentId}>
-                <div className="doc-spacer">
-                  <div className={docSelected ? "prefix" : ""} />
-                </div>
+                <DocSpacer docSelected={docSelected} className="prefix" />
                 <div
                   className={`doc-main ${
                     docSelected ? "selected" : "unselected"
                   }`}
                 >
-                  <div
-                    className={`doc-header ${
-                      firstPageGroupSelected ? "first-page-selected" : ""
-                    }`}
-                    onClick={
-                      docSelected
-                        ? undefined
-                        : dispatchUnlessError({ type: "goto", documentId })
-                    }
-                  >
-                    <DocumentRegular className="icon" />
-                    {name ?? pdfUrl}
-                  </div>
-                  {firstPageGroupSelected && (
-                    <div className="bottom-right">
-                      <div />
-                    </div>
-                  )}
-                  {noCitations && <div className="sidebar-divider" />}
+                  <DocHeader
+                    firstPageGroupSelected={firstPageGroupSelected}
+                    docSelected={docSelected}
+                    noCitations={noCitations}
+                    documentId={documentId}
+                    name={name ?? pdfUrl}
+                  />
                   {pageGroups.map(
                     ({
                       firstPage,
@@ -187,80 +173,30 @@ export function Sidebar() {
                       prevPageGroupSelected,
                       nextPageGroupSelected,
                     }) => (
-                      <div
-                        className={`page-group ${
-                          pageGroupSelected ? "selected" : "unselected"
-                        }`}
-                        key={firstPage * maxPageNumber + lastPage}
+                      <PageGroupHeader
+                        documentId={documentId}
+                        selected={pageGroupSelected}
+                        firstPage={firstPage}
+                        lastPage={lastPage}
+                        pageGroupSelected={pageGroupSelected}
+                        prevPageGroupSelected={prevPageGroupSelected}
+                        nextPageGroupSelected={nextPageGroupSelected}
                       >
-                        <div
-                          className={`page-header ${
-                            pageGroupSelected ? "selected" : "unselected"
-                          }`}
-                          onClick={
-                            pageGroupSelected
-                              ? undefined
-                              : dispatchUnlessError({
-                                  type: "goto",
-                                  pageNumber: firstPage,
-                                  documentId,
-                                })
-                          }
-                        >
-                          {firstPage == lastPage ? (
-                            firstPage == unlocatedPage ? (
-                              <>
-                                <DocumentOnePageAddRegular className="icon" />
-                                Unable to locate citation
-                              </>
-                            ) : (
-                              <>
-                                <DocumentOnePageRegular className="icon" />
-                                Page {firstPage}
-                              </>
-                            )
-                          ) : (
-                            <>
-                              <DocumentOnePageMultipleRegular className="icon" />
-                              Pages {firstPage}-{lastPage}
-                            </>
-                          )}
-                        </div>
-                        {prevPageGroupSelected && (
-                          <div className="top-right">
-                            <div />
-                          </div>
-                        )}
-                        {citationIndices.length ? (
-                          citationIndices.map((citationIndex) => {
-                            const { excerpt, review } =
-                              questions[questionIndex].citations[citationIndex];
-                            return (
-                              <CitationUX
-                                key={citationIndex}
-                                citationIndex={citationIndex}
-                                excerpt={excerpt}
-                                review={review}
-                                selected={
-                                  selectedCitation?.citationIndex ==
-                                  citationIndex
-                                }
-                              />
-                            );
-                          })
-                        ) : (
-                          <div className="no-citations">
-                            No citations currently exist on this page.
-                            <br />
-                            Select document text to manually add a citation
-                          </div>
-                        )}{" "}
-                        {nextPageGroupSelected && (
-                          <div className="bottom-right">
-                            <div />
-                          </div>
-                        )}
-                      </div>
+                        {citationIndices.map((citationIndex) => {
+                          const { excerpt, review } = citations[citationIndex];
+                          return (
+                            <CitationUX
+                              key={citationIndex}
+                              citationIndex={citationIndex}
+                              excerpt={excerpt}
+                              review={review}
+                              selected={
+                                selectedCitation?.citationIndex == citationIndex
+                              }
+                            />
+                          );
+                        })}
+                      </PageGroupHeader>
                     )
                   )}
                   <div className="doc-footer">
@@ -276,9 +212,7 @@ export function Sidebar() {
                   </div>
                 </div>
                 {!docSelected && <div className="sidebar-divider" />}
-                <div className="doc-spacer">
-                  <div className={docSelected ? "suffix" : ""} />
-                </div>
+                <DocSpacer docSelected={docSelected} className="suffix" />
               </div>
             );
           }
@@ -322,3 +256,127 @@ export function Sidebar() {
     </div>
   );
 }
+
+const DocSpacer = ({
+  docSelected,
+  className,
+}: {
+  docSelected: boolean;
+  className: string;
+}) => (
+  <div className="doc-spacer">
+    <div className={docSelected ? className : ""} />
+  </div>
+);
+
+const DocHeader = ({
+  firstPageGroupSelected,
+  docSelected,
+  noCitations,
+  documentId,
+  name,
+}: {
+  firstPageGroupSelected: boolean;
+  docSelected: boolean;
+  noCitations: boolean;
+  documentId: number;
+  name: string;
+}) => {
+  const { dispatchUnlessError } = useDispatchHandler();
+
+  return (
+    <>
+      <div
+        className={`doc-header ${
+          firstPageGroupSelected ? "first-page-selected" : ""
+        }`}
+        onClick={
+          docSelected
+            ? undefined
+            : dispatchUnlessError({ type: "goto", documentId })
+        }
+      >
+        <DocumentRegular className="icon" />
+        {name}
+      </div>
+      {firstPageGroupSelected && (
+        <div className="bottom-right">
+          <div />
+        </div>
+      )}
+      {noCitations && <div className="sidebar-divider" />}
+    </>
+  );
+};
+
+const PageGroupHeader = ({
+  documentId,
+  selected,
+  firstPage,
+  lastPage,
+  pageGroupSelected,
+  prevPageGroupSelected,
+  nextPageGroupSelected,
+  children,
+}: {
+  documentId: number;
+  selected: boolean;
+  firstPage: number;
+  lastPage: number;
+  pageGroupSelected: boolean;
+  prevPageGroupSelected: boolean;
+  nextPageGroupSelected: boolean;
+  children: ReactNode;
+}) => {
+  const { dispatchUnlessError } = useDispatchHandler();
+
+  return (
+    <div
+      className={`page-group ${pageGroupSelected ? "selected" : "unselected"}`}
+      key={firstPage * maxPageNumber + lastPage}
+    >
+      <div
+        className={`page-header ${selected ? "selected" : "unselected"}`}
+        onClick={
+          selected
+            ? undefined
+            : dispatchUnlessError({
+                type: "goto",
+                pageNumber: firstPage,
+                documentId,
+              })
+        }
+      >
+        {firstPage == lastPage ? (
+          firstPage == unlocatedPage ? (
+            <>
+              <DocumentOnePageAddRegular className="icon" />
+              Unable to locate citation
+            </>
+          ) : (
+            <>
+              <DocumentOnePageRegular className="icon" />
+              Page {firstPage}
+            </>
+          )
+        ) : (
+          <>
+            <DocumentOnePageMultipleRegular className="icon" />
+            Pages {firstPage}-{lastPage}
+          </>
+        )}
+      </div>
+      {prevPageGroupSelected && (
+        <div className="top-right">
+          <div />
+        </div>
+      )}
+      {children}
+      {nextPageGroupSelected && (
+        <div className="bottom-right">
+          <div />
+        </div>
+      )}
+    </div>
+  );
+};
