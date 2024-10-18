@@ -92,7 +92,7 @@ button:focus-visible {
 
 .navbar-page {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 13fr 1fr 2fr 1fr 13fr;
 }
 
 .navbar-column {
@@ -110,9 +110,10 @@ button:focus-visible {
 }
 
 .navbar-icon {
+  height: 100%;
+  width: 100%;
   margin-bottom: -3pt;
   margin-right: 2pt;
-  font-size: 18pt;
   &.enabled {
     color: var(--color-button-enabled);
     :hover {
@@ -123,6 +124,10 @@ button:focus-visible {
   &.disabled {
     color: var(--color-button-disabled);
   }
+}
+
+.navbar-change-page {
+  margin: 0 auto;
 }
 
 #sidebar {
@@ -157,8 +162,8 @@ button:focus-visible {
 }
 
 .question-nav {
-  font-size: 30pt;
-  vertical-align: top;
+  height: 100%;
+  width: 100%;
   &.enabled {
     color: var(--color-button-enabled);
     :hover {
@@ -229,6 +234,8 @@ button:focus-visible {
 .doc-header {
   grid-column: 1 / 5;
   padding: 3px 0 3px 0px;
+  display: grid;
+  grid-template-columns: 5% 95%;
 }
 
 .bottom-right {
@@ -274,6 +281,8 @@ button:focus-visible {
   &.unselected {
     grid-column-end: 4;
   }
+  display: grid;
+  grid-template-columns: 5% 95%;
 }
 
 .top-right {
@@ -288,6 +297,8 @@ button:focus-visible {
 
 .citation {
   grid-column-start: 2;
+  display: grid;
+  grid-template-columns: 5% 95%;
   &.unselected {
     grid-column-end: 4;
     span {
@@ -315,6 +326,8 @@ button:focus-visible {
 }
 
 .citation-icon {
+  height: 100%;
+  width: 100%;
   vertical-align: top;
   pointer-events: all;
   &.approved {
@@ -367,9 +380,10 @@ button:focus-visible {
 }
 
 .icon {
+  height: 100%;
+  width: 100%;
   margin-bottom: -3pt;
   margin-right: 2pt;
-  font-size: 18pt;
 }
 
 .large-icon {

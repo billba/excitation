@@ -36,19 +36,17 @@ export const NavBar = () => {
             Citation continues from previous page
           </span>
         </div>
-        <div className="navbar-column">
-          <TriangleLeftFilled
-            className={`navbar-icon ${disablePrev ? "disabled" : "enabled"}`}
-            onClick={dispatchUnlessError({ type: "prevPage" })}
-          />
-          <span>
-            {pageNumber}&nbsp;/&nbsp;{pages}
-          </span>
-          <TriangleRightFilled
-            className={`navbar-icon ${disableNext ? "disabled" : "enabled"}`}
-            onClick={dispatchUnlessError({ type: "nextPage" })}
-          />
+        <TriangleLeftFilled
+          className={`navbar-icon ${disablePrev ? "disabled" : "enabled"}`}
+          onClick={dispatchUnlessError({ type: "prevPage" })}
+        />
+        <div className="navbar-change-page">
+          {pageNumber}&nbsp;/&nbsp;{pages}
         </div>
+        <TriangleRightFilled
+          className={`navbar-icon ${disableNext ? "disabled" : "enabled"}`}
+          onClick={dispatchUnlessError({ type: "nextPage" })}
+        />
         <div className="navbar-column">
           <span
             className={citationNext ? "visible" : "hidden"}
