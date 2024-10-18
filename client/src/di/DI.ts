@@ -1,4 +1,4 @@
-import { DocIntResponse, Page, Point, Polygon4, Range, CursorRange, Region, Summary } from "./Types";
+import { CursorRange, DocIntResponse, Page, Point, Polygon4, PolygonOnPage, Range, Region, Summary } from "./Types";
 import { comparePointToPolygon, comparePoints, combinePolygons } from "./Utility";
 import { offsetSearch } from "./OffsetSearch";
 
@@ -52,7 +52,7 @@ function findInPage(
 
   for (const region of regionsOfInterest) {
     let index = findInRegion(point, page, region);
-    if (index) return index;
+    if (index != null) return index;
   }
   return null;
 }
@@ -64,10 +64,11 @@ function createSummary(
   [startWord, endWord]: Range,
   di: DocIntResponse
 ): Summary {
-  let summary = {} as Summary;
+  let summary = { excerpt: '', polygons: [] as PolygonOnPage[] };
+
   for (let pageIndex = startPage; pageIndex <= endPage; pageIndex++) {
     let page = di.analyzeResult.pages[pageIndex];
-    
+
     // again i want the typing to stop yelling
     if (!page.regions) continue;
 
@@ -115,7 +116,7 @@ export function rangeToSummary(
   let endPage = range.end.page - 1;
 
   let startWord = findInPage(range.start.point, di.analyzeResult.pages[range.start.page - 1]); // as always, page numbers are 1-indexed and need to be adjusted
-  if (!startWord) return {} as Summary;
+  if (startWord == null) return {} as Summary;
 
   // if we just want a single point, return just the start
   if (comparePoints(range.start.point, range.end.point) == 0)
@@ -123,7 +124,7 @@ export function rangeToSummary(
 
   let endWord = findInPage(range.end.point, di.analyzeResult.pages[range.end.page - 1]); // as always, page numbers are 1-indexed and need to be adjusted
   // if we can't find the end, return just the start
-  if (!endWord) return createSummary([startPage, startPage], [startWord, startWord], di);
+  if (endWord == null) return createSummary([startPage, startPage], [startWord, startWord], di);
 
   return createSummary([startPage, endPage], [startWord, endWord], di);
 }
@@ -133,7 +134,7 @@ export function excerptToSummary(
   excerpt: string,
   di: DocIntResponse
 ): Summary {
-  let excerptWords = excerpt.split(/(\s+)/);
+  let excerptWords = excerpt.split(/(\s+)/); // all whitespace characters
   let currentWord = 0;
 
   for (let pageIndex = 0; pageIndex < di.analyzeResult.pages.length; pageIndex++) {
