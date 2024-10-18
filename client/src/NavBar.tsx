@@ -37,14 +37,14 @@ export const NavBar = () => {
           </span>
         </div>
         <TriangleLeftFilled
-          className={`navbar-icon ${disablePrev ? "disabled" : "enabled"}`}
+          className={`navbar-icon icon ${disablePrev ? "disabled" : "enabled"}`}
           onClick={dispatchUnlessError({ type: "prevPage" })}
         />
         <div className="navbar-change-page">
           {pageNumber}&nbsp;/&nbsp;{pages}
         </div>
         <TriangleRightFilled
-          className={`navbar-icon ${disableNext ? "disabled" : "enabled"}`}
+          className={`navbar-icon icon ${disableNext ? "disabled" : "enabled"}`}
           onClick={dispatchUnlessError({ type: "nextPage" })}
         />
         <div className="navbar-column">

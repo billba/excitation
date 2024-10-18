@@ -70,11 +70,17 @@ export const CitationUX = ({
     const className = classNames[Number(selected) * (Number(review == r) + 1)];
 
     return (
-      <Icon
-        key={r}
-        className={className + (selected ? " large-icon" : " icon")}
-        onClick={dispatchUnlessAsyncing({ type: "toggleReview", target: r, citationIndex })}
-      />
+      <div>
+        <Icon
+          key={r}
+          className={className + " icon"}
+          onClick={dispatchUnlessAsyncing({
+            type: "toggleReview",
+            target: r,
+            citationIndex,
+          })}
+        />
+      </div>
     );
   });
 
@@ -82,17 +88,20 @@ export const CitationUX = ({
     <div
       className={`citation ${selected ? "selected" : "unselected"}`}
       key={citationIndex}
-      onClick={dispatchUnlessAsyncing({ type: "selectCitation", citationIndex })}
+      onClick={dispatchUnlessAsyncing({
+        type: "selectCitation",
+        citationIndex,
+      })}
     >
       {selected ? (
         <>
-          {excerpt}
-          <div>{icons}</div>
+          <div className="citation-excerpt">{excerpt}</div>
+          {icons}
         </>
       ) : (
         <>
           {icons}
-          <span>{excerpt}</span>
+          <div className="citation-excerpt">{excerpt}</div>
         </>
       )}
     </div>

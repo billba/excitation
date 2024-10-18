@@ -110,10 +110,6 @@ button:focus-visible {
 }
 
 .navbar-icon {
-  height: 100%;
-  width: 100%;
-  margin-bottom: -3pt;
-  margin-right: 2pt;
   &.enabled {
     color: var(--color-button-enabled);
     :hover {
@@ -132,7 +128,7 @@ button:focus-visible {
 
 #sidebar {
   display: grid;
-  grid-template-columns: 10px 10px 15px 10px auto 10px;
+  grid-template-columns: 10px 10px 10px 10px auto 10px;
   background-color: var(--color-base);
 
   -webkit-touch-callout: none;
@@ -275,14 +271,14 @@ button:focus-visible {
 .page-header {
   padding: 3px 0 5px 0;
   grid-column-start: 1;
+  display: grid;
+  grid-template-columns: 5% 95%;
   &.selected {
     grid-column-end: 5;
   }
   &.unselected {
     grid-column-end: 4;
   }
-  display: grid;
-  grid-template-columns: 5% 95%;
 }
 
 .top-right {
@@ -298,38 +294,38 @@ button:focus-visible {
 .citation {
   grid-column-start: 2;
   display: grid;
-  grid-template-columns: 5% 95%;
+  margin: 0 0 3px 0;
   &.unselected {
     grid-column-end: 4;
-    span {
-      line-height: 1.1;
-      height: 1.2em;
-      width: 320px;
-      display: inline-block;
+    grid-template-columns: 5% 95%;
+    grid-template-rows: 1.5em;
+    .citation-excerpt {
+      margin-top: -1px;
       overflow: clip;
       border: transparent 2px solid;
     }
   }
   &.unselected:hover {
-    span {
+    .citation-excerpt {
       border-radius: 4px;
-      border: var(--color-highlight) 2px solid;
+      border-color: var(--color-highlight);
     }
   }
   &.selected {
-    margin: 2px 0 3px 0;
-    padding: 0 0 0 4px;
     grid-column-end: 5;
+    grid-template-columns: 10% 10% 80%;
+    padding: 0 4px 0 4px;
     border: solid 1.5px var(--color-highlight);
     border-radius: 7px;
+    .citation-excerpt {
+      grid-column: 1 / 4;
+    }    
   }
 }
 
 .citation-icon {
-  height: 100%;
-  width: 100%;
-  vertical-align: top;
   pointer-events: all;
+
   &.approved {
     &.on {
       color: var(--color-approve);
@@ -382,12 +378,6 @@ button:focus-visible {
 .icon {
   height: 100%;
   width: 100%;
-  margin-bottom: -3pt;
-  margin-right: 2pt;
-}
-
-.large-icon {
-  font-size: 36pt;
 }
 
 .buttons {
