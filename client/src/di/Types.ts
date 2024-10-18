@@ -6,19 +6,19 @@ export type Polygon4 = [
   number, number
 ]
 export type PolygonN = number[]
+export type Polygon = Polygon4 | PolygonN
 
 // Complex polygons
 // This does mean supporting cases where the lead and
 // the tail are non-adjacent (i.e. the selection travels
 // to the next line but not far enough to overlap with
 // the previous line)
+
 export interface PolygonC {
-  lead: Polygon4;
+  head: Polygon4;
   body?: Polygon4;
   tail?: Polygon4;
 }
-
-export type Polygon = Polygon4 | PolygonC
 
 export interface PolygonOnPage {
   polygon: Polygon;
@@ -58,7 +58,7 @@ export interface Summary {
 }
 
 // Doc Int base types
-export interface DocumentIntelligenceResponse {
+export interface DocIntResponse {
   status: string;
   createdDateTime: string;
   lastUpdatedDateTime: string;
@@ -75,9 +75,9 @@ interface AnalyzeResult {
   tables: Table[];
   paragraphs: Paragraph[];
   styles: Style[];
-  contentFormat: string;
-  sections: Section[];
-  figures: Figure[];
+  contentFormat?: string;
+  sections?: Section[];
+  figures?: Figure[];
 }
 
 interface Figure {
@@ -112,7 +112,7 @@ interface Table {
   cells: Cell[];
   boundingRegions: Bounds[];
   spans: Span[];
-  caption: Caption;
+  caption?: Caption;
 }
 
 interface Caption {
@@ -135,7 +135,7 @@ interface Cell {
 
 export interface Bounds {
   pageNumber: number;
-  polygon: Polygon4;
+  polygon: Polygon;
 }
 
 export interface Page {
@@ -153,20 +153,20 @@ export interface Page {
 
 interface SelectionMark {
   state: string;
-  polygon: Polygon4;
+  polygon: Polygon;
   confidence: number;
   span: Span;
 }
 
 export interface Line {
   content: string;
-  polygon: Polygon4;
+  polygon: Polygon;
   spans: Span[];
 }
 
 export interface Word {
   content: string;
-  polygon: Polygon4;
+  polygon: Polygon;
   confidence: number;
   span: Span;
 }

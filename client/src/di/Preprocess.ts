@@ -1,15 +1,16 @@
-import { DocumentIntelligenceResponse, Page, Region } from "./Types"
+import { DocIntResponse, Page, Polygon4, Region } from "./Types"
 import { adjacent, combinePolygons4 } from "./Utility"
 
-// in place change to di, adds a field that models the spacing of the document (scale of 0-1?)
+// returns a number that models the spacing of the document (scale of 0-1?)
 export function setDocumentDelta(
-  di: DocumentIntelligenceResponse
-) {
-  
+  di: DocIntResponse
+): number {
+  return 0.2;
 }
 
 function createPerPageRegions(
-  page: Page
+  page: Page,
+  delta: number
 ): Region[] {
   const lines = page.lines;
   let regions = [] as Region[];
@@ -24,9 +25,9 @@ function createPerPageRegions(
     // if this is the end of the page, OR
     // the next polygon is non-adjacent
     if (lineIndex == lines.length - 1 ||
-        !adjacent(lines[lineIndex].polygon, lines[lineIndex + 1].polygon)) {
+        !adjacent(lines[lineIndex].polygon as Polygon4, lines[lineIndex + 1].polygon as Polygon4, delta)) {
       // let's wrap up the current section
-      let polygon = combinePolygons4(lines.slice(startLine, lineIndex + 1).map((line) => line.polygon));
+      let polygon = combinePolygons4(lines.slice(startLine, lineIndex + 1).map((line) => line.polygon as Polygon4));
       regions.push({
         lineIndices: [startLine, lineIndex],
         wordIndices: [startWord, wordIndex],
@@ -41,8 +42,10 @@ function createPerPageRegions(
 }
 // in place change to di, adds a `Region[]` field to each page
 export function createRegions(
-  di: DocumentIntelligenceResponse
+  di: DocIntResponse
 ) {
+  if (!di.analyzeResult.delta) di.analyzeResult.delta = setDocumentDelta(di);
+
   for (let index = 0; index < di.analyzeResult.pages.length; index++)
-    di.analyzeResult.pages[index].regions = createPerPageRegions(di.analyzeResult.pages[index]);
+    di.analyzeResult.pages[index].regions = createPerPageRegions(di.analyzeResult.pages[index], di.analyzeResult.delta);
 }

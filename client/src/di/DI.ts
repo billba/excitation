@@ -1,4 +1,4 @@
-import { DocumentIntelligenceResponse, Page, Point, Range, CursorRange, Region, Summary } from "./Types";
+import { DocIntResponse, Page, Point, Polygon4, Range, CursorRange, Region, Summary } from "./Types";
 import { comparePointToPolygon, comparePoints, combinePolygons } from "./Utility";
 import { offsetSearch } from "./OffsetSearch";
 
@@ -9,7 +9,7 @@ function findInRegion(
   region: Region
 ): number | null {
   let linesOfInterest = page.lines.slice(region.lineIndices[0], region.lineIndices[1] + 1)
-    .filter((line) => comparePointToPolygon(point, line.polygon) == 0);
+    .filter((line) => comparePointToPolygon(point, line.polygon as Polygon4) == 0);
 
   let wordIndices = [] as number[];
   for (const line of linesOfInterest) {
@@ -20,7 +20,7 @@ function findInRegion(
 
     const [ startWord, endWord ] = wordRange;
     for (let index = startWord; index <= endWord; index++) {
-      if (comparePointToPolygon(point, page.words[index].polygon) == 0)
+      if (comparePointToPolygon(point, page.words[index].polygon as Polygon4) == 0)
         wordIndices.push(index);
     }
   }
@@ -62,15 +62,14 @@ function findInPage(
 function createSummary(
   [startPage, endPage]: Range,
   [startWord, endWord]: Range,
-  di: DocumentIntelligenceResponse
+  di: DocIntResponse
 ): Summary {
   let summary = {} as Summary;
-  // page numbers are always 1-indexed, so adjust for 0-indexing
   for (let pageIndex = startPage; pageIndex <= endPage; pageIndex++) {
     let page = di.analyzeResult.pages[pageIndex];
-
+    
     // again i want the typing to stop yelling
-    if (!page.regions) return summary;
+    if (!page.regions) continue;
 
     for (const region of page.regions) {
       // if the end of this region is still prior to our startWord, skip it
@@ -89,24 +88,27 @@ function createSummary(
         summary.excerpt += ' ';
       summary.excerpt += contents.join(' ');
 
-      // get polygon from this region
+      // get polygon(s) from this region
       let polygons = words.map((word) => word.polygon);
-      summary.polygons.push({
-        polygon: combinePolygons(polygons),
-        page: pageIndex + 1 // 1-indexed
-      });
+      let polys = combinePolygons(polygons as Polygon4[]);
+      for (const poly of polys) {
+        summary.polygons.push({
+          polygon: poly,
+          page: pageIndex + 1 // 1-indexed
+        });
+      }
     }
   }
   return summary;
 }
 
-// takes in a Range and creates the corresponding Summary
+// takes in a CursorRange and creates the corresponding Summary
 // if the start and end points are the same, or 
 // if the start is found and the end is not,
 // the Summary will be single-word
-export function cursorRangeToSummary(
+export function rangeToSummary(
   range: CursorRange,
-  di: DocumentIntelligenceResponse
+  di: DocIntResponse
 ): Summary {
   // page numbers are 1-indexed, so adjust
   let startPage = range.start.page - 1;
@@ -129,7 +131,7 @@ export function cursorRangeToSummary(
 // takes in an excerpt and creates the corresponding Summary with the *first* instance of the excerpt in di
 export function excerptToSummary(
   excerpt: string,
-  di: DocumentIntelligenceResponse
+  di: DocIntResponse
 ): Summary {
   let excerptWords = excerpt.split(/(\s+)/);
   let currentWord = 0;
