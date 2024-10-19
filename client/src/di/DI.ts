@@ -73,14 +73,20 @@ function createSummary(
     if (!page.regions) continue;
 
     for (const region of page.regions) {
-      // if the end of this region is still prior to our startWord, skip it
-      if (region.wordIndices[1] < startWord) continue;
-      // if the beginning of this region is past our endWord, break the loop
-      if (region.wordIndices[0] > endWord) break;
+      // if the end of this region is still prior to our startWord (and we're
+      // on startWord's page), skip it
+      if (pageIndex == startPage && region.wordIndices[1] < startWord) continue;
+      // if the beginning of this region is past our endWord (and we're on 
+      // endWord's page), break the loop
+      if (pageIndex == endPage && region.wordIndices[0] > endWord) break;
 
       // grab the relevant start and end points in the Word array
-      let start = Math.max(startWord, region.wordIndices[0]);
-      let end = Math.min(endWord, region.wordIndices[1]);
+      let start = pageIndex == startPage ? 
+        Math.max(startWord, region.wordIndices[0]) :
+        region.wordIndices[0];
+      let end = pageIndex == endPage ?
+        Math.min(endWord, region.wordIndices[1]) :
+        region.wordIndices[1];
       let words = page.words.slice(start, end + 1);
 
       // get excerpt from this region
@@ -134,7 +140,10 @@ export function excerptToSummary(
   excerpt: string,
   di: DocIntResponse
 ): Summary {
-  let excerptWords = excerpt.split(/(\s+)/); // all whitespace characters
+  if (!excerpt || excerpt == '' || excerpt.length <= 1) return {} as Summary;
+  console.log(`excerptToSummary | seeking '${excerpt}'`)
+
+  let excerpts = excerpt.split(/\s+/); // all whitespace characters
   let currentWord = 0;
 
   for (let pageIndex = 0; pageIndex < di.analyzeResult.pages.length; pageIndex++) {
@@ -142,24 +151,24 @@ export function excerptToSummary(
 
     for (let index = 0; index < page.words.length; index++) {
       // if this matches our current word, we can start looking for the next one
-      if (page.words[index].content === excerptWords[currentWord])
+      if (page.words[index].content == excerpts[currentWord])
         currentWord++;
       // if it doesn't match, and we thought we had some of our excerpt, reset
       else if (currentWord > 0) currentWord = 0;
 
       // if we've got the whole excerpt, it's time to make the summary
-      if (currentWord == excerpt.length) {
+      if (currentWord == excerpts.length) {
         // if the excerpt uses less words than the current index, it's all on the
         // same page. otherwise, it started on last page (please be true)
-        if (index >= excerpt.length - 1)
-          return createSummary([pageIndex, pageIndex], [index - (excerpt.length - 1), index], di);
+        if (index >= excerpts.length - 1)
+          return createSummary([pageIndex, pageIndex], [index - (excerpts.length - 1), index], di);
         else
           return createSummary([pageIndex - 1, pageIndex],[
             // this line looks impenetrable, i'll grant you that. here:
             // the index of the starting word of the excerpt is the length of
             // the previous page minus (the excerpt length minus (index + 1))
             // distribute out those minuses a little to get this:
-            di.analyzeResult.pages[pageIndex - 1].words.length - excerpt.length + (index + 1),
+            di.analyzeResult.pages[pageIndex - 1].words.length - excerpts.length + (index + 1),
             index], di);
       }
     }

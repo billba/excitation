@@ -180,7 +180,16 @@ export function polygonize(
   if (!poly.body) {
     // if there's no body, let's check for some simple cases
     if (!poly.tail) return [poly.head]; // (A)
-    if (!adjacent(poly.head, poly.tail)) return [poly.head, poly.tail]; // (B)
+    if (!adjacent(poly.head, poly.tail, 0.2)) return [poly.head, poly.tail]; // (B)
+
+    // if the head and tail are right-aligned, treat the head like a body
+    if (leftAligned(poly.head, poly.tail)) {
+      const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
+      const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
+      return [[hx[0], hy[0], hx[1], hy[0],
+               hx[1], hy[1], tx[1], hy[1],
+               tx[1], ty[1], hx[0], ty[1]]]; // (E)
+    }
 
     const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
     const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];

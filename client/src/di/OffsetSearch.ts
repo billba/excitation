@@ -53,7 +53,6 @@ function offsetBinarySearch(
   }
 
   const axis = Math.floor((end - start) / 2) + start;
-  console.log(`offset search | axis [${axis}]: offset ${words[axis].span.offset}`);
 
   switch (compareOffsets(offsetRange, words[axis].span.offset)) {
     case -1:

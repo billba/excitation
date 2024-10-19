@@ -18,10 +18,10 @@ function createPerPageRegions(
 
   let startLine = 0;
   let startWord = 0;
-  let wordIndex = 0;
+  let wordIndex = -1; // it works ok
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-    wordIndex += lines[lineIndex].content.split(' ').length - 1;
+    wordIndex += lines[lineIndex].content.split(' ').length;
     // if this is the end of the page, OR
     // the next polygon is non-adjacent
     if (lineIndex == lines.length - 1 ||
