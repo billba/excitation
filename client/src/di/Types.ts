@@ -13,12 +13,40 @@ export type Polygon = Polygon4 | PolygonN
 // the tail are non-adjacent (i.e. the selection travels
 // to the next line but not far enough to overlap with
 // the previous line)
-
-export interface PolygonC {
-  head: Polygon4;
-  body?: Polygon4;
-  tail?: Polygon4;
-}
+export type PolygonC =
+  | {
+    type: "h";
+    head: Polygon4;
+  }
+  | {
+    type: "b";
+    body: Polygon4;
+  }
+  | { 
+    type: "t";
+    tail: Polygon4;
+  }
+  | {
+    type: "ht";
+    head: Polygon4;
+    tail: Polygon4;
+  }
+  | {
+    type: "hb";
+    head: Polygon4;
+    body: Polygon4;
+  }
+  | {
+    type: "bt";
+    body: Polygon4;
+    tail: Polygon4;
+  }
+  | {
+    type: "hbt";
+    head: Polygon4;
+    body: Polygon4;
+    tail: Polygon4;
+  };
 
 export interface PolygonOnPage {
   polygon: Polygon;

@@ -179,7 +179,7 @@ const point7b = { x: 2, y: 4.7 };
 const range7 = {
   start: { point: point7a, page: 1 },
   end: { point: point7b, page: 1 }
-}
+};
 const summary7 = {
   excerpt: "officer of Microsoft. Business Highlights",
   polygons: [

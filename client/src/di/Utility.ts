@@ -22,30 +22,6 @@ function getY(
 // === ADJACENCY ===
 // =================
 
-function leftAligned(
-  poly0: Polygon4,
-  poly1: Polygon4,
-  delta = 0.2
-): boolean {
-  const x0 = getX(poly0);
-  const x1 = getX(poly1);
-
-  if (Math.abs(x1[0] - x0[0]) < delta) return true;
-  return false;
-}
-
-function rightAligned(
-  poly0: Polygon4,
-  poly1: Polygon4,
-  delta = 0.2
-): boolean {
-  const x0 = getX(poly0);
-  const x1 = getX(poly1);
-
-  if (Math.abs(x1[1] - x0[1]) < delta) return true;
-  return false;
-}
-
 // Returns true if polygons share y-axis space
 function onSameLine(
   poly0: Polygon4,
@@ -84,6 +60,26 @@ export function adjacent(
 // ==================
 // === COMPARISON ===
 // ==================
+
+// compares poly to refPol; returns
+// - if poly is narrower than refPoly
+// 0 if they are roughly equal (controlled by delta)
+// + if poly is wider than refPoly
+function comparePolyWidth(
+  poly: Polygon4,
+  refPoly: Polygon4,
+  delta = 0.2
+): number {
+  const x = getX(poly);
+  const refX = getX(refPoly);
+
+  const width = x[1] - x[0];
+  const refWidth = refX[1] - refX[0];
+
+  if (width < refWidth - delta) return -1;
+  if (width > refWidth + delta) return 1;
+  return 0;
+}
 
 // compares poly to refPoly
 // if both polys are in the same region, then the comparison
@@ -177,19 +173,13 @@ export function comparePoints(
 export function polygonize(
   poly: PolygonC
 ): PolygonN[] {
-  if (!poly.body) {
-    // if there's no body, let's check for some simple cases
-    if (!poly.tail) return [poly.head]; // (A)
-    if (!adjacent(poly.head, poly.tail, 0.2)) return [poly.head, poly.tail]; // (B)
+  if (poly.type == "h") return [poly.head]; // (A)
+  if (poly.type == "t") return [poly.tail];
+  if (poly.type == "b") return [poly.body];
 
-    // if the head and tail are right-aligned, treat the head like a body
-    if (leftAligned(poly.head, poly.tail)) {
-      const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-      const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-      return [[hx[0], hy[0], hx[1], hy[0],
-               hx[1], hy[1], tx[1], hy[1],
-               tx[1], ty[1], hx[0], ty[1]]]; // (E)
-    }
+  if (poly.type == "ht") {
+    if (!adjacent(poly.head, poly.tail, 0.2))
+      return [poly.head, poly.tail]; // (B)
 
     const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
     const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
@@ -197,41 +187,31 @@ export function polygonize(
              hx[1], hy[1], tx[1], hy[1],
              tx[1], ty[1], tx[0], ty[1],
              tx[0], ty[0], hx[0], ty[0]]]; // (C)
-  } else {
-    // is `tail` strictly necessary? if it's not a partial line -
-    // i.e. is right aligned w/ the body - we can merge them
-    if (poly.tail && rightAligned(poly.body, poly.tail)) {
-      poly.body = combinePolygons4([poly.body, poly.tail]);
-      poly.tail = undefined;
-    }
-    // is `head` strictly necessary? if it's not a partial line -
-    // i.e. is left aligned w/ the body - we can merge them
-    if (leftAligned(poly.head, poly.body)) {
-      poly.body = combinePolygons4([poly.head, poly.body]);
-      if (!poly.tail) return [poly.body]; // (A)
+  }
 
-      const [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-      const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-      return [[bx[0], by[0], bx[1], by[0],
-               bx[1], by[1], tx[1], by[1],
-               tx[1], ty[1], bx[0], ty[1]]]; // (E)
-    }
-
+  if (poly.type == "hb") {
     const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
     const [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-
-    if (poly.tail) {
-      const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-      return [[hx[0], hy[0], bx[1], hy[0],
-               bx[1], by[1], tx[1], by[1],
-               tx[1], ty[1], bx[0], ty[1],
-               bx[0], by[0], hx[0], by[0]]]; // (F)
-    }
-
     return [[hx[0], hy[0], bx[1], hy[0],
              bx[1], by[1], bx[0], by[1],
              bx[0], by[0], hx[0], by[0]]]; // (D)
   }
+
+  if (poly.type == "bt") {
+    const [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
+    const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
+    return [[bx[0], by[0], bx[1], by[0],
+             bx[1], by[1], tx[1], by[1],
+             tx[1], ty[1], bx[0], ty[1]]]; // (E)
+  }
+
+  const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
+  const [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
+  const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
+  return [[hx[0], hy[0], bx[1], hy[0],
+            bx[1], by[1], tx[1], by[1],
+            tx[1], ty[1], bx[0], ty[1],
+            bx[0], by[0], hx[0], by[0]]]; // (F)
 }
 
 // ===================
@@ -262,7 +242,10 @@ export function combinePolygons4(
 export function combinePolygons(
   polygons: Polygon4[]
 ): PolygonN[] {
-  let poly = {} as PolygonC;
+  let zero = [0,0,0,0,0,0,0,0] as Polygon4;
+  let head = zero;
+  let body = zero;
+  let tail = zero;
   let headIndex = 0;
   let tailIndex = polygons.length - 1;
 
@@ -270,7 +253,7 @@ export function combinePolygons(
   for (; headIndex < polygons.length; headIndex++) {
     if (headIndex == polygons.length - 1 ||
         !onSameLine(polygons[headIndex], polygons[headIndex + 1])) {
-      poly.head = combinePolygons4(polygons.slice(0, headIndex + 1));
+      head = combinePolygons4(polygons.slice(0, headIndex + 1));
       break;
     }
   }
@@ -278,13 +261,35 @@ export function combinePolygons(
   for (; tailIndex > headIndex; tailIndex--) {
     if (tailIndex == headIndex + 1 ||
         !onSameLine(polygons[tailIndex], polygons[tailIndex - 1])) {
-      poly.tail = combinePolygons4(polygons.slice(tailIndex, polygons.length));
+      tail = combinePolygons4(polygons.slice(tailIndex, polygons.length));
       break;
     }
   }
   // Any remaining lines become the `body`
   if (tailIndex - headIndex > 1)
-    poly.body = combinePolygons4(polygons.slice(headIndex + 1, tailIndex));
+    body = combinePolygons4(polygons.slice(headIndex + 1, tailIndex));
 
-  return polygonize(poly);
+  // now we create the poly
+  if (body == zero) {
+    if (tail == zero) return polygonize ({ type: "h", head: head });
+    return polygonize({ type: "ht", head: head, tail: tail });
+  }
+  // we need to do a few checks...
+  // is the head actually just a body line?
+  if (comparePolyWidth(head, body) >= 0) {
+    body = combinePolygons4([head, body]);
+    head = zero;
+    if (tail == zero) return polygonize({ type: "b", body: body });
+  }
+
+  // is the tail actually just a body line?
+  if (comparePolyWidth(tail, body) >= 0) {
+    body = combinePolygons4([body, tail]);
+    tail = zero;
+    if (head == zero) return polygonize({ type: "b", body: body });
+    return polygonize({ type: "hb", head: head, body: body });
+  }
+
+  if (head == zero) return polygonize({type: "bt", body: body, tail: tail });
+  return polygonize({ type: "hbt", head: head, body: body, tail: tail });
 }
