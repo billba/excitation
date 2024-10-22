@@ -173,45 +173,48 @@ export function comparePoints(
 export function polygonize(
   poly: PolygonC
 ): PolygonN[] {
-  if (poly.type == "h") return [poly.head]; // (A)
-  if (poly.type == "t") return [poly.tail];
-  if (poly.type == "b") return [poly.body];
+  switch (poly.type) {
+    case "h":
+      return [poly.head];
+    case "b":
+      return [poly.body];
+    case "t":
+      return [poly.tail];
 
-  if (poly.type == "ht") {
-    if (!adjacent(poly.head, poly.tail, 0.2))
-      return [poly.head, poly.tail]; // (B)
+    case "ht":
+      if (!adjacent(poly.head, poly.tail, 0.2))
+        return [poly.head, poly.tail]; // (B)
 
-    const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-    const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-    return [[hx[0], hy[0], hx[1], hy[0],
-             hx[1], hy[1], tx[1], hy[1],
-             tx[1], ty[1], tx[0], ty[1],
-             tx[0], ty[0], hx[0], ty[0]]]; // (C)
+      let [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
+      let [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
+      return [[hx[0], hy[0], hx[1], hy[0],
+               hx[1], hy[1], tx[1], hy[1],
+               tx[1], ty[1], tx[0], ty[1],
+               tx[0], ty[0], hx[0], ty[0]]]; // (C)
+
+    case "hb":
+      [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
+      let [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
+      return [[hx[0], hy[0], bx[1], hy[0],
+               bx[1], by[1], bx[0], by[1],
+               bx[0], by[0], hx[0], by[0]]]; // (D)
+
+    case "bt":
+      [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
+      [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
+      return [[bx[0], by[0], bx[1], by[0],
+               bx[1], by[1], tx[1], by[1],
+               tx[1], ty[1], bx[0], ty[1]]]; // (E)
+
+    case "hbt":
+      [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
+      [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
+      [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
+      return [[hx[0], hy[0], bx[1], hy[0],
+                bx[1], by[1], tx[1], by[1],
+                tx[1], ty[1], bx[0], ty[1],
+                bx[0], by[0], hx[0], by[0]]]; // (F)
   }
-
-  if (poly.type == "hb") {
-    const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-    const [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-    return [[hx[0], hy[0], bx[1], hy[0],
-             bx[1], by[1], bx[0], by[1],
-             bx[0], by[0], hx[0], by[0]]]; // (D)
-  }
-
-  if (poly.type == "bt") {
-    const [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-    const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-    return [[bx[0], by[0], bx[1], by[0],
-             bx[1], by[1], tx[1], by[1],
-             tx[1], ty[1], bx[0], ty[1]]]; // (E)
-  }
-
-  const [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-  const [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-  const [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-  return [[hx[0], hy[0], bx[1], hy[0],
-            bx[1], by[1], tx[1], by[1],
-            tx[1], ty[1], bx[0], ty[1],
-            bx[0], by[0], hx[0], by[0]]]; // (F)
 }
 
 // ===================
