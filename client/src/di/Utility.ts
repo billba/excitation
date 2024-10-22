@@ -272,6 +272,10 @@ export function combinePolygons(
   // now we create the poly
   if (body == zero) {
     if (tail == zero) return polygonize ({ type: "h", head: head });
+
+    // if the head and the tail are the same width, just return a single poly
+    if (comparePolyWidth(head, tail) == 0) return polygonize({ type: "b", body: combinePolygons4([head, tail]) });
+
     return polygonize({ type: "ht", head: head, tail: tail });
   }
   // we need to do a few checks...

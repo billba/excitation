@@ -197,3 +197,22 @@ const summary7 = {
 };
 rangeToSummaryTest("summary should continue across regions", range7, di0, summary7);
 excerptToSummaryTest("summary should continue across regions", summary7.excerpt, di0, summary7);
+
+const point8a = { x: 2, y: 8.7 };
+const point8b = { x: 7, y: 8.9 };
+const range8 = {
+  start: { point: point8a, page: 1 },
+  end: { point: point8b, page: 1 }
+};
+const summary8 = {
+  excerpt: "Windows revenue increased 11% with Windows OEM revenue growth of 11% and Windows Commercial products and cloud services revenue growth of 13% (up 12% in constant currency)",
+  polygons: [
+    { polygon: [1.4899, 8.651,
+                7.2871, 8.651,
+                7.2871, 9.0282,
+                1.4899, 9.0282],
+      page: 1 }
+  ]
+};
+rangeToSummaryTest("summary should be single poly4, not head + tail", range8, di0, summary8);
+excerptToSummaryTest("summary should be single poly4, not head + tail", summary8.excerpt, di0, summary8);

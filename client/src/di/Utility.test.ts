@@ -22,18 +22,18 @@ const tailWide = [0,3, 7,3, 7,4, 0,4] as Polygon4;
 const poly0a = {
   type: "h",
   head: head
-};
+} as const;
 const poly0b = {
   type: "hb",
   head: headWide,
   body: body
-};
+} as const;
 const poly0c = {
   type: "hbt",
   head: headWide,
   body: body,
   tail: tailWide
-};
+} as const;
 polygonizeTest("(A) via only head", poly0a, [head]);
 polygonizeTest("(A) via body-width head and body", poly0b, [[0,1, 7,1, 7,3, 0,3]]);
 polygonizeTest("(A) via body-width head, body, and body-width tail", poly0c, [[0,1, 7,1, 7,4, 0,4]]);
@@ -45,7 +45,7 @@ const poly1 = {
   type: "ht",
   head: headNarrow,
   tail: tailNarrow
-};
+} as const;
 polygonizeTest("(B) via head and tail", poly1, [headNarrow, tailNarrow])
 
 // (C)
@@ -54,7 +54,7 @@ const poly2 = {
   type: "ht",
   head: head,
   tail: tailClose
-};
+} as const;
 polygonizeTest("(C) via head and tail", poly2, [[3,1, 7,1, 7,2, 5,2, 5,3, 0,3, 0,2, 3,2]]);
 
 // (D)
@@ -62,13 +62,13 @@ const poly3a = {
   type: "hb",
   head: head,
   body: body
-};
+} as const;
 const poly3b = {
   type: "hbt",
   head: head,
   body: body,
   tail: tailWide
-};
+} as const;
 polygonizeTest("(D) via head and body", poly3a, [[3,1, 7,1, 7,3, 0,3, 0,2, 3,2]]);
 polygonizeTest("(D) via head, body, and body-width tail", poly3b, [[3,1, 7,1, 7,4, 0,4, 0,2, 3,2]]);
 
@@ -78,7 +78,7 @@ const poly4 = {
   head: headWide,
   body: body,
   tail: tail
-};
+} as const;
 polygonizeTest("(E) via body-width head, body, and tail", poly4, [[0,1, 7,1, 7,3, 4,3, 4,4, 0,4]]);
 
 // (F)
@@ -87,5 +87,5 @@ const poly5 = {
   head: head,
   body: body,
   tail: tail
-};
+} as const;
 polygonizeTest("(F) via head, body, and tail", poly5, [[3,1, 7,1, 7,3, 4,3, 4,4, 0,4, 0,2, 3,2]]);
