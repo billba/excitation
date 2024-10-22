@@ -173,6 +173,13 @@ export function comparePoints(
 export function polygonize(
   poly: PolygonC
 ): PolygonN[] {
+  let hx: Range;
+  let hy: Range;
+  let bx: Range;
+  let by: Range;
+  let tx: Range;
+  let ty: Range;
+
   switch (poly.type) {
     case "h":
       return [poly.head];
@@ -185,8 +192,8 @@ export function polygonize(
       if (!adjacent(poly.head, poly.tail, 0.2))
         return [poly.head, poly.tail]; // (B)
 
-      let [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-      let [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
+      [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
+      [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
       return [[hx[0], hy[0], hx[1], hy[0],
                hx[1], hy[1], tx[1], hy[1],
                tx[1], ty[1], tx[0], ty[1],
@@ -194,7 +201,7 @@ export function polygonize(
 
     case "hb":
       [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-      let [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
+      [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
       return [[hx[0], hy[0], bx[1], hy[0],
                bx[1], by[1], bx[0], by[1],
                bx[0], by[0], hx[0], by[0]]]; // (D)
@@ -211,9 +218,9 @@ export function polygonize(
       [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
       [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
       return [[hx[0], hy[0], bx[1], hy[0],
-                bx[1], by[1], tx[1], by[1],
-                tx[1], ty[1], bx[0], ty[1],
-                bx[0], by[0], hx[0], by[0]]]; // (F)
+               bx[1], by[1], tx[1], by[1],
+               tx[1], ty[1], bx[0], ty[1],
+               bx[0], by[0], hx[0], by[0]]]; // (F)
   }
 }
 
