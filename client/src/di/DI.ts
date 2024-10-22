@@ -162,14 +162,12 @@ export function excerptToSummary(
         // same page. otherwise, it started on last page (please be true)
         if (index >= excerpts.length - 1)
           return createSummary([pageIndex, pageIndex], [index - (excerpts.length - 1), index], di);
-        else
-          return createSummary([pageIndex - 1, pageIndex],[
-            // this line looks impenetrable, i'll grant you that. here:
-            // the index of the starting word of the excerpt is the length of
-            // the previous page minus (the excerpt length minus (index + 1))
-            // distribute out those minuses a little to get this:
-            di.analyzeResult.pages[pageIndex - 1].words.length - excerpts.length + (index + 1),
-            index], di);
+        else {
+          const wordsOnPrevPage = excerpts.length - (index + 1);
+          const startIndex = di.analyzeResult.pages[pageIndex - 1].words.length - wordsOnPrevPage;
+
+          return createSummary([pageIndex - 1, pageIndex],[startIndex,index], di);
+        }
       }
     }
   }
