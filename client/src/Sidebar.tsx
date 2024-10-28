@@ -1,4 +1,4 @@
-import { docs, useAppState } from "./State";
+import { docs, useAppState, sortBy } from "./State";
 import { ReactNode, useCallback, useMemo } from "react";
 import { Citation } from "./Types";
 import { CitationUX } from "./Citation";
@@ -20,13 +20,13 @@ interface PageGroup {
   citationIndices: number[];
 }
 
-const sortIndex = ({ firstPage, lastPage }: PageGroup) =>
-  firstPage * maxPageNumber + lastPage;
+const sortIndex = sortBy(({ firstPage, lastPage }: PageGroup) =>
+  firstPage * maxPageNumber + lastPage);
 
-const sortCitation = (questionCitations: Citation[], citationIndex: number) => {
-  const { review } = questionCitations[citationIndex];
-  return review * 1000 + citationIndex;
-};
+// const sortCitation = (questionCitations: Citation[]) => sortBy((citationIndex: number) => {
+//   const { review } = questionCitations[citationIndex];
+//   return review * 1000 + citationIndex;
+// });
 
 export function Sidebar() {
   const [state, dispatch] = useAppState();
@@ -84,19 +84,17 @@ export function Sidebar() {
           .map(({ firstPage, lastPage, citationIndices }) => ({
             firstPage,
             lastPage,
-            citationIndices: citationIndices.sort(
-              (a, b) => sortCitation(citations, a) - sortCitation(citations, b)
-            ),
+            citationIndices /*: citationIndices.sort(sortCitation(citations))*/,
           }))
           // and sort the page groups themselves
-          .sort((a, b) => sortIndex(a) - sortIndex(b))
+          .sort(sortIndex)
           // note whether a given page group is selected
           .map(({ firstPage, lastPage, citationIndices }) => {
             const pageGroupSelected =
               docSelected &&
               (selectedCitation
                 ? citationIndices.includes(selectedCitation.citationIndex)
-                : pageNumber >= firstPage && pageNumber <= lastPage);
+                : pageNumber !== undefined && pageNumber >= firstPage && pageNumber <= lastPage);
             return {
               firstPage,
               lastPage,
@@ -172,15 +170,15 @@ export function Sidebar() {
                       pageGroupSelected,
                       prevPageGroupSelected,
                       nextPageGroupSelected,
-                    }) => (
+                    }, key) => (
                       <PageGroupHeader
-                        documentId={documentId}
-                        selected={pageGroupSelected}
+                        documentId={docSelected ? undefined : documentId}
                         firstPage={firstPage}
                         lastPage={lastPage}
                         pageGroupSelected={pageGroupSelected}
                         prevPageGroupSelected={prevPageGroupSelected}
                         nextPageGroupSelected={nextPageGroupSelected}
+                        key={key}
                       >
                         {citationIndices.map((citationIndex) => {
                           const { excerpt, review } = citations[citationIndex];
@@ -311,7 +309,6 @@ const DocHeader = ({
 
 const PageGroupHeader = ({
   documentId,
-  selected,
   firstPage,
   lastPage,
   pageGroupSelected,
@@ -319,8 +316,7 @@ const PageGroupHeader = ({
   nextPageGroupSelected,
   children,
 }: {
-  documentId: number;
-  selected: boolean;
+  documentId?: number;
   firstPage: number;
   lastPage: number;
   pageGroupSelected: boolean;
@@ -336,9 +332,9 @@ const PageGroupHeader = ({
       key={firstPage * maxPageNumber + lastPage}
     >
       <div
-        className={`page-header ${selected ? "selected" : "unselected"}`}
+        className={`page-header ${pageGroupSelected ? "selected" : "unselected"}`}
         onClick={
-          selected
+          pageGroupSelected
             ? undefined
             : dispatchUnlessError({
                 type: "goto",

@@ -4,7 +4,6 @@ import { create } from "mutative";
 import {
   Citation,
   CitationHighlight,
-  UXState,
   Action,
   Review,
   Event,
@@ -67,12 +66,9 @@ async function loadForm(url: string): Promise<State> {
       await dispatchEvents(updatedCitations);
     }
 
-    const defaultDocumentId = docs[0].documentId;
-
     return {
       ...form,
-      defaultDocumentId,
-      ux: inferUXState(defaultDocumentId, 0, form.questions[0].citations, 0),
+      ux: initialUXState(0, form.questions[0].citations),
       asyncState: { status: "idle" },
       viewer: { top: 0, left: 0, width: 1024, height: 768 },
     };
@@ -82,64 +78,65 @@ async function loadForm(url: string): Promise<State> {
   }
 }
 
+// throughout the code we sort using functions that map items into a number
+// this helper expands those functions into the sort function that Array.sort expects
+export function sortBy<T>(sortFunction: (a: T) => number) {
+  return (a: T, b: T) => sortFunction(a) - sortFunction(b);
+}
+
+// TODO: also sort by polygons top then left
+const sortCitationHighlight = sortBy(
+  (a: CitationHighlight) => a.pageNumber * 1000
+);
+
 const citationHighlightsFor = (citation?: Citation) => {
   const bounds = citation?.bounds ?? [];
 
-  return [
-    ...new Set(bounds.map(({ pageNumber }) => pageNumber)),
-  ].map<CitationHighlight>((pageNumber) => ({
-    pageNumber,
-    polygons: bounds
-      .filter((bounds) => bounds.pageNumber === pageNumber)
-      .map(({ polygon }) => polygon),
-  }));
+  return [...new Set(bounds.map(({ pageNumber }) => pageNumber))]
+    .map<CitationHighlight>((pageNumber) => ({
+      pageNumber,
+      polygons: bounds
+        .filter((bounds) => bounds.pageNumber === pageNumber)
+        .map(({ polygon }) => polygon),
+    }))
+    .sort(sortCitationHighlight);
 };
 
-// when citationIndex !== undefined && keepCurrentCitation == false, we keep citationIndex if there are no unreviewed citations
-// when citationIndex !== undefined && keepCurrentCitation == true, we keep citationIndex no matter what
-function inferUXState(
-  defaultDocumentId: number,
-  questionIndex: number,
-  citations: Citation[],
-  citationIndex?: number,
-  keepCurrentCitation = false
-): UXState {
-  if (!keepCurrentCitation) {
-    if (citations.length === 0) {
-      citationIndex = undefined;
-    } else {
-      const index = citations.findIndex(
-        (citation) => citation.review === Review.Unreviewed
-      );
-      citationIndex = index == -1 ? undefined : index;
-    }
-  }
+function indexOfNextUnreviewedCitation(citations: Citation[]) {
+  const index = citations.findIndex(
+    ({ review }) => review === Review.Unreviewed
+  );
+  console.log("ionuc", index);
+  return index == -1 ? undefined : index;
+}
 
-  let pageNumber = 1;
-  let documentId = defaultDocumentId;
+function initialUXState(questionIndex: number, citations: Citation[]) {
+  if (citations.length == 0)
+    return {
+      questionIndex,
+      documentId: undefined,
+    };
+
+  const citationIndex = indexOfNextUnreviewedCitation(citations);
 
   if (citationIndex == undefined)
     return {
       questionIndex,
-      pageNumber,
-      documentId,
+      documentId: undefined,
     };
 
   const citation = citations[citationIndex];
   const citationHighlights = citationHighlightsFor(citation);
 
-  if (citationHighlights.length) {
-    [pageNumber] = citationHighlights
-      .map(({ pageNumber }) => pageNumber)
-      .sort();
-    ({ documentId } = citation);
-  }
-
   return {
     questionIndex,
-    pageNumber,
-    documentId,
-    selectedCitation: { citationIndex, citationHighlights },
+    documentId: citation.documentId,
+    pageNumber: citationHighlights[0]?.pageNumber ?? 1,
+    range: undefined,
+    selectedCitation: {
+      citationIndex,
+      citationHighlights,
+    },
   };
 }
 
@@ -168,36 +165,26 @@ const stateAtom = atom<State, [Action], void>(
       action.type === "asyncRevert"
         ? (prevState.asyncState as AsyncErrorState).prevState
         : create(prevState, (state) => {
-            const {
-              metadata,
-              defaultDocumentId,
-              questions,
-              ux,
-              asyncState,
-              viewer,
-            } = state;
-            const { documentId, pageNumber, questionIndex, selectedCitation } =
-              ux;
+            const { metadata, questions, ux, asyncState, viewer } = state;
             const { isAsyncing } = asyncHelpers(asyncState);
 
-            function goto(gotoPageNumber: number, gotoDocumentId?: number) {
-              ux.pageNumber = gotoPageNumber;
+            function goto(pageNumber?: number, documentId?: number) {
+              console.assert(ux.documentId !== undefined);
               ux.range = undefined;
+              ux.pageNumber = pageNumber ?? firstCitedPage(documentId!) ?? 1;
 
-              if (gotoDocumentId != undefined && gotoDocumentId !== documentId) {
-                ux.documentId = gotoDocumentId;
-                ux.selectedCitation = undefined;
-              } else {
-                // Deselect the current citation, unless moving to
-                // a different page of the same multi-page citation.
+              if (documentId === undefined || documentId === ux.documentId) {
                 if (
-                  !selectedCitation?.citationHighlights.find(
-                    ({ pageNumber }) => pageNumber == gotoPageNumber
+                  ux.selectedCitation?.citationHighlights.find(
+                    (ch) => ch.pageNumber === pageNumber
                   )
-                ) {
-                  ux.selectedCitation = undefined;
-                }
+                )
+                  return;
+              } else {
+                ux.documentId = documentId;
               }
+
+              ux.selectedCitation = undefined;
             }
 
             function setAsync({
@@ -216,7 +203,7 @@ const stateAtom = atom<State, [Action], void>(
             }
 
             function firstCitedPage(documentId: number): number | undefined {
-              return questions[questionIndex].citations
+              return questions[ux.questionIndex].citations
                 .filter(
                   (citation) =>
                     citation.documentId === documentId && citation.bounds
@@ -227,54 +214,71 @@ const stateAtom = atom<State, [Action], void>(
                 .sort()[0];
             }
 
+            function selectCitation(citationIndex?: number) {
+              if (citationIndex == undefined) {
+                ux.selectedCitation = undefined;
+                return;
+              }
+
+              const citation =
+                questions[ux.questionIndex].citations[citationIndex];
+              const citationHighlights = citationHighlightsFor(citation);
+
+              if (citationHighlights.length == 0) {
+                ux.selectedCitation = undefined;
+                return;
+              }
+
+              ux.documentId = citation.documentId;
+              ux.pageNumber = citationHighlights[0].pageNumber;
+              ux.selectedCitation = {
+                citationIndex,
+                citationHighlights,
+              };
+            }
+
+            function selectQuestion(questionIndex: number) {
+              ux.questionIndex = questionIndex;
+              selectUnreviewedCitation();
+            }
+
+            function selectUnreviewedCitation() {
+              const citationIndex = indexOfNextUnreviewedCitation(
+                questions[ux.questionIndex].citations
+              );
+
+              console.log("suc", citationIndex);
+              if (citationIndex != undefined) {
+                selectCitation(citationIndex);
+              } else {
+                ux.selectedCitation = undefined;
+              }
+            }
+
             switch (action.type) {
               case "selectCitation": {
-                const { citationIndex } = action;
-                if (citationIndex !== undefined) {
-                  state.ux = inferUXState(
-                    defaultDocumentId,
-                    questionIndex,
-                    questions[questionIndex].citations,
-                    citationIndex,
-                    true
-                  );
-                } else {
-                  ux.selectedCitation = undefined;
-                }
+                selectCitation(action.citationIndex);
                 break;
               }
 
               case "prevQuestion":
-                state.ux = inferUXState(
-                  defaultDocumentId,
-                  questionIndex - 1,
-                  questions[questionIndex - 1].citations
-                );
+                selectQuestion(ux.questionIndex - 1);
                 break;
 
               case "nextQuestion":
-                state.ux = inferUXState(
-                  defaultDocumentId,
-                  questionIndex + 1,
-                  questions[questionIndex + 1].citations
-                );
+                selectQuestion(ux.questionIndex + 1);
                 break;
 
               case "prevPage":
-                goto(pageNumber - 1);
+                goto(ux.pageNumber! - 1);
                 break;
 
               case "nextPage":
-                goto(pageNumber + 1);
+                goto(ux.pageNumber! + 1);
                 break;
 
               case "goto":
-                goto(
-                  action.pageNumber ??
-                    firstCitedPage(action.documentId ?? documentId) ??
-                    1,
-                  action.documentId
-                );
+                goto(action.pageNumber, action.documentId);
                 break;
 
               case "setSelectedText":
@@ -289,32 +293,34 @@ const stateAtom = atom<State, [Action], void>(
 
               case "addSelection": {
                 console.assert(!isAsyncing);
-                const { range } = ux;
-                console.assert(range !== undefined);
-                const realRange = calculateRange(range);
+                console.assert(ux.range !== undefined);
+                console.assert(ux.documentId !== undefined);
+                const realRange = calculateRange(ux.range);
                 console.assert(realRange !== undefined);
 
                 const { excerpt, bounds } = findUserSelection(
-                  pageNumber,
+                  ux.pageNumber!,
                   realRange!,
                   viewer,
-                  docFromId[documentId].di
+                  docFromId[ux.documentId!].di
                 );
 
-                questions[questionIndex].citations.push({
-                  documentId,
-                  citationId: createCitationId(metadata.formId, "client"),
-                  bounds,
-                  excerpt,
-                  review: Review.Approved,
-                });
+                selectCitation(
+                  questions[ux.questionIndex].citations.push({
+                    documentId: ux.documentId!,
+                    citationId: createCitationId(metadata.formId, "client"),
+                    bounds,
+                    excerpt,
+                    review: Review.Approved,
+                  }) - 1
+                );
 
                 setAsync({
                   event: {
                     type: "addCitation",
                     formId: metadata.formId,
-                    questionId: questionIndex,
-                    documentId,
+                    questionId: ux.questionIndex,
+                    documentId: ux.documentId!,
                     citationId: createCitationId(metadata.formId, "client"),
                     excerpt,
                     bounds,
@@ -323,21 +329,15 @@ const stateAtom = atom<State, [Action], void>(
                   },
                   onError: {
                     type: "errorAddSelection",
-                    questionIndex,
+                    questionIndex: ux.questionIndex,
                   },
                 });
                 break;
               }
 
               case "errorAddSelection": {
-                const { questionIndex } = action;
-                const { citations } = questions[questionIndex];
-                state.ux = inferUXState(
-                  defaultDocumentId,
-                  questionIndex,
-                  citations,
-                  citations.length - 1,
-                  true
+                selectCitation(
+                  questions[ux.questionIndex].citations.length - 1
                 );
                 break;
               }
@@ -345,22 +345,19 @@ const stateAtom = atom<State, [Action], void>(
               case "toggleReview": {
                 console.assert(!isAsyncing);
 
-                const { citations } = questions[questionIndex];
-                const targetCitation = citations[action.citationIndex];
+                const targetCitation =
+                  questions[ux.questionIndex].citations[action.citationIndex];
                 targetCitation.review =
                   targetCitation.review == action.target
                     ? Review.Unreviewed
                     : action.target;
 
-                if (selectedCitation?.citationIndex == action.citationIndex) {
+                if (
+                  ux.selectedCitation?.citationIndex == action.citationIndex
+                ) {
                   // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
                   if (targetCitation.review! != Review.Unreviewed) {
-                    state.ux = inferUXState(
-                      defaultDocumentId,
-                      questionIndex,
-                      citations,
-                      action.citationIndex
-                    );
+                    selectUnreviewedCitation();
                   }
                 } else {
                   state.ux.selectedCitation = {
@@ -378,7 +375,7 @@ const stateAtom = atom<State, [Action], void>(
                   },
                   onError: {
                     type: "errorToggleReview",
-                    questionIndex,
+                    questionIndex: ux.questionIndex,
                     citationIndex: action.citationIndex,
                   },
                 });
@@ -386,15 +383,7 @@ const stateAtom = atom<State, [Action], void>(
               }
 
               case "errorToggleReview": {
-                const { questionIndex, citationIndex } = action;
-                const { citations } = questions[questionIndex];
-                state.ux = inferUXState(
-                  defaultDocumentId,
-                  questionIndex,
-                  citations,
-                  citationIndex,
-                  true
-                );
+                selectCitation(action.citationIndex);
                 break;
               }
 

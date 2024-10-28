@@ -5,25 +5,32 @@ import {
   TriangleRightFilled,
 } from "@fluentui/react-icons";
 
-export const NavBar = () => {
-  const { ux: { pageNumber, selectedCitation, documentId } }  = useAppStateValue();
-  const { pages } = docFromId[documentId];
+export const NavBar = () => {  
+  const { ux: { pageNumber, selectedCitation, documentId } } = useAppStateValue();
 
   const { isError } = useAsyncHelper();
   const { dispatchUnlessError } = useDispatchHandler();
+
+  if (documentId === undefined) return (
+    <div id="navbar">
+      <div className="navbar-page">
+      </div>
+    </div>
+  );
+
+  const { pages } = docFromId[documentId];
 
   const pageNumbers =
     selectedCitation == undefined
       ? []
       : selectedCitation.citationHighlights
-          .map(({ pageNumber }) => pageNumber)
-          .sort();
+        .map(({ pageNumber }) => pageNumber);
 
-  const disablePrev = isError || pageNumber === 1;
-  const disableNext = isError || pageNumber === pages - 1;
+  const enablePrev = !isError && pageNumber !== 1 || undefined;
+  const enableNext = !isError && pageNumber !== pages || undefined;
 
-  const citationPrev = isError || pageNumbers.includes(pageNumber - 1);
-  const citationNext = pageNumbers.includes(pageNumber + 1);
+  const citationPrev = enablePrev && pageNumbers.includes(pageNumber! - 1) || undefined;
+  const citationNext = enableNext && pageNumbers.includes(pageNumber! + 1) || undefined;
 
   return (
     <div id="navbar">
@@ -31,26 +38,26 @@ export const NavBar = () => {
         <div className="navbar-column">
           <span
             className={citationPrev ? "visible" : "hidden"}
-            onClick={citationPrev ? dispatchUnlessError({ type: "prevPage" }) : undefined}
+            onClick={citationPrev && dispatchUnlessError({ type: "prevPage" })}
           >
             Citation continues from previous page
           </span>
         </div>
         <TriangleLeftFilled
-          className={`navbar-icon icon ${disablePrev ? "disabled" : "enabled"}`}
-          onClick={dispatchUnlessError({ type: "prevPage" })}
+          className={`navbar-icon icon ${enablePrev ? "enabled" : "disabled"}`}
+          onClick={enablePrev && dispatchUnlessError({ type: "prevPage" })}
         />
         <div className="navbar-change-page">
           {pageNumber}&nbsp;/&nbsp;{pages}
         </div>
         <TriangleRightFilled
-          className={`navbar-icon icon ${disableNext ? "disabled" : "enabled"}`}
-          onClick={dispatchUnlessError({ type: "nextPage" })}
+          className={`navbar-icon icon ${enableNext ? "enabled" : "disabled"}`}
+          onClick={enableNext && dispatchUnlessError({ type: "nextPage" })}
         />
         <div className="navbar-column">
           <span
             className={citationNext ? "visible" : "hidden"}
-            onClick={citationNext ? dispatchUnlessError({ type: "nextPage" }) : undefined}
+            onClick={citationNext && dispatchUnlessError({ type: "nextPage" })}
           >
             Citation continues on next page
           </span>

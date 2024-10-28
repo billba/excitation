@@ -115,8 +115,8 @@ export interface CitationHighlight {
 
 export interface UXState {
   questionIndex: number;
-  documentId: number;
-  pageNumber: number;
+  documentId?: number;
+  pageNumber?: number;
   range?: SerializedRange;
   selectedCitation?: {
     citationIndex: number;
@@ -176,7 +176,6 @@ export interface LoadForm extends Form {
 }
 
 export interface State extends Form {
-  defaultDocumentId: number;
   ux: UXState;
   asyncState: AsyncState;
   viewer: ViewerState;

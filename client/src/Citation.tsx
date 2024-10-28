@@ -70,9 +70,8 @@ export const CitationUX = ({
     const className = classNames[Number(selected) * (Number(review == r) + 1)];
 
     return (
-      <div>
+      <div key={r}>
         <Icon
-          key={r}
           className={className + " icon"}
           onClick={dispatchUnlessAsyncing({
             type: "toggleReview",

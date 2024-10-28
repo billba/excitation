@@ -11,8 +11,9 @@ import {
 import { useAsyncHelper } from "./Hooks";
 
 export function Viewer() {
-  const [{ ux: { documentId, pageNumber, range, selectedCitation} }, dispatch] = useAppState();
-  const { pdfUrl } = docFromId[documentId];
+  const [{ ux }, dispatch] = useAppState();
+
+  const { documentId } = ux;
 
   const { isError } = useAsyncHelper();
 
@@ -25,7 +26,10 @@ export function Viewer() {
       if (selection?.rangeCount) {
         const selectionRange = selection.getRangeAt(0);
         console.assert(viewerRef.current != undefined);
-        if (!selectionRange.collapsed && viewerRef.current!.contains(selectionRange.commonAncestorContainer)) {
+        if (
+          !selectionRange.collapsed &&
+          viewerRef.current!.contains(selectionRange.commonAncestorContainer)
+        ) {
           range = calculateSerializedRange(selectionRange);
         }
       }
@@ -46,6 +50,8 @@ export function Viewer() {
     () => setRenderCounter((c) => c + 1),
     [setRenderCounter]
   );
+
+  const range = documentId == undefined ? undefined : ux.range;
 
   useEffect(() => {
     if (!range) return;
@@ -70,9 +76,11 @@ export function Viewer() {
     window.addEventListener("resize", () => setResizeCounter((c) => c + 1));
   }, [setResizeCounter]);
 
-  const polygons = selectedCitation?.citationHighlights.filter(
-    (citationHighlight) => citationHighlight.pageNumber == pageNumber
-  )[0]?.polygons;
+  const polygons =
+    documentId != undefined &&
+    ux.selectedCitation?.citationHighlights.filter(
+      (citationHighlight) => citationHighlight.pageNumber == ux.pageNumber
+    )[0]?.polygons;
 
   useEffect(() => {
     if (!polygons) return;
@@ -90,14 +98,14 @@ export function Viewer() {
     highlightCanvas.style.left = left + window.scrollX + "px";
     highlightCanvas.style.width = rect.width + "px";
     highlightCanvas.style.height = rect.height + "px";
-    
+
     highlightCanvas.width = canvas.width;
     highlightCanvas.height = canvas.height;
-    
-    dispatch({ type: 'setViewerSize', top, left, width, height });
-    
+
+    dispatch({ type: "setViewerSize", top, left, width, height });
+
     const context = highlightCanvas.getContext("2d")!;
-    
+
     context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
     context.strokeStyle = "#00acdc";
     context.lineWidth = 2;
@@ -107,10 +115,22 @@ export function Viewer() {
 
     for (const polygon of polygons) {
       context.beginPath();
-      context.moveTo(polygon[0] * multiplier - padding, polygon[1] * multiplier - padding);
-      context.lineTo(polygon[2] * multiplier + padding, polygon[3] * multiplier - padding);
-      context.lineTo(polygon[4] * multiplier + padding, polygon[5] * multiplier + padding);
-      context.lineTo(polygon[6] * multiplier - padding, polygon[7] * multiplier + padding);
+      context.moveTo(
+        polygon[0] * multiplier - padding,
+        polygon[1] * multiplier - padding
+      );
+      context.lineTo(
+        polygon[2] * multiplier + padding,
+        polygon[3] * multiplier - padding
+      );
+      context.lineTo(
+        polygon[4] * multiplier + padding,
+        polygon[5] * multiplier + padding
+      );
+      context.lineTo(
+        polygon[6] * multiplier - padding,
+        polygon[7] * multiplier + padding
+      );
       context.closePath();
       context.stroke();
     }
@@ -125,20 +145,36 @@ export function Viewer() {
 
   return (
     <div ref={viewerRef}>
-      <Document file={pdfUrl} onLoadSuccess={onDocumentLoadSuccess}>
-        <Page
-          canvasRef={canvasRef}
-          pageNumber={pageNumber}
-          onRenderSuccess={onRenderSuccess}
-        />
-      </Document>
+      {documentId == undefined ? (
+        <div>
+          <p>You can select a document in the sidebar.</p>
+        </div>
+      ) : ux.pageNumber == undefined ? (
+        <div>
+          <p>
+            The selected citation could not be found on the document. You may
+            explore this document using the page navigation above.
+          </p>
+        </div>
+      ) : (
+        <Document
+          file={docFromId[documentId].pdfUrl}
+          onLoadSuccess={onDocumentLoadSuccess}
+        >
+          <Page
+            canvasRef={canvasRef}
+            pageNumber={ux.pageNumber}
+            onRenderSuccess={onRenderSuccess}
+          />
+        </Document>
+      )}
       {polygons && (
         <canvas
           ref={highlightCanvasRef}
           id="highlight-canvas"
           style={{
             position: "absolute",
-            zIndex: isError ? 1000: 1,
+            zIndex: isError ? 1000 : 1,
             opacity: 1,
           }}
         />
