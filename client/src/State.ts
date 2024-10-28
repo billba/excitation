@@ -102,12 +102,21 @@ const citationHighlightsFor = (citation?: Citation) => {
     .sort(sortCitationHighlight);
 };
 
-function indexOfNextUnreviewedCitation(citations: Citation[]) {
-  const index = citations.findIndex(
-    ({ review }) => review === Review.Unreviewed
-  );
-  console.log("ionuc", index);
-  return index == -1 ? undefined : index;
+const sortUnreviewedCitations = (documentId?: number, pageNumber?: number) => sortBy(([citation]: [Citation, number]) => {
+  if (!citation.bounds) return Number.MAX_SAFE_INTEGER;
+
+  const ch = citationHighlightsFor(citation);
+  const firstPage = ch.length ? ch[0].pageNumber : 1000
+  const lastPage = ch.length ? ch[ch.length - 1].pageNumber : 1000;
+
+  return documentId === citation.documentId && pageNumber! >= firstPage && pageNumber! <= lastPage ? 0 : citation.documentId * 1000000 + firstPage * 1000 + lastPage;
+})
+
+function indexOfNextUnreviewedCitation(citations: Citation[], documentId?: number, pageNumber?: number) {
+  return citations
+    .map<[Citation, number]>((citation, citationIndex) => [citation, citationIndex])
+    .filter(([{ review }]) => review === Review.Unreviewed)
+    .sort(sortUnreviewedCitations(documentId, pageNumber))[0]?.[1];
 }
 
 function initialUXState(questionIndex: number, citations: Citation[]) {
@@ -244,10 +253,11 @@ const stateAtom = atom<State, [Action], void>(
 
             function selectUnreviewedCitation() {
               const citationIndex = indexOfNextUnreviewedCitation(
-                questions[ux.questionIndex].citations
+                questions[ux.questionIndex].citations,
+                ux.documentId,
+                ux.pageNumber
               );
 
-              console.log("suc", citationIndex);
               if (citationIndex != undefined) {
                 selectCitation(citationIndex);
               } else {
