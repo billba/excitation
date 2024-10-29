@@ -333,7 +333,7 @@ const stateAtom = atom<State, [Action], void>(
                     citationId: createCitationId(metadata.formId, "client"),
                     bounds,
                     excerpt,
-                    review: Review.Approved,
+                    review: Review.Unreviewed,
                   }) - 1
                 );
 
