@@ -191,6 +191,7 @@ export function Sidebar() {
                               selected={
                                 selectedCitation?.citationIndex == citationIndex
                               }
+                              editing={selectedCitation?.editing}
                             />
                           );
                         })}

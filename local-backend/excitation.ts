@@ -92,6 +92,12 @@ export type Event =
       creator: string;
     }
   | {
+      type: "updateExcerpt";
+      citationId: string;
+      excerpt: string;
+      creator: string;
+    }
+  | {
       type: "updateBounds";
       citationId: string;
       bounds: Bounds[];
@@ -220,6 +226,19 @@ export async function dispatchEvent(event: Event) {
       if (!citation) throw new Error(`Citation ${event.citationId} not found`);
 
       citation.review = event.review;
+      break;
+    }
+
+    case "updateExcerpt": {
+      if (await isError())
+        throw new Error(
+          `Congratulations, you asked for an error and you got one!`
+        );
+
+      const citation = findCitation(event.citationId);
+      if (!citation) throw new Error(`Citation ${event.citationId} not found`);
+
+      citation.excerpt = event.excerpt;
       break;
     }
 

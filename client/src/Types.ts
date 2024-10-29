@@ -42,12 +42,28 @@ export type Action =
       questionIndex: number;
     }
   | {
-      type: "toggleReview";
+      type: "reviewCitation";
       citationIndex: number;
-      target: Review;
+      review: Review;
     }
   | {
-      type: "errorToggleReview";
+      type: "errorReviewCitation";
+      questionIndex: number;
+      citationIndex: number;
+    }
+  | {
+      type: "startEditExcerpt";
+    }
+  | {
+      type: "cancelEditExcerpt";
+    }
+  | {
+      type: "updateExcerpt";
+      citationIndex: number;
+      excerpt: string;
+    }
+  | {
+      type: "errorUpdateExcerpt";
       questionIndex: number;
       citationIndex: number;
     }
@@ -121,6 +137,7 @@ export interface UXState {
   selectedCitation?: {
     citationIndex: number;
     citationHighlights: CitationHighlight[];
+    editing?: true;
   };
 }
 
@@ -183,14 +200,6 @@ export interface State extends Form {
 
 export type Event =
   | {
-      type: "mockEvent";
-      delay: number;
-      error?: {
-        count: number;
-        description: string;
-      };
-    }
-  | {
       type: "addCitation";
       formId: number;
       questionId: number;
@@ -205,6 +214,12 @@ export type Event =
       type: "updateReview";
       citationId: string;
       review: Review;
+      creator: string;
+    }
+  | {
+      type: "updateExcerpt";
+      citationId: string;
+      excerpt: string;
       creator: string;
     }
   | {

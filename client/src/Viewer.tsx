@@ -14,31 +14,40 @@ export function Viewer() {
   const [{ ux }, dispatch] = useAppState();
 
   const { documentId } = ux;
+  const editing = ux.selectedCitation?.editing;
 
   const { isError } = useAsyncHelper();
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    document.addEventListener("selectionchange", () => {
-      const selection = document.getSelection();
-      let range: SerializedRange | undefined;
-      if (selection?.rangeCount) {
-        const selectionRange = selection.getRangeAt(0);
-        console.assert(viewerRef.current != undefined);
-        if (
-          !selectionRange.collapsed &&
-          viewerRef.current!.contains(selectionRange.commonAncestorContainer)
-        ) {
-          range = calculateSerializedRange(selectionRange);
-        }
+  const selectionChange = useCallback(() => {
+    const selection = document.getSelection();
+    let range: SerializedRange | undefined;
+    if (selection?.rangeCount) {
+      const selectionRange = selection.getRangeAt(0);
+      console.assert(viewerRef.current != undefined);
+      if (
+        !selectionRange.collapsed &&
+        viewerRef.current!.contains(selectionRange.commonAncestorContainer)
+      ) {
+        range = calculateSerializedRange(selectionRange);
       }
-      dispatch({
-        type: "setSelectedText",
-        range,
-      });
+    }
+    dispatch({
+      type: "setSelectedText",
+      range,
     });
   }, [dispatch]);
+
+  useEffect(() => {
+    if (editing) return;
+
+    document.addEventListener("selectionchange", selectionChange);
+
+    return () => {
+      document.removeEventListener("selectionchange", selectionChange);
+    };
+  }, [selectionChange, editing]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const highlightCanvasRef = useRef<HTMLCanvasElement>(null);

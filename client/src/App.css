@@ -313,13 +313,29 @@ button:focus-visible {
   }
   &.selected {
     grid-column-end: 5;
-    grid-template-columns: 10% 10% 80%;
+    grid-template-columns: 10% 10% 10% 50% 10% 10%;
     padding: 0 4px 0 4px;
     border: solid 1.5px var(--color-highlight);
     border-radius: 7px;
     .citation-excerpt {
-      grid-column: 1 / 4;
-    }    
+      grid-column: 1 / 7;
+      line-height: inherit;
+    }
+    .editor-excerpt {
+      grid-column: 1 / 7;
+      line-height: inherit;
+      background-color: transparent;
+      border: none;
+      overflow: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 100%;
+      margin: -2px 0 -4px -2px;
+      outline: none;
+    }
+    .editor-cancel {
+      grid-column: 5;
+    }
   }
 }
 
@@ -356,6 +372,21 @@ button:focus-visible {
   }
   &.unreviewed {
     color: var(--color-highlight);
+  }
+  &.edit {
+    color: var(--color-button-enabled);
+    :hover {
+      color: var(--color-button-hover);
+    }
+  }
+}
+
+.edit-icon {
+  height: 100%;
+  width: 100%;
+  color: var(--color-button-enabled);
+  &:hover {
+    color: var(--color-button-hover);
   }
 }
 

@@ -102,19 +102,31 @@ const citationHighlightsFor = (citation?: Citation) => {
     .sort(sortCitationHighlight);
 };
 
-const sortUnreviewedCitations = (documentId?: number, pageNumber?: number) => sortBy(([citation]: [Citation, number]) => {
-  if (!citation.bounds) return Number.MAX_SAFE_INTEGER;
+const sortUnreviewedCitations = (documentId?: number, pageNumber?: number) =>
+  sortBy(([citation]: [Citation, number]) => {
+    if (!citation.bounds) return Number.MAX_SAFE_INTEGER;
 
-  const ch = citationHighlightsFor(citation);
-  const firstPage = ch.length ? ch[0].pageNumber : 1000
-  const lastPage = ch.length ? ch[ch.length - 1].pageNumber : 1000;
+    const ch = citationHighlightsFor(citation);
+    const firstPage = ch.length ? ch[0].pageNumber : 1000;
+    const lastPage = ch.length ? ch[ch.length - 1].pageNumber : 1000;
 
-  return documentId === citation.documentId && pageNumber! >= firstPage && pageNumber! <= lastPage ? 0 : citation.documentId * 1000000 + firstPage * 1000 + lastPage;
-})
+    return documentId === citation.documentId &&
+      pageNumber! >= firstPage &&
+      pageNumber! <= lastPage
+      ? 0
+      : citation.documentId * 1000000 + firstPage * 1000 + lastPage;
+  });
 
-function indexOfNextUnreviewedCitation(citations: Citation[], documentId?: number, pageNumber?: number) {
+function indexOfNextUnreviewedCitation(
+  citations: Citation[],
+  documentId?: number,
+  pageNumber?: number
+) {
   return citations
-    .map<[Citation, number]>((citation, citationIndex) => [citation, citationIndex])
+    .map<[Citation, number]>((citation, citationIndex) => [
+      citation,
+      citationIndex,
+    ])
     .filter(([{ review }]) => review === Review.Unreviewed)
     .sort(sortUnreviewedCitations(documentId, pageNumber))[0]?.[1];
 }
@@ -352,50 +364,91 @@ const stateAtom = atom<State, [Action], void>(
                 break;
               }
 
-              case "toggleReview": {
+              case "reviewCitation": {
                 console.assert(!isAsyncing);
+                const { review, citationIndex } = action;
 
-                const targetCitation =
-                  questions[ux.questionIndex].citations[action.citationIndex];
-                targetCitation.review =
-                  targetCitation.review == action.target
-                    ? Review.Unreviewed
-                    : action.target;
+                const citation =
+                  questions[ux.questionIndex].citations[citationIndex];
+                citation.review = review;
 
-                if (
-                  ux.selectedCitation?.citationIndex == action.citationIndex
-                ) {
+                if (ux.selectedCitation?.citationIndex === citationIndex) {
                   // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
-                  if (targetCitation.review! != Review.Unreviewed) {
+                  if (review! != Review.Unreviewed) {
                     selectUnreviewedCitation();
                   }
                 } else {
-                  state.ux.selectedCitation = {
-                    citationIndex: action.citationIndex,
-                    citationHighlights: citationHighlightsFor(targetCitation),
-                  };
+                  selectCitation(citationIndex);
                 }
 
                 setAsync({
                   event: {
                     type: "updateReview",
-                    citationId: targetCitation.citationId,
-                    review: targetCitation.review,
+                    citationId: citation.citationId,
+                    review,
                     creator: "client",
                   },
                   onError: {
-                    type: "errorToggleReview",
+                    type: "errorReviewCitation",
                     questionIndex: ux.questionIndex,
-                    citationIndex: action.citationIndex,
+                    citationIndex,
                   },
                 });
                 break;
               }
 
-              case "errorToggleReview": {
+              case "errorReviewCitation":
+                ux.questionIndex = action.questionIndex;
                 selectCitation(action.citationIndex);
                 break;
+
+              case "startEditExcerpt":
+                console.assert(!isAsyncing);
+                console.assert(ux.selectedCitation !== undefined);
+                ux.selectedCitation!.editing = true;
+                break;
+
+              case "updateExcerpt": {
+                console.assert(!isAsyncing);
+                console.assert(ux.selectedCitation?.editing !== undefined);
+                ux.selectedCitation!.editing = undefined;
+
+                const { excerpt, citationIndex } = action;
+
+                const citation =
+                  questions[ux.questionIndex].citations[citationIndex];
+
+                if (citation.excerpt === excerpt) return;
+
+                citation.excerpt = excerpt;
+
+
+                setAsync({
+                  event: {
+                    type: "updateExcerpt",
+                    citationId: citation.citationId,
+                    excerpt,
+                    creator: "client",
+                  },
+                  onError: {
+                    type: "errorUpdateExcerpt",
+                    questionIndex: ux.questionIndex,
+                    citationIndex,
+                  },
+                });
+                break;
               }
+
+              case "errorUpdateExcerpt":
+                ux.questionIndex = action.questionIndex;
+                selectCitation(action.citationIndex);
+                break;
+
+              case "cancelEditExcerpt":
+                console.assert(!isAsyncing);
+                console.assert(ux.selectedCitation?.editing !== undefined);
+                ux.selectedCitation!.editing = undefined;
+                break;
 
               case "asyncLoading":
                 console.assert(asyncState.status === "pending");
