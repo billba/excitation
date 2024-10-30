@@ -23,6 +23,9 @@
   --color-approve: #00ac00;
   --color-reject: #f07070;
   --color-highlight: #00acdc;
+  --color-edit: #ffa500;
+
+  --color-icon: light-dark(#808080, #b6b6b6);
 
   --rounding-height: 3px;
 
@@ -340,17 +343,15 @@ button:focus-visible {
 }
 
 .citation-icon {
-  pointer-events: all;
-
   &.approved {
     &.on {
       color: var(--color-approve);
       :hover {
-        color: var(--color-button-enabled);
+        color: var(--color-icon);
       }
     }
     &.off {
-      color: var(--color-button-enabled);
+      color: var(--color-icon);
       :hover {
         color: var(--color-approve);
       }
@@ -360,11 +361,11 @@ button:focus-visible {
     &.on {
       color: var(--color-reject);
       :hover {
-        color: var(--color-button-enabled);
+        color: var(--color-icon);
       }
     }
     &.off {
-      color: var(--color-button-enabled);
+      color: var(--color-icon);
       :hover {
         color: var(--color-reject);
       }
@@ -373,20 +374,24 @@ button:focus-visible {
   &.unreviewed {
     color: var(--color-highlight);
   }
-  &.edit {
-    color: var(--color-button-enabled);
+  &.edit-start {
+    color: var(--color-icon);
     :hover {
-      color: var(--color-button-hover);
+      color: var(--color-edit);
     }
   }
-}
-
-.edit-icon {
-  height: 100%;
-  width: 100%;
-  color: var(--color-button-enabled);
-  &:hover {
-    color: var(--color-button-hover);
+  &.edit-cancel {
+    grid-column: 5;
+    color: var(--color-icon);
+    :hover {
+      color: black;
+    }    
+  }
+  &.edit-save {
+    color: var(--color-icon);
+    :hover {
+      color: black;
+    }
   }
 }
 
@@ -409,6 +414,25 @@ button:focus-visible {
 .icon {
   height: 100%;
   width: 100%;
+  pointer-events: all;
+}
+
+.hoverable {
+  .filled {
+    display: none;
+  }
+  .regular {
+    display: block;
+  }
+  &:hover {
+    cursor: pointer;
+    .filled {
+      display: block;
+    }
+    .regular {
+      display: none;
+    }
+  }
 }
 
 .buttons {

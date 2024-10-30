@@ -1,12 +1,17 @@
 import { Review } from "./Types";
 import {
   CircleRegular,
+  CheckmarkCircleRegular,
   CheckmarkCircleFilled,
   DismissCircleFilled,
+  DismissCircleRegular,
   EditFilled,
+  EditRegular,
   CheckmarkRegular,
   DismissRegular,
+  FluentIcon,
 } from "@fluentui/react-icons";
+
 import { useDispatchHandler } from "./Hooks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatchAppState } from "./State";
@@ -77,6 +82,13 @@ export const CitationUX = ({
     }
   }, [editing, excerpt]);
 
+  const hoverableIcon = (FilledIcon: FluentIcon, RegularIcon: FluentIcon) => (
+    <>
+      <FilledIcon className="icon filled" />
+      <RegularIcon className="icon regular" />
+    </>
+  );
+
   return (
     <div
       className={`citation ${selected ? "selected" : "unselected"}`}
@@ -97,11 +109,11 @@ export const CitationUX = ({
               onChange={onChangeExcerpt}
               onClick={(e) => e.stopPropagation()}
             />
-            <div className="editor-cancel" onClick={cancelEditExcerpt}>
-              <DismissRegular className="edit-icon" />
+            <div className="citation-icon edit-cancel" onClick={cancelEditExcerpt}>
+              <DismissRegular className="icon" />
             </div>
-            <div onClick={updateExcerpt}>
-              <CheckmarkRegular className="edit-icon" />
+            <div className="citation-icon edit-save" onClick={updateExcerpt}>
+              <CheckmarkRegular className="icon" />
             </div>
           </>
         ) : (
@@ -111,31 +123,34 @@ export const CitationUX = ({
             </div>
             {review === Review.Unreviewed ? (
               <>
-                <div key="approve">
-                  <CheckmarkCircleFilled
-                    className="icon citation-icon approved off"
-                    onClick={dispatchUnlessAsyncing({
-                      type: "reviewCitation",
-                      review: Review.Approved,
-                      citationIndex,
-                    })}
-                  />
+                <div
+                  key="approve"
+                  className="citation-icon approved off hoverable"
+                  onClick={dispatchUnlessAsyncing({
+                    type: "reviewCitation",
+                    review: Review.Approved,
+                    citationIndex,
+                  })}
+                >
+                  {hoverableIcon(CheckmarkCircleFilled, CheckmarkCircleRegular)}
                 </div>
-                <div key="reject">
-                  <DismissCircleFilled
-                    className="icon citation-icon rejected off"
-                    onClick={dispatchUnlessAsyncing({
-                      type: "reviewCitation",
-                      review: Review.Rejected,
-                      citationIndex,
-                    })}
-                  />
+                <div
+                  key="reject"
+                  className="citation-icon rejected off hoverable"
+                  onClick={dispatchUnlessAsyncing({
+                    type: "reviewCitation",
+                    review: Review.Rejected,
+                    citationIndex,
+                  })}
+                >
+                  {hoverableIcon(DismissCircleFilled, DismissCircleRegular)}
                 </div>
-                <div key="edit">
-                  <EditFilled
-                    className="icon citation-icon edit"
-                    onClick={startEditExcerpt}
-                  />
+                <div
+                  key="edit"
+                  className="citation-icon edit-start hoverable"
+                  onClick={startEditExcerpt}
+                >
+                  {hoverableIcon(EditFilled, EditRegular)}
                 </div>
               </>
             ) : review === Review.Approved ? (
