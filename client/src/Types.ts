@@ -59,7 +59,6 @@ export type Action =
     }
   | {
       type: "updateExcerpt";
-      citationIndex: number;
       excerpt: string;
     }
   | {

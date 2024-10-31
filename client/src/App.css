@@ -24,6 +24,7 @@
   --color-reject: #f07070;
   --color-highlight: #00acdc;
   --color-edit: #ffa500;
+  --color-edit-hover: black;
 
   --color-icon: light-dark(#808080, #b6b6b6);
 
@@ -257,6 +258,7 @@ button:focus-visible {
     color: var(--color-text-page-active);
   }
   &.unselected:hover {
+    cursor: pointer;
     background-color: var(--color-page-hover);
     .top-right {
       div {
@@ -309,6 +311,7 @@ button:focus-visible {
     }
   }
   &.unselected:hover {
+    cursor: pointer;
     .citation-excerpt {
       border-radius: 4px;
       border-color: var(--color-highlight);
@@ -333,7 +336,7 @@ button:focus-visible {
       resize: none;
       font-family: inherit;
       font-size: 100%;
-      margin: -2px 0 -4px -2px;
+      margin: -2px 0 -9px -2px;
       outline: none;
     }
     .editor-cancel {
@@ -343,6 +346,7 @@ button:focus-visible {
 }
 
 .citation-icon {
+  color: var(--color-icon);
   &.approved {
     &.on {
       color: var(--color-approve);
@@ -351,7 +355,6 @@ button:focus-visible {
       }
     }
     &.off {
-      color: var(--color-icon);
       :hover {
         color: var(--color-approve);
       }
@@ -365,7 +368,6 @@ button:focus-visible {
       }
     }
     &.off {
-      color: var(--color-icon);
       :hover {
         color: var(--color-reject);
       }
@@ -375,23 +377,39 @@ button:focus-visible {
     color: var(--color-highlight);
   }
   &.edit-start {
-    color: var(--color-icon);
     :hover {
       color: var(--color-edit);
     }
   }
   &.edit-cancel {
     grid-column: 5;
-    color: var(--color-icon);
     :hover {
-      color: black;
-    }    
+      color: var(--color-edit-hover);
+    }
   }
   &.edit-save {
-    color: var(--color-icon);
     :hover {
-      color: black;
+      color: var(--color-edit-hover);
     }
+  }
+  &.hoverable {
+    .hover {
+      display: none;
+    }
+    .default {
+      display: block;
+    }
+    &:hover {
+      .hover {
+        display: block;
+      }
+      .default {
+        display: none;
+      }
+    }
+  }
+  &:hover {
+    cursor: pointer;
   }
 }
 
@@ -412,27 +430,9 @@ button:focus-visible {
 }
 
 .icon {
+  pointer-events: all;
   height: 100%;
   width: 100%;
-  pointer-events: all;
-}
-
-.hoverable {
-  .filled {
-    display: none;
-  }
-  .regular {
-    display: block;
-  }
-  &:hover {
-    cursor: pointer;
-    .filled {
-      display: block;
-    }
-    .regular {
-      display: none;
-    }
-  }
 }
 
 .buttons {
