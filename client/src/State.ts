@@ -410,10 +410,12 @@ const stateAtom = atom<State, [Action], void>(
 
               case "updateExcerpt": {
                 console.assert(!isAsyncing);
+                console.assert(ux.selectedCitation !== undefined);
                 console.assert(ux.selectedCitation?.editing !== undefined);
                 ux.selectedCitation!.editing = undefined;
 
-                const { excerpt, citationIndex } = action;
+                const { excerpt } = action;
+                const { citationIndex } = ux.selectedCitation!;
 
                 const citation =
                   questions[ux.questionIndex].citations[citationIndex];
@@ -421,7 +423,6 @@ const stateAtom = atom<State, [Action], void>(
                 if (citation.excerpt === excerpt) return;
 
                 citation.excerpt = excerpt;
-
 
                 setAsync({
                   event: {
