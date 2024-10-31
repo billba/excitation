@@ -128,22 +128,27 @@ export const CitationUX = ({
     [citationIndex, dispatchUnlessAsyncing, hoverableIcon]
   );
 
-  const Edit = useMemo(() => () => (
-    <div
-  key="edit"
-  className="citation-icon edit-start hoverable"
-  onClick={startEditExcerpt}
->
-  {hoverableIcon(EditRegular, EditFilled)}
-    </div>
-  ), [startEditExcerpt, hoverableIcon]);
+  const Edit = useMemo(
+    () => () =>
+      (
+        <div
+          key="edit"
+          className="citation-icon edit-start hoverable"
+          onClick={startEditExcerpt}
+        >
+          {hoverableIcon(EditRegular, EditFilled)}
+        </div>
+      ),
+    [startEditExcerpt, hoverableIcon]
+  );
 
   const Unreviewed = useMemo(
-    () => () => (
-      <div className="icon citation-icon unreviewed">
-        <CircleRegular className="icon" />
-      </div>
-    ),
+    () => () =>
+      (
+        <div className="icon citation-icon unreviewed">
+          <CircleRegular className="icon" />
+        </div>
+      ),
     []
   );
 
