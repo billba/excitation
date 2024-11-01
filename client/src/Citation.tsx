@@ -12,7 +12,7 @@ import {
   FluentIcon,
 } from "@fluentui/react-icons";
 
-import { useDispatchHandler } from "./Hooks";
+import { useDispatchHandler, useStopProp } from "./Hooks";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatchAppState } from "./State";
 
@@ -186,6 +186,8 @@ export const CitationUX = ({
     [citationIndex, dispatchUnlessAsyncing, hoverableIcon]
   );
 
+  const stopProp = useStopProp();
+
   return (
     <div
       className={`citation ${selected ? "selected" : "unselected"}`}
@@ -204,7 +206,7 @@ export const CitationUX = ({
               style={{ height }}
               value={editExcerpt}
               onChange={onChangeExcerpt}
-              onClick={(e) => e.stopPropagation()}
+              onClick={stopProp}
             />
             <div
               className="citation-icon edit-cancel"
