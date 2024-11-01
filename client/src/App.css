@@ -29,6 +29,7 @@
   --color-icon: light-dark(#808080, #b6b6b6);
 
   --rounding-height: 3px;
+  --icon-size: 30px;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -319,7 +320,7 @@ button:focus-visible {
   }
   &.selected {
     grid-column-end: 5;
-    grid-template-columns: 10% 10% 10% 50% 10% 10%;
+    grid-template-columns: var(--icon-size) var(--icon-size) var(--icon-size) auto var(--icon-size) var(--icon-size);
     padding: 0 4px 0 4px;
     border: solid 1.5px var(--color-highlight);
     border-radius: 7px;
@@ -376,40 +377,43 @@ button:focus-visible {
   &.unreviewed {
     color: var(--color-highlight);
   }
-  &.edit-start {
-    :hover {
-      color: var(--color-edit);
-    }
-  }
   &.edit-cancel {
     grid-column: 5;
-    :hover {
-      color: var(--color-edit-hover);
-    }
-  }
-  &.edit-save {
-    :hover {
-      color: var(--color-edit-hover);
-    }
-  }
-  &.hoverable {
-    .hover {
-      display: none;
-    }
-    .default {
-      display: block;
-    }
-    &:hover {
-      .hover {
-        display: block;
-      }
-      .default {
-        display: none;
-      }
-    }
   }
   &:hover {
     cursor: pointer;
+  }
+}
+
+.edit-start {
+  :hover {
+    color: var(--color-edit);
+  }
+}
+.edit-cancel {
+  :hover {
+    color: var(--color-edit-hover);
+  }
+}
+.edit-save {
+  :hover {
+    color: var(--color-edit-hover);
+  }
+}
+.hoverable {
+  .hover {
+    display: none;
+  }
+  .default {
+    display: block;
+  }
+  &:hover {
+    .hover {
+      display: block;
+    }
+    .default {
+      display: none;
+    }
   }
 }
 
@@ -437,4 +441,50 @@ button:focus-visible {
 
 .buttons {
   grid-column: 2 / 6;
+  padding-right: 15px;
+}
+
+#answer {
+  display: grid;
+  grid-template-columns: var(--icon-size) auto var(--icon-size) var(--icon-size);
+
+  .h4 {
+    grid-column: 1 / 5;
+  }
+}
+
+.answer-icon {
+  color: var(--color-icon);
+  &.edit-cancel {
+    grid-column:3;
+  }
+  &:hover {
+    cursor: pointer;
+  }
+}
+
+.answer-section {
+  grid-column: 1 / 5;
+}
+
+#edit-answer {
+  grid-column: 1 / 5;
+  width: 100%;
+  line-height: inherit;
+  /* background-color: transparent; */
+  /* border: none; */
+  overflow: none;
+  resize: vertical;
+  font-family: inherit;
+  font-size: 100%;
+  /* margin: -2px 0 -9px -2px; */
+  outline: none;
+}
+
+.action {
+  color: blue;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
 }

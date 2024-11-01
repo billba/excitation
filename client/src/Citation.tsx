@@ -24,6 +24,16 @@ interface Props {
   editing: true | undefined; // is this citation currently being edited?
 }
 
+export const useHoverableIcon = () => useCallback(
+  (DefaultIcon: FluentIcon, HoverIcon: FluentIcon) => (
+    <>
+      <DefaultIcon className="icon default" />
+      <HoverIcon className="icon hover" />
+    </>
+  ),
+  []
+);
+
 export const CitationUX = ({
   citationIndex,
   excerpt,
@@ -82,15 +92,7 @@ export const CitationUX = ({
     }
   }, [editing]);
 
-  const hoverableIcon = useCallback(
-    (DefaultIcon: FluentIcon, HoverIcon: FluentIcon) => (
-      <>
-        <DefaultIcon className="icon default" />
-        <HoverIcon className="icon hover" />
-      </>
-    ),
-    []
-  );
+  const hoverableIcon = useHoverableIcon();
 
   const Approve = useMemo(
     () => () =>

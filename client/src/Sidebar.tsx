@@ -1,12 +1,23 @@
 import { docs, useAppState, sortBy } from "./State";
-import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
-import { Citation } from "./Types";
-import { CitationUX } from "./Citation";
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Citation, Review } from "./Types";
+import { CitationUX, useHoverableIcon } from "./Citation";
 import {
   DocumentRegular,
   DocumentOnePageRegular,
   DocumentOnePageMultipleRegular,
   DocumentOnePageAddRegular,
+  DismissRegular,
+  CheckmarkRegular,
+  EditRegular,
+  EditFilled,
 } from "@fluentui/react-icons";
 import { useAsyncHelper, useDispatchHandler, useStopProp } from "./Hooks";
 import { SidebarHeader } from "./SidebarHeader";
@@ -132,6 +143,10 @@ export function Sidebar() {
     [citations, pageNumber, documentId, selectedCitation]
   );
 
+  const unreviewedCitations = citations.filter(
+    ({ review }) => review === Review.Unreviewed
+  );
+
   const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
 
   const addSelection = useCallback(
@@ -143,7 +158,7 @@ export function Sidebar() {
     [dispatch]
   );
 
-  const answerRef = useRef<HTMLDivElement>(null);
+  const answerRef = useRef<HTMLTextAreaElement>(null);
   const [editAnswer, setEditAnswer] = useState<string | undefined>(undefined);
 
   const startEditAnswer = useCallback(
@@ -179,6 +194,29 @@ export function Sidebar() {
       e.stopPropagation();
     },
     [dispatch, editAnswer]
+  );
+
+  useEffect(() => {
+    if (editingAnswer && answerRef.current) {
+      answerRef.current.focus();
+      answerRef.current.select();
+    }
+  }, [editingAnswer]);
+
+  const hoverableIcon = useHoverableIcon();
+
+  const Edit = useMemo(
+    () => () =>
+      (
+        <div
+          key="edit"
+          className="answer-icon edit-start hoverable"
+          onClick={startEditAnswer}
+        >
+          {hoverableIcon(EditRegular, EditFilled)}
+        </div>
+      ),
+    [startEditAnswer, hoverableIcon]
   );
 
   return (
@@ -268,12 +306,6 @@ export function Sidebar() {
           }
         )}
         <div className="buttons" key="buttons">
-          <button
-            onClick={addSelection}
-            disabled={isAsyncing || ux.range == undefined}
-          >
-            add selection
-          </button>
           {isError && (
             <div>
               &nbsp;
@@ -286,30 +318,66 @@ export function Sidebar() {
               </button>
             </div>
           )}
-          <br />
-          <br />
-          {editingAnswer ? (
-            <>
-              <textarea
-                ref={answerRef}
-                className="answer"
-                value={editAnswer}
-                onChange={onChangeAnswer}
-                onClick={stopProp}
-              />
-              <div onClick={cancelEditAnswer}>Cancel</div>
-              <div onClick={updateAnswer}>Save</div>
-            </>
-          ) : answer === undefined ? (
-            <div onClick={startEditAnswer}>Answer the question</div>
-          ) : (
-            <>
-              <h4>Answer</h4>
-              <div>{answer}</div>
-              <div onClick={startEditAnswer}>Edit</div>
-            </>
-          )}
-
+          <div id="answer">
+            <h4>Answer</h4>
+            {editingAnswer ? (
+              <>
+                <textarea
+                  ref={answerRef}
+                  id="edit-answer"
+                  value={editAnswer}
+                  onChange={onChangeAnswer}
+                  onClick={stopProp}
+                />
+                <div
+                  className="answer-icon edit-cancel"
+                  onClick={cancelEditAnswer}
+                >
+                  <DismissRegular className="icon" />
+                </div>
+                <div className="answer-icon edit-save" onClick={updateAnswer}>
+                  <CheckmarkRegular className="icon" />
+                </div>
+              </>
+            ) : unreviewedCitations.length ? (
+              <div className="answer-section">
+                Before you can answer the question you must review all suggested
+                citations.
+              </div>
+            ) : answer === undefined ? (
+              <>
+                <div className="answer-section">
+                  You have reviewed all the suggested citations for this question. You can still
+                  manually add additional citations by navigating the documents,
+                  selecting relevant text, and
+                  {isAsyncing || ux.range == undefined ? (
+                    " clicking here"
+                  ) : (
+                    <>
+                      &nbsp;
+                      <span className="action" onClick={addSelection}>
+                        clicking here
+                      </span>
+                    </>
+                  )}
+                  .
+                    </div>
+                    <br/>
+                <div className="answer-section">
+                  When you are ready, you can&nbsp;
+                  <span className="action" onClick={startEditAnswer}>
+                    answer the question
+                  </span>
+                  .
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="answer-section">{answer}</div>
+                <Edit />
+              </>
+            )}
+          </div>
           <br />
           <br />
           <br />
