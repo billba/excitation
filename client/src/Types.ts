@@ -67,6 +67,35 @@ export type Action =
       citationIndex: number;
     }
   | {
+      type: "startEditAnswer";
+    }
+  | {
+      type: "cancelEditAnswer";
+    }
+  | {
+      type: "updateAnswer";
+      answer: string;
+    }
+  | {
+      type: "errorUpdateAnswer";
+      questionIndex: number;
+    }
+  | {
+      type: "startEditExcerpt";
+    }
+  | {
+      type: "cancelEditExcerpt";
+    }
+  | {
+      type: "updateExcerpt";
+      excerpt: string;
+    }
+  | {
+      type: "errorUpdateExcerpt";
+      questionIndex: number;
+      citationIndex: number;
+    }
+  | {
       type: "asyncLoading";
     }
   | {
@@ -133,6 +162,7 @@ export interface UXState {
   documentId?: number;
   pageNumber?: number;
   range?: SerializedRange;
+  editingAnswer?: true;
   selectedCitation?: {
     citationIndex: number;
     citationHighlights: CitationHighlight[];
@@ -167,6 +197,7 @@ export interface Question {
   prefix?: string;
   text: string;
   citations: Citation[];
+  answer?: string;
 }
 
 export interface ViewerState {
@@ -219,6 +250,13 @@ export type Event =
       type: "updateExcerpt";
       citationId: string;
       excerpt: string;
+      creator: string;
+    }
+  | {
+    type: "updateAnswer";
+      formId: number;
+      questionId: number;
+      answer: string;
       creator: string;
     }
   | {

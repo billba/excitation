@@ -1,5 +1,5 @@
 import { docs, useAppState, sortBy } from "./State";
-import { ReactNode, useCallback, useMemo } from "react";
+import { ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import {
@@ -8,7 +8,7 @@ import {
   DocumentOnePageMultipleRegular,
   DocumentOnePageAddRegular,
 } from "@fluentui/react-icons";
-import { useAsyncHelper, useDispatchHandler } from "./Hooks";
+import { useAsyncHelper, useDispatchHandler, useStopProp } from "./Hooks";
 import { SidebarHeader } from "./SidebarHeader";
 
 const maxPageNumber = 1000;
@@ -20,8 +20,9 @@ interface PageGroup {
   citationIndices: number[];
 }
 
-const sortIndex = sortBy(({ firstPage, lastPage }: PageGroup) =>
-  firstPage * maxPageNumber + lastPage);
+const sortIndex = sortBy(
+  ({ firstPage, lastPage }: PageGroup) => firstPage * maxPageNumber + lastPage
+);
 
 // const sortCitation = (questionCitations: Citation[]) => sortBy((citationIndex: number) => {
 //   const { review } = questionCitations[citationIndex];
@@ -31,11 +32,18 @@ const sortIndex = sortBy(({ firstPage, lastPage }: PageGroup) =>
 export function Sidebar() {
   const [state, dispatch] = useAppState();
   const { questions, ux } = state;
-  const { pageNumber, questionIndex, selectedCitation, documentId } = ux;
-
-  const { citations } = questions[questionIndex];
+  const {
+    pageNumber,
+    questionIndex,
+    selectedCitation,
+    documentId,
+    editingAnswer,
+  } = ux;
+  const question = questions[questionIndex];
+  const { citations, answer } = question;
 
   const { isAsyncing, isError } = useAsyncHelper();
+  const stopProp = useStopProp();
 
   const groupedCitations = useMemo(
     () =>
@@ -94,7 +102,9 @@ export function Sidebar() {
               docSelected &&
               (selectedCitation
                 ? citationIndices.includes(selectedCitation.citationIndex)
-                : pageNumber !== undefined && pageNumber >= firstPage && pageNumber <= lastPage);
+                : pageNumber !== undefined &&
+                  pageNumber >= firstPage &&
+                  pageNumber <= lastPage);
             return {
               firstPage,
               lastPage,
@@ -133,6 +143,44 @@ export function Sidebar() {
     [dispatch]
   );
 
+  const answerRef = useRef<HTMLDivElement>(null);
+  const [editAnswer, setEditAnswer] = useState<string | undefined>(undefined);
+
+  const startEditAnswer = useCallback(
+    (e: React.MouseEvent) => {
+      setEditAnswer(answer);
+      dispatch({ type: "startEditAnswer" });
+      e.stopPropagation();
+    },
+    [dispatch, setEditAnswer, answer]
+  );
+
+  const cancelEditAnswer = useCallback(
+    (e: React.MouseEvent) => {
+      setEditAnswer(undefined);
+      dispatch({ type: "cancelEditAnswer" });
+      e.stopPropagation();
+    },
+    [dispatch]
+  );
+
+  const onChangeAnswer = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setEditAnswer(e.target.value);
+      e.stopPropagation();
+    },
+    []
+  );
+
+  const updateAnswer = useCallback(
+    (e: React.MouseEvent) => {
+      dispatch({ type: "updateAnswer", answer: editAnswer! });
+      setEditAnswer(undefined);
+      e.stopPropagation();
+    },
+    [dispatch, editAnswer]
+  );
+
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
       <SidebarHeader />
@@ -163,14 +211,17 @@ export function Sidebar() {
                     name={name ?? pdfUrl}
                   />
                   {pageGroups.map(
-                    ({
-                      firstPage,
-                      lastPage,
-                      citationIndices,
-                      pageGroupSelected,
-                      prevPageGroupSelected,
-                      nextPageGroupSelected,
-                    }, key) => (
+                    (
+                      {
+                        firstPage,
+                        lastPage,
+                        citationIndices,
+                        pageGroupSelected,
+                        prevPageGroupSelected,
+                        nextPageGroupSelected,
+                      },
+                      key
+                    ) => (
                       <PageGroupHeader
                         documentId={docSelected ? undefined : documentId}
                         firstPage={firstPage}
@@ -237,6 +288,28 @@ export function Sidebar() {
           )}
           <br />
           <br />
+          {editingAnswer ? (
+            <>
+              <textarea
+                ref={answerRef}
+                className="answer"
+                value={editAnswer}
+                onChange={onChangeAnswer}
+                onClick={stopProp}
+              />
+              <div onClick={cancelEditAnswer}>Cancel</div>
+              <div onClick={updateAnswer}>Save</div>
+            </>
+          ) : answer === undefined ? (
+            <div onClick={startEditAnswer}>Answer the question</div>
+          ) : (
+            <>
+              <h4>Answer</h4>
+              <div>{answer}</div>
+              <div onClick={startEditAnswer}>Edit</div>
+            </>
+          )}
+
           <br />
           <br />
           <br />
@@ -333,7 +406,9 @@ const PageGroupHeader = ({
       key={firstPage * maxPageNumber + lastPage}
     >
       <div
-        className={`page-header ${pageGroupSelected ? "selected" : "unselected"}`}
+        className={`page-header ${
+          pageGroupSelected ? "selected" : "unselected"
+        }`}
         onClick={
           pageGroupSelected
             ? undefined
