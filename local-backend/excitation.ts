@@ -16,6 +16,7 @@ export interface Form {
   templateId: number;
   documentIds: number[];
   citations: Citation[][];
+  answers: (string | undefined)[];
 }
 
 interface FormMetadata {
@@ -98,6 +99,13 @@ export type Event =
       creator: string;
     }
   | {
+      type: "updateAnswer";
+      formId: number;
+      questionId: number;
+      answer: string;
+      creator: string;
+    }
+  | {
       type: "updateBounds";
       citationId: string;
       bounds: Bounds[];
@@ -130,6 +138,7 @@ export function getClientForm(formId: number): ClientForm {
       return {
         ...question,
         citations: form.citations[i],
+        answer: form.answers[i],
       };
     }),
   };
@@ -159,6 +168,7 @@ export function getClientFormFromBootstrap(
         citationId: `${formId}-${questionIndex}-${citationIndex}`,
       }))
     ),
+    answers: [],
   });
 
   return formId;
@@ -239,6 +249,22 @@ export async function dispatchEvent(event: Event) {
       if (!citation) throw new Error(`Citation ${event.citationId} not found`);
 
       citation.excerpt = event.excerpt;
+      break;
+    }
+      
+    case "updateAnswer": {
+      if (await isError())
+        throw new Error(
+          `Congratulations, you asked for an error and you got one!`
+        );
+      
+      const { formId, questionId, answer } = event;
+      const form = forms[formId];
+      if (!form) throw new Error(`Form ${formId} not found`);
+      if (questionId > templates[form.templateId].questions.length - 1) throw new Error(`Form ${formId} doesn't have a question with id ${questionId}`);
+
+      form.answers[questionId] = answer;
+
       break;
     }
 

@@ -17,7 +17,7 @@ export const SidebarHeader = () => {
 
   return (
     <div id="sidebar-header">
-      <p>Please provide evidence for the following question:</p>
+      <p/>
       <div id="sidebar-question-nav">
         <TriangleLeftFilled
           className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
@@ -42,7 +42,6 @@ export const SidebarHeader = () => {
           }
         />
       </div>
-      <br />
     </div>
   );
 }

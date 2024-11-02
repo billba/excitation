@@ -43,3 +43,7 @@ export const useAsyncHelper = () => {
   const { asyncState } = useAppStateValue();
   return asyncHelpers(asyncState);
 }
+
+export const useStopProp = () => {
+  return useCallback((e: React.MouseEvent) => e.stopPropagation(), []);
+}

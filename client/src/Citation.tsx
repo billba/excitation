@@ -9,10 +9,10 @@ import {
   EditRegular,
   CheckmarkRegular,
   DismissRegular,
-  FluentIcon,
 } from "@fluentui/react-icons";
 
-import { useDispatchHandler } from "./Hooks";
+import { useDispatchHandler, useStopProp } from "./Hooks";
+import { useHoverableIcon } from "./Hooks.tsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatchAppState } from "./State";
 
@@ -82,22 +82,14 @@ export const CitationUX = ({
     }
   }, [editing]);
 
-  const hoverableIcon = useCallback(
-    (DefaultIcon: FluentIcon, HoverIcon: FluentIcon) => (
-      <>
-        <DefaultIcon className="icon default" />
-        <HoverIcon className="icon hover" />
-      </>
-    ),
-    []
-  );
+  const hoverableIcon = useHoverableIcon();
 
   const Approve = useMemo(
     () => () =>
       (
         <div
           key="approve"
-          className="citation-icon approved off hoverable"
+          className="icon-container approved off hoverable"
           onClick={dispatchUnlessAsyncing({
             type: "reviewCitation",
             review: Review.Approved,
@@ -115,7 +107,7 @@ export const CitationUX = ({
       (
         <div
           key="reject"
-          className="citation-icon rejected off hoverable"
+          className="icon-container rejected off hoverable"
           onClick={dispatchUnlessAsyncing({
             type: "reviewCitation",
             review: Review.Rejected,
@@ -133,7 +125,7 @@ export const CitationUX = ({
       (
         <div
           key="edit"
-          className="citation-icon edit-start hoverable"
+          className="icon-container edit-start hoverable"
           onClick={startEditExcerpt}
         >
           {hoverableIcon(EditRegular, EditFilled)}
@@ -145,7 +137,7 @@ export const CitationUX = ({
   const Unreviewed = useMemo(
     () => () =>
       (
-        <div className="icon citation-icon unreviewed">
+        <div className="icon icon-container unreviewed">
           <CircleRegular className="icon" />
         </div>
       ),
@@ -156,7 +148,7 @@ export const CitationUX = ({
     () => () =>
       (
         <div
-          className="citation-icon approved on hoverable"
+          className="icon-container approved on hoverable"
           onClick={dispatchUnlessAsyncing({
             type: "reviewCitation",
             review: Review.Unreviewed,
@@ -173,7 +165,7 @@ export const CitationUX = ({
     () => () =>
       (
         <div
-          className="citation-icon rejected on hoverable"
+          className="icon-container rejected on hoverable"
           onClick={dispatchUnlessAsyncing({
             type: "reviewCitation",
             review: Review.Unreviewed,
@@ -185,6 +177,8 @@ export const CitationUX = ({
       ),
     [citationIndex, dispatchUnlessAsyncing, hoverableIcon]
   );
+
+  const stopProp = useStopProp();
 
   return (
     <div
@@ -204,15 +198,15 @@ export const CitationUX = ({
               style={{ height }}
               value={editExcerpt}
               onChange={onChangeExcerpt}
-              onClick={(e) => e.stopPropagation()}
+              onClick={stopProp}
             />
             <div
-              className="citation-icon edit-cancel"
+              className="icon-container edit-cancel"
               onClick={cancelEditExcerpt}
             >
               <DismissRegular className="icon" />
             </div>
-            <div className="citation-icon edit-save" onClick={updateExcerpt}>
+            <div className="icon-container edit-save" onClick={updateExcerpt}>
               <CheckmarkRegular className="icon" />
             </div>
           </>
