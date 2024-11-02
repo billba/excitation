@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { Citation, Review } from "./Types";
-import { CitationUX, useHoverableIcon } from "./Citation";
+import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
   DocumentOnePageRegular,
@@ -19,7 +19,14 @@ import {
   EditRegular,
   EditFilled,
 } from "@fluentui/react-icons";
-import { useAsyncHelper, useDispatchHandler, useStopProp } from "./Hooks";
+import {
+  useAsyncHelper,
+  useDispatchHandler,
+  useStopProp,
+} from "./Hooks";
+import {
+  useHoverableIcon,
+} from './Hooks.tsx';
 import { SidebarHeader } from "./SidebarHeader";
 
 const maxPageNumber = 1000;
@@ -210,7 +217,7 @@ export function Sidebar() {
       (
         <div
           key="edit"
-          className="answer-icon edit-start hoverable"
+          className="icon-container edit-start hoverable"
           onClick={startEditAnswer}
         >
           {hoverableIcon(EditRegular, EditFilled)}
@@ -222,6 +229,8 @@ export function Sidebar() {
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
       <SidebarHeader />
+      <div className="sidebar-divider" />
+      <h4 id="citations-label">Citations</h4>
       <div className="sidebar-divider" />
       <div id="docs">
         {groupedCitations.map(
@@ -319,23 +328,41 @@ export function Sidebar() {
             </div>
           )}
           <div id="answer">
+            <div className="answer-section">
+              You can manually add additional citations by navigating the
+              documents, selecting relevant text, and
+              {isAsyncing || ux.range == undefined ? (
+                " clicking here"
+              ) : (
+                <>
+                  &nbsp;
+                  <span className="action" onClick={addSelection}>
+                    clicking here
+                  </span>
+                </>
+              )}
+            </div>
             <h4>Answer</h4>
             {editingAnswer ? (
               <>
                 <textarea
                   ref={answerRef}
+                  className="answer-section"
                   id="edit-answer"
                   value={editAnswer}
                   onChange={onChangeAnswer}
                   onClick={stopProp}
                 />
                 <div
-                  className="answer-icon edit-cancel"
+                  className="icon-container edit-cancel"
                   onClick={cancelEditAnswer}
                 >
                   <DismissRegular className="icon" />
                 </div>
-                <div className="answer-icon edit-save" onClick={updateAnswer}>
+                <div
+                  className="icon-container edit-save"
+                  onClick={updateAnswer}
+                >
                   <CheckmarkRegular className="icon" />
                 </div>
               </>
@@ -346,23 +373,6 @@ export function Sidebar() {
               </div>
             ) : answer === undefined ? (
               <>
-                <div className="answer-section">
-                  You have reviewed all the suggested citations for this question. You can still
-                  manually add additional citations by navigating the documents,
-                  selecting relevant text, and
-                  {isAsyncing || ux.range == undefined ? (
-                    " clicking here"
-                  ) : (
-                    <>
-                      &nbsp;
-                      <span className="action" onClick={addSelection}>
-                        clicking here
-                      </span>
-                    </>
-                  )}
-                  .
-                    </div>
-                    <br/>
                 <div className="answer-section">
                   When you are ready, you can&nbsp;
                   <span className="action" onClick={startEditAnswer}>

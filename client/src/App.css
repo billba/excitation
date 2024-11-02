@@ -144,6 +144,10 @@ button:focus-visible {
   user-select: none;
 }
 
+#citations-label {
+  grid-column: 2 / 6;
+}
+
 #sidebar-header {
   grid-column: 2/ 6;
   margin: 0 10px 0 10px;
@@ -340,66 +344,73 @@ button:focus-visible {
       margin: -2px 0 -9px -2px;
       outline: none;
     }
-    .editor-cancel {
+    .edit-cancel {
       grid-column: 5;
     }
   }
 }
 
-.citation-icon {
-  color: var(--color-icon);
-  &.approved {
-    &.on {
-      color: var(--color-approve);
-      :hover {
-        color: var(--color-icon);
-      }
-    }
-    &.off {
-      :hover {
-        color: var(--color-approve);
-      }
-    }
-  }
-  &.rejected {
-    &.on {
-      color: var(--color-reject);
-      :hover {
-        color: var(--color-icon);
-      }
-    }
-    &.off {
-      :hover {
-        color: var(--color-reject);
-      }
-    }
-  }
-  &.unreviewed {
-    color: var(--color-highlight);
-  }
-  &.edit-cancel {
-    grid-column: 5;
-  }
+.icon-container {
   &:hover {
     cursor: pointer;
   }
 }
 
+.unreviewed {
+  color: var(--color-highlight);
+}
+
+.approved {
+  &.on {
+    color: var(--color-approve);
+    :hover {
+      color: var(--color-icon);
+    }
+  }
+  &.off {
+    color: var(--color-icon);
+    :hover {
+      color: var(--color-approve);
+    }
+  }
+}
+
+.rejected {
+  &.on {
+    color: var(--color-reject);
+    :hover {
+      color: var(--color-icon);
+    }
+  }
+  &.off {
+    color: var(--color-icon);
+    :hover {
+      color: var(--color-reject);
+    }
+  }
+}
+
 .edit-start {
+  color: var(--color-icon);
   :hover {
     color: var(--color-edit);
   }
 }
+
 .edit-cancel {
+  color: var(--color-icon);
   :hover {
     color: var(--color-edit-hover);
   }
 }
+
 .edit-save {
+  color: var(--color-icon);
   :hover {
     color: var(--color-edit-hover);
   }
 }
+
 .hoverable {
   .hover {
     display: none;
@@ -447,19 +458,9 @@ button:focus-visible {
 #answer {
   display: grid;
   grid-template-columns: var(--icon-size) auto var(--icon-size) var(--icon-size);
-
-  .h4 {
-    grid-column: 1 / 5;
-  }
-}
-
-.answer-icon {
-  color: var(--color-icon);
-  &.edit-cancel {
-    grid-column:3;
-  }
-  &:hover {
-    cursor: pointer;
+  
+  .edit-cancel {
+    grid-column: 3;
   }
 }
 
@@ -468,16 +469,12 @@ button:focus-visible {
 }
 
 #edit-answer {
-  grid-column: 1 / 5;
   width: 100%;
   line-height: inherit;
-  /* background-color: transparent; */
-  /* border: none; */
   overflow: none;
   resize: vertical;
   font-family: inherit;
   font-size: 100%;
-  /* margin: -2px 0 -9px -2px; */
   outline: none;
 }
 
