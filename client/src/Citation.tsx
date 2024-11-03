@@ -82,56 +82,36 @@ export const CitationUX = ({
     }
   }, [editing]);
 
-  const hoverableIcon = useHoverableIcon();
-
-  const Approve = useMemo(
-    () => () =>
-      (
-        <div
-          key="approve"
-          className="icon-container approved off hoverable"
-          onClick={dispatchUnlessAsyncing({
-            type: "reviewCitation",
-            review: Review.Approved,
-            citationIndex,
-          })}
-        >
-          {hoverableIcon(CheckmarkCircleRegular, CheckmarkCircleFilled)}
-        </div>
-      ),
-    [citationIndex, dispatchUnlessAsyncing, hoverableIcon]
+  const Approve = useHoverableIcon(
+    CheckmarkCircleRegular,
+    CheckmarkCircleFilled,
+    "approve",
+    "approved off",
+    dispatchUnlessAsyncing({
+      type: "reviewCitation",
+      review: Review.Approved,
+      citationIndex,
+    })
   );
 
-  const Reject = useMemo(
-    () => () =>
-      (
-        <div
-          key="reject"
-          className="icon-container rejected off hoverable"
-          onClick={dispatchUnlessAsyncing({
-            type: "reviewCitation",
-            review: Review.Rejected,
-            citationIndex,
-          })}
-        >
-          {hoverableIcon(DismissCircleRegular, DismissCircleFilled)}
-        </div>
-      ),
-    [citationIndex, dispatchUnlessAsyncing, hoverableIcon]
+  const Reject = useHoverableIcon(
+    DismissCircleRegular,
+    DismissCircleFilled,
+    "reject",
+    "rejected off",
+    dispatchUnlessAsyncing({
+      type: "reviewCitation",
+      review: Review.Rejected,
+      citationIndex,
+    })
   );
-
-  const Edit = useMemo(
-    () => () =>
-      (
-        <div
-          key="edit"
-          className="icon-container edit-start hoverable"
-          onClick={startEditExcerpt}
-        >
-          {hoverableIcon(EditRegular, EditFilled)}
-        </div>
-      ),
-    [startEditExcerpt, hoverableIcon]
+    
+  const Edit = useHoverableIcon(
+    EditRegular,
+    EditFilled,
+    "edit",
+    "edit-start",
+    startEditExcerpt
   );
 
   const Unreviewed = useMemo(
@@ -144,38 +124,28 @@ export const CitationUX = ({
     []
   );
 
-  const Approved = useMemo(
-    () => () =>
-      (
-        <div
-          className="icon-container approved on hoverable"
-          onClick={dispatchUnlessAsyncing({
-            type: "reviewCitation",
-            review: Review.Unreviewed,
-            citationIndex,
-          })}
-        >
-          {hoverableIcon(CheckmarkCircleFilled, CheckmarkCircleRegular)}
-        </div>
-      ),
-    [citationIndex, dispatchUnlessAsyncing, hoverableIcon]
+  const Approved = useHoverableIcon(
+    CheckmarkCircleFilled,
+    CheckmarkCircleRegular,
+    "approved",
+    "approved on",
+    dispatchUnlessAsyncing({
+      type: "reviewCitation",
+      review: Review.Unreviewed,
+      citationIndex,
+    })
   );
-
-  const Rejected = useMemo(
-    () => () =>
-      (
-        <div
-          className="icon-container rejected on hoverable"
-          onClick={dispatchUnlessAsyncing({
-            type: "reviewCitation",
-            review: Review.Unreviewed,
-            citationIndex,
-          })}
-        >
-          {hoverableIcon(DismissCircleFilled, DismissCircleRegular)}
-        </div>
-      ),
-    [citationIndex, dispatchUnlessAsyncing, hoverableIcon]
+    
+  const Rejected = useHoverableIcon(
+    DismissCircleFilled,
+    DismissCircleRegular,
+    "rejected",
+    "rejected on",
+    dispatchUnlessAsyncing({
+      type: "reviewCitation",
+      review: Review.Unreviewed,
+      citationIndex,
+    })
   );
 
   const stopProp = useStopProp();

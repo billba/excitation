@@ -210,20 +210,12 @@ export function Sidebar() {
     }
   }, [editingAnswer]);
 
-  const hoverableIcon = useHoverableIcon();
-
-  const Edit = useMemo(
-    () => () =>
-      (
-        <div
-          key="edit"
-          className="icon-container edit-start hoverable"
-          onClick={startEditAnswer}
-        >
-          {hoverableIcon(EditRegular, EditFilled)}
-        </div>
-      ),
-    [startEditAnswer, hoverableIcon]
+  const Edit = useHoverableIcon(
+    EditRegular,
+    EditFilled,
+    "edit",
+    "edit-start",
+    startEditAnswer
   );
 
   return (
