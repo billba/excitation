@@ -105,7 +105,7 @@ export const CitationUX = ({
       citationIndex,
     })
   );
-    
+
   const Edit = useHoverableIcon(
     EditRegular,
     EditFilled,
@@ -114,14 +114,10 @@ export const CitationUX = ({
     startEditExcerpt
   );
 
-  const Unreviewed = useMemo(
-    () => () =>
-      (
-        <div className="icon icon-container unreviewed">
-          <CircleRegular className="icon" />
-        </div>
-      ),
-    []
+  const Unreviewed = () => (
+    <div className="icon icon-container unreviewed">
+      <CircleRegular className="icon" />
+    </div>
   );
 
   const Approved = useHoverableIcon(
@@ -135,7 +131,7 @@ export const CitationUX = ({
       citationIndex,
     })
   );
-    
+
   const Rejected = useHoverableIcon(
     DismissCircleFilled,
     DismissCircleRegular,
