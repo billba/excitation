@@ -485,3 +485,16 @@ button:focus-visible {
     text-decoration: underline;
   }
 }
+
+.viewer-citations {
+  background-color: "transparent",
+}
+
+.viewer-citation-highlight {
+  display: grid;
+  grid-template-columns: var(--icon-size);
+  border-radius: var(--rounding-height);
+  border-width: 2px;
+  border-style: solid;
+  /* background-color: white; */
+}
