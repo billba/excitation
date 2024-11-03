@@ -13,7 +13,7 @@ import {
 
 import { useDispatchHandler, useStopProp } from "./Hooks";
 import { useHoverableIcon } from "./Hooks.tsx";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatchAppState } from "./State";
 
 interface Props {

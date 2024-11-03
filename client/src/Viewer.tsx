@@ -1,5 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Document, Page } from "react-pdf";
+import {
+  CheckmarkCircleFilled,
+  CheckmarkCircleRegular,
+} from "@fluentui/react-icons";
 
 import { docFromId, useAppState } from "./State";
 import {
@@ -8,15 +12,20 @@ import {
   compareRanges,
   SerializedRange,
 } from "./Range";
-import { useAsyncHelper } from "./Hooks";
+import { useAsyncHelper, useDispatchHandler } from "./Hooks";
+import { useHoverableIcon } from "./Hooks.tsx";
+import { Review } from "./Types";
+
+const colors = ["#00acdc", "#00ac00", "#f07070"];
 
 export function Viewer() {
-  const [{ ux }, dispatch] = useAppState();
+  const [{ ux, viewer, questions }, dispatch] = useAppState();
 
-  const { documentId } = ux;
+  const { documentId, questionIndex } = ux;
   const editing = ux.selectedCitation?.editing;
 
   const { isError } = useAsyncHelper();
+  const { dispatchUnlessAsyncing } = useDispatchHandler();
 
   const viewerRef = useRef<HTMLDivElement>(null);
 
@@ -50,14 +59,20 @@ export function Viewer() {
   }, [selectionChange, editing]);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const highlightCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
-  const [renderCounter, setRenderCounter] = useState(0); // make highlighting responsive to page rendering
-  const onRenderSuccess = useCallback(
-    () => setRenderCounter((c) => c + 1),
-    [setRenderCounter]
+  const updateViewerSize = useCallback(() => {
+    if (!canvasRef.current) return;
+
+    const { top, left, width, height } =
+      canvasRef.current.getBoundingClientRect();
+    dispatch({ type: "setViewerSize", top, left, width, height });
+  }, [dispatch]);
+
+  useEffect(
+    () => window.addEventListener("resize", updateViewerSize),
+    [updateViewerSize]
   );
 
   const range = documentId == undefined ? undefined : ux.range;
@@ -78,79 +93,37 @@ export function Viewer() {
     if (!realRange) return;
 
     selection.addRange(realRange);
-  }, [renderCounter, range]);
+  }, [range]);
 
-  const [resizeCounter, setResizeCounter] = useState(0); // make highlighting responsive to window resizing
-  useEffect(() => {
-    window.addEventListener("resize", () => setResizeCounter((c) => c + 1));
-  }, [setResizeCounter]);
+  const citation = ux.selectedCitation
+    ? questions[questionIndex].citations[ux.selectedCitation.citationIndex]
+    : undefined;
 
-  const polygons =
-    documentId != undefined &&
-    ux.selectedCitation?.citationHighlights.filter(
-      (citationHighlight) => citationHighlight.pageNumber == ux.pageNumber
-    )[0]?.polygons;
+  const polygons = ux.selectedCitation?.citationHighlights.filter(
+    (citationHighlight) => citationHighlight.pageNumber == ux.pageNumber
+  )[0]?.polygons;
 
-  useEffect(() => {
-    if (!polygons) return;
+  const review = citation?.review;
+  const color = colors[review || 0];
 
-    const canvas = canvasRef.current;
-    const highlightCanvas = highlightCanvasRef.current;
+  const multiple = 72;
+  const padding = 3;
 
-    if (!canvas || !highlightCanvas) return;
+  const citationIndex = ux.selectedCitation?.citationIndex;
 
-    const rect = canvas.getBoundingClientRect();
-
-    const { top, left, width, height } = rect;
-
-    highlightCanvas.style.top = top + window.scrollY + "px";
-    highlightCanvas.style.left = left + window.scrollX + "px";
-    highlightCanvas.style.width = rect.width + "px";
-    highlightCanvas.style.height = rect.height + "px";
-
-    highlightCanvas.width = canvas.width;
-    highlightCanvas.height = canvas.height;
-
-    dispatch({ type: "setViewerSize", top, left, width, height });
-
-    const context = highlightCanvas.getContext("2d")!;
-
-    context.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
-    context.strokeStyle = "#00acdc";
-    context.lineWidth = 2;
-
-    const multiplier = 72 * (window.devicePixelRatio || 1);
-    const padding = 3;
-
-    for (const polygon of polygons) {
-      context.beginPath();
-      context.moveTo(
-        polygon[0] * multiplier - padding,
-        polygon[1] * multiplier - padding
-      );
-      context.lineTo(
-        polygon[2] * multiplier + padding,
-        polygon[3] * multiplier - padding
-      );
-      context.lineTo(
-        polygon[4] * multiplier + padding,
-        polygon[5] * multiplier + padding
-      );
-      context.lineTo(
-        polygon[6] * multiplier - padding,
-        polygon[7] * multiplier + padding
-      );
-      context.closePath();
-      context.stroke();
-    }
-  }, [
-    dispatch,
-    canvasRef,
-    highlightCanvasRef,
-    polygons,
-    renderCounter, // the underlying PDF page canvas has changed
-    resizeCounter, // the window has resized
-  ]);
+  const Approved = useHoverableIcon(
+    CheckmarkCircleFilled,
+    CheckmarkCircleRegular,
+    "approve",
+    "approved on",
+    citationIndex
+      ? dispatchUnlessAsyncing({
+          type: "reviewCitation",
+          review: Review.Unreviewed,
+          citationIndex,
+        })
+      : undefined
+  );
 
   return (
     <div ref={viewerRef}>
@@ -173,20 +146,35 @@ export function Viewer() {
           <Page
             canvasRef={canvasRef}
             pageNumber={ux.pageNumber}
-            onRenderSuccess={onRenderSuccess}
+            onRenderSuccess={updateViewerSize}
           />
         </Document>
       )}
       {polygons && (
-        <canvas
-          ref={highlightCanvasRef}
-          id="highlight-canvas"
+        <div
+          className="viewer-citations"
           style={{
+            ... viewer,
             position: "absolute",
             zIndex: isError ? 1000 : 1,
-            opacity: 1,
           }}
-        />
+        >
+          {polygons.map((polygon, i) => (
+            <div
+              key={i}
+              className="viewer-citation-highlight"
+              style={{
+                position: "absolute",
+                color,
+                top: polygon[1] * multiple - padding,
+                left: polygon[0] * multiple - padding,
+                width: (polygon[4] - polygon[0]) * multiple + padding,
+                minHeight: (polygon[5] - polygon[1]) * multiple + padding,
+              }}
+            >
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
