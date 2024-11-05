@@ -151,10 +151,12 @@ const ViewerCitations = () => {
   const polygon = polygons[0];
 
   // for now we'll center the floater on top of the top polygon
-  const height = 40;
+  const height = 32;
+  const highlightWidth = (polygon[4] - polygon[0]) * multiple;
+  const highlightMiddle = polygon[0] * multiple + highlightWidth / 2;
+  const width = Math.max(80, highlightWidth);
   const top = polygon[1] * multiple - height;
-  const left = polygon[0] * multiple;
-  const width = (polygon[4] - polygon[0]) * multiple;
+  const left = highlightMiddle - width / 2;
 
   // const Unreviewed = () => (
   //   <div className="icon icon-container unreviewed">
@@ -203,6 +205,7 @@ const ViewerCitations = () => {
         review: Review.Approved,
         citationIndex,
       })}
+      floating={true}
     />
   );
 
@@ -217,6 +220,7 @@ const ViewerCitations = () => {
         review: Review.Rejected,
         citationIndex,
       })}
+      floating={true}
     />
   );
 
@@ -238,31 +242,28 @@ const ViewerCitations = () => {
         zIndex: 1000, //isError ? 1000 : 1,
       }}
     >
-      {polygons.map((polygon, i) => (
-        <div
-          key={i}
-          className="viewer-citation-highlight"
-          style={{
-            color,
-            top: polygon[1] * multiple - padding,
-            left: polygon[0] * multiple - padding,
-            width: (polygon[4] - polygon[0]) * multiple + padding,
-            minHeight: (polygon[5] - polygon[1]) * multiple + padding,
-          }}
-        ></div>
-      ))}
       <div
-        className="floater-container"
+        key="viewer-citation-highlight"
+        id="viewer-citation-highlight"
+        style={{
+          color,
+          top: polygon[1] * multiple - padding,
+          left: polygon[0] * multiple - padding,
+          width: (polygon[4] - polygon[0]) * multiple + padding,
+          minHeight: (polygon[5] - polygon[1]) * multiple + padding,
+        }}
+      />
+      <div
+        id="floater"
+        className={review === Review.Unreviewed ? "review" : "reviewed"}
         style={{ top, left, width, height, color }}
       >
         {review === Review.Unreviewed ? (
-          <div className="floater-review">
-            <Approve /> <Reject /> <Edit />
-          </div>
+          <>
+            <Approve /> <Reject />
+          </>
         ) : (
-          <div className="floater-reviewed">
-            {review === Review.Approved ? <Approved /> : <Rejected />}
-          </div>
+          <>{review === Review.Approved ? <Approved /> : <Rejected />}</>
         )}
       </div>
     </div>
