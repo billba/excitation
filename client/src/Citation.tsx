@@ -12,7 +12,7 @@ import {
 } from "@fluentui/react-icons";
 
 import { useDispatchHandler, useStopProp } from "./Hooks";
-import { useHoverableIcon } from "./Hooks.tsx";
+import { HoverableIcon } from "./Hooks.tsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatchAppState } from "./State";
 
@@ -82,67 +82,67 @@ export const CitationUX = ({
     }
   }, [editing]);
 
-  const Approve = useHoverableIcon(
-    CheckmarkCircleRegular,
-    CheckmarkCircleFilled,
-    "approve",
-    "approved off",
-    dispatchUnlessAsyncing({
+  const Approve = () => <HoverableIcon
+    DefaultIcon={CheckmarkCircleRegular}
+    HoverIcon={CheckmarkCircleFilled}
+    key="approve"
+    classes="approved off"
+    onClick={dispatchUnlessAsyncing({
       type: "reviewCitation",
       review: Review.Approved,
       citationIndex,
-    })
-  );
+    })}
+  />;
 
-  const Reject = useHoverableIcon(
-    DismissCircleRegular,
-    DismissCircleFilled,
-    "reject",
-    "rejected off",
-    dispatchUnlessAsyncing({
+  const Reject = () => <HoverableIcon
+    DefaultIcon={DismissCircleRegular}
+    HoverIcon={DismissCircleFilled}
+    key="reject"
+    classes="rejected off"
+    onClick={dispatchUnlessAsyncing({
       type: "reviewCitation",
       review: Review.Rejected,
       citationIndex,
-    })
-  );
+    })}
+  />;
 
-  const Edit = useHoverableIcon(
-    EditRegular,
-    EditFilled,
-    "edit",
-    "edit-start",
-    startEditExcerpt
-  );
+  const Edit = () => <HoverableIcon
+    DefaultIcon={EditRegular}
+    HoverIcon={EditFilled}
+    key="edit"
+    classes="edit-start"
+    onClick={startEditExcerpt}
+  />;
 
   const Unreviewed = () => (
-    <div className="icon icon-container unreviewed">
+    <div className="icon-container unreviewed">
       <CircleRegular className="icon" />
     </div>
   );
 
-  const Approved = useHoverableIcon(
-    CheckmarkCircleFilled,
-    CheckmarkCircleRegular,
-    "approved",
-    "approved on",
-    dispatchUnlessAsyncing({
+  const Approved = () => <HoverableIcon
+    DefaultIcon={CheckmarkCircleFilled}
+    HoverIcon={CheckmarkCircleRegular}
+    key="approved"
+    classes="approved on"
+    onClick={dispatchUnlessAsyncing({
       type: "reviewCitation",
       review: Review.Unreviewed,
       citationIndex,
-    })
-  );
+    })}
+  />; 
 
-  const Rejected = useHoverableIcon(
-    DismissCircleFilled,
-    DismissCircleRegular,
-    "rejected",
-    "rejected on",
-    dispatchUnlessAsyncing({
+  const Rejected = () => <HoverableIcon
+    DefaultIcon={DismissCircleFilled}
+    HoverIcon={DismissCircleRegular}
+    key="rejected"
+    classes="rejected on"
+    onClick={dispatchUnlessAsyncing({
       type: "reviewCitation",
       review: Review.Unreviewed,
       citationIndex,
-    })
-  );
+    })}
+  />;
 
   const stopProp = useStopProp();
 

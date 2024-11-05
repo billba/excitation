@@ -25,7 +25,7 @@ import {
   useStopProp,
 } from "./Hooks";
 import {
-  useHoverableIcon,
+  HoverableIcon,
 } from './Hooks.tsx';
 import { SidebarHeader } from "./SidebarHeader";
 
@@ -210,13 +210,13 @@ export function Sidebar() {
     }
   }, [editingAnswer]);
 
-  const Edit = useHoverableIcon(
-    EditRegular,
-    EditFilled,
-    "edit",
-    "edit-start",
-    startEditAnswer
-  );
+  const Edit = () => <HoverableIcon
+    DefaultIcon={EditRegular}
+    HoverIcon={EditFilled}
+    key="edit"
+    classes="edit off"
+    onClick={startEditAnswer}
+  />;
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
