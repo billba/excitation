@@ -70,6 +70,7 @@ button:focus-visible {
 }
 
 #app {
+  position: relative;
   display: grid;
   grid-template-columns: 400px auto;
   align-items: start;
@@ -88,11 +89,6 @@ button:focus-visible {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-}
-
-.navbar-filename {
-  width: fit-content;
-  margin: 0 auto;
 }
 
 .navbar-page {
@@ -351,7 +347,7 @@ button:focus-visible {
 }
 
 .icon-container {
-  &:hover {
+  :hover {
     cursor: pointer;
   }
 }
@@ -486,15 +482,51 @@ button:focus-visible {
   }
 }
 
+#viewer {
+}
+
 .viewer-citations {
+  position: absolute;
   background-color: "transparent",
 }
 
 .viewer-citation-highlight {
+  position: absolute;
   display: grid;
   grid-template-columns: var(--icon-size);
   border-radius: var(--rounding-height);
   border-width: 2px;
   border-style: solid;
-  /* background-color: white; */
+}
+
+.floater-container {
+  position: absolute;
+}
+
+.floater-review {
+  display: grid;
+  grid-template-columns: var(--icon-size) var(--icon-size) var(--icon-size);
+  width: fit-content;
+  margin: 0 auto;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: var(--rounding-height);
+  background-color: white;;
+}
+
+.floater-reviewed {
+  position: relative;
+  width: var(--icon-size);
+  min-height: var(--icon-size);
+  margin: 0 auto;
+}
+
+.floating {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+}
+
+.background {
+  color: white;
 }
