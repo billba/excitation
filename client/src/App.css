@@ -347,6 +347,7 @@ button:focus-visible {
 }
 
 .icon-container {
+  position: relative;
   :hover {
     cursor: pointer;
   }
@@ -360,11 +361,11 @@ button:focus-visible {
   &.on {
     color: var(--color-approve);
     :hover {
-      color: var(--color-icon);
+      color: var(--color-approve);
     }
   }
   &.off {
-    color: var(--color-icon);
+    color: var(--color-highlight);
     :hover {
       color: var(--color-approve);
     }
@@ -375,11 +376,11 @@ button:focus-visible {
   &.on {
     color: var(--color-reject);
     :hover {
-      color: var(--color-icon);
+      color: var(--color-reject);
     }
   }
   &.off {
-    color: var(--color-icon);
+    color: var(--color-highlight);
     :hover {
       color: var(--color-reject);
     }
@@ -454,7 +455,7 @@ button:focus-visible {
 #answer {
   display: grid;
   grid-template-columns: var(--icon-size) auto var(--icon-size) var(--icon-size);
-  
+
   .edit-cancel {
     grid-column: 3;
   }
@@ -487,38 +488,46 @@ button:focus-visible {
 
 .viewer-citations {
   position: absolute;
-  background-color: "transparent",
+  background-color: transparent;
 }
 
-.viewer-citation-highlight {
+#viewer-citation-highlight {
   position: absolute;
   display: grid;
   grid-template-columns: var(--icon-size);
   border-radius: var(--rounding-height);
   border-width: 2px;
   border-style: solid;
+
+  &:hover {
+    opacity: 0.4;
+    ~ #floater {
+      opacity: 0.4;
+      .background {
+        color: transparent;
+      }
+    }
+  }
 }
 
-.floater-container {
-  position: absolute;
-}
-
-.floater-review {
-  display: grid;
-  grid-template-columns: var(--icon-size) var(--icon-size) var(--icon-size);
-  width: fit-content;
-  margin: 0 auto;
-  border-width: 2px;
-  border-style: solid;
-  border-radius: var(--rounding-height);
-  background-color: white;;
-}
-
-.floater-reviewed {
+#floater {
+  /* transition: opacity 200ms linear; */
+  /* transition: color 200ms linear; */
   position: relative;
-  width: var(--icon-size);
-  min-height: var(--icon-size);
-  margin: 0 auto;
+  display: grid;
+  grid-template-rows: var(--icon-size);
+  &.review {
+    grid-template-columns: auto var(--icon-size) var(--icon-size) auto;
+  }
+  &.reviewed {
+    grid-template-columns: auto var(--icon-size) auto;
+  }
+  .approved.off {
+    grid-column: 2;
+  }
+  .on {
+    grid-column: 2;
+  }
 }
 
 .floating {

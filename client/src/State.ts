@@ -376,9 +376,9 @@ const stateAtom = atom<State, [Action], void>(
 
                 if (ux.selectedCitation?.citationIndex === citationIndex) {
                   // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
-                  if (review! != Review.Unreviewed) {
-                    selectUnreviewedCitation();
-                  }
+                  // if (review! != Review.Unreviewed) {
+                  //   selectUnreviewedCitation();
+                  // }
                 } else {
                   selectCitation(citationIndex);
                 }
