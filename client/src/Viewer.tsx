@@ -7,6 +7,8 @@ import {
   DismissCircleRegular,
   TextFieldFilled,
   TextFieldRegular,
+  MoreCircleRegular,
+  MoreCircleFilled,
 } from "@fluentui/react-icons";
 
 import { docFromId, useAppState } from "./State";
@@ -135,14 +137,14 @@ const ViewerCitations = () => {
 
   if (!ux.selectedCitation) return null;
 
-  const { questionIndex } = ux;
-  const { citationIndex } = ux.selectedCitation;
+  const { questionIndex, pageNumber, selectedCitation } = ux;
+  const { citationIndex, citationHighlights } = selectedCitation;
 
   const citation = questions[questionIndex].citations[citationIndex];
   const { review } = citation;
   const color = colors[review || 0];
 
-  const polygons = ux.selectedCitation.citationHighlights.filter(
+  const polygons = citationHighlights.filter(
     (citationHighlight) => citationHighlight.pageNumber == ux.pageNumber
   )[0]?.polygons;
 
@@ -154,7 +156,7 @@ const ViewerCitations = () => {
   const height = 32;
   const highlightWidth = (polygon[4] - polygon[0]) * multiple;
   const highlightMiddle = polygon[0] * multiple + highlightWidth / 2;
-  const width = Math.max(80, highlightWidth);
+  const width = Math.max(160, highlightWidth);
   const top = polygon[1] * multiple - height;
   const left = highlightMiddle - width / 2;
 
@@ -234,6 +236,32 @@ const ViewerCitations = () => {
     />
   );
 
+  const pageNumbers = citationHighlights.map(({ pageNumber }) => pageNumber);
+  const citationPrev = pageNumbers.includes(pageNumber! - 1);
+  const citationNext = pageNumbers.includes(pageNumber! + 1);
+
+  const Prev = () => (
+    <HoverableIcon
+      DefaultIcon={MoreCircleRegular}
+      HoverIcon={MoreCircleFilled}
+      key="prev"
+      classes="prev"
+      onClick={dispatchUnlessAsyncing({ type: "prevPage" })}
+      floating={true}
+    />
+  );
+
+  const Next = () => (
+    <HoverableIcon
+      DefaultIcon={MoreCircleRegular}
+      HoverIcon={MoreCircleFilled}
+      key="next"
+      classes="next"
+      onClick={dispatchUnlessAsyncing({ type: "nextPage" })}
+      floating={true}
+    />
+  );
+
   return (
     <div
       className="viewer-citations"
@@ -260,10 +288,18 @@ const ViewerCitations = () => {
       >
         {review === Review.Unreviewed ? (
           <>
+            <div />
+            {citationPrev ? <Prev /> : <div />}
             <Approve /> <Reject />
+            {citationNext ? <Next /> : <div />}
+            <div />
           </>
         ) : (
-          <>{review === Review.Approved ? <Approved /> : <Rejected />}</>
+          <>
+            <div />
+            {review === Review.Approved ? <Approved /> : <Rejected />}
+            <div />
+          </>
         )}
       </div>
     </div>

@@ -517,13 +517,13 @@ button:focus-visible {
   display: grid;
   grid-template-rows: var(--icon-size);
   &.review {
-    grid-template-columns: auto var(--icon-size) var(--icon-size) auto;
+    grid-template-columns: auto var(--icon-size) var(--icon-size) var(--icon-size) var(--icon-size) auto;
   }
   &.reviewed {
     grid-template-columns: auto var(--icon-size) auto;
   }
   .approved.off {
-    grid-column: 2;
+    grid-column: 3;
   }
   .on {
     grid-column: 2;
