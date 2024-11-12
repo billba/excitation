@@ -69,7 +69,13 @@ export function Viewer() {
 
     const { top, left, width, height } =
       canvasRef.current.getBoundingClientRect();
-    dispatch({ type: "setViewerSize", top: top + window.scrollY, left: left + window.scrollX, width, height });
+    dispatch({
+      type: "setViewerSize",
+      top: top + window.scrollY,
+      left: left + window.scrollX,
+      width,
+      height,
+    });
   }, [dispatch]);
 
   useEffect(
@@ -158,11 +164,12 @@ const ViewerCitations = () => {
   const top = polygon[1] * multiple - height;
   const left = highlightMiddle - width / 2;
 
-  const reviewCitation = (review: Review) => dispatchUnlessAsyncing({
-    type: "reviewCitation",
-    review,
-    citationIndex,
-  })
+  const reviewCitation = (review: Review) =>
+    dispatchUnlessAsyncing({
+      type: "reviewCitation",
+      review,
+      citationIndex,
+    });
 
   const Approved = () => (
     <HoverableIcon
