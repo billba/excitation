@@ -522,12 +522,6 @@ button:focus-visible {
   &.reviewed {
     grid-template-columns: auto var(--icon-size) var(--icon-size) var(--icon-size) auto;
   }
-  .approved.off {
-    grid-column: 3;
-  }
-  .on {
-    grid-column: 3;
-  }
 }
 
 .floating {
