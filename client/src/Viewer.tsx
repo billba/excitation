@@ -5,8 +5,6 @@ import {
   CheckmarkCircleRegular,
   DismissCircleFilled,
   DismissCircleRegular,
-  TextFieldFilled,
-  TextFieldRegular,
   MoreCircleRegular,
   MoreCircleFilled,
 } from "@fluentui/react-icons";
@@ -71,7 +69,7 @@ export function Viewer() {
 
     const { top, left, width, height } =
       canvasRef.current.getBoundingClientRect();
-    dispatch({ type: "setViewerSize", top, left, width, height });
+    dispatch({ type: "setViewerSize", top: top + window.scrollY, left: left + window.scrollX, width, height });
   }, [dispatch]);
 
   useEffect(
@@ -160,11 +158,11 @@ const ViewerCitations = () => {
   const top = polygon[1] * multiple - height;
   const left = highlightMiddle - width / 2;
 
-  // const Unreviewed = () => (
-  //   <div className="icon icon-container unreviewed">
-  //     <CircleRegular className="icon" />
-  //   </div>
-  // );
+  const reviewCitation = (review: Review) => dispatchUnlessAsyncing({
+    type: "reviewCitation",
+    review,
+    citationIndex,
+  })
 
   const Approved = () => (
     <HoverableIcon
@@ -172,11 +170,7 @@ const ViewerCitations = () => {
       HoverIcon={CheckmarkCircleRegular}
       key="approved"
       classes="approved on"
-      onClick={dispatchUnlessAsyncing({
-        type: "reviewCitation",
-        review: Review.Unreviewed,
-        citationIndex,
-      })}
+      onClick={reviewCitation(Review.Unreviewed)}
       floating={true}
     />
   );
@@ -187,11 +181,7 @@ const ViewerCitations = () => {
       HoverIcon={DismissCircleRegular}
       key="rejected"
       classes="rejected on"
-      onClick={dispatchUnlessAsyncing({
-        type: "reviewCitation",
-        review: Review.Unreviewed,
-        citationIndex,
-      })}
+      onClick={reviewCitation(Review.Unreviewed)}
       floating={true}
     />
   );
@@ -202,11 +192,7 @@ const ViewerCitations = () => {
       HoverIcon={CheckmarkCircleFilled}
       key="approve"
       classes="approved off"
-      onClick={dispatchUnlessAsyncing({
-        type: "reviewCitation",
-        review: Review.Approved,
-        citationIndex,
-      })}
+      onClick={reviewCitation(Review.Approved)}
       floating={true}
     />
   );
@@ -217,22 +203,8 @@ const ViewerCitations = () => {
       HoverIcon={DismissCircleFilled}
       key="reject"
       classes="rejected off"
-      onClick={dispatchUnlessAsyncing({
-        type: "reviewCitation",
-        review: Review.Rejected,
-        citationIndex,
-      })}
+      onClick={reviewCitation(Review.Rejected)}
       floating={true}
-    />
-  );
-
-  const Edit = () => (
-    <HoverableIcon
-      DefaultIcon={TextFieldRegular}
-      HoverIcon={TextFieldFilled}
-      key="edit"
-      classes="edit-start"
-      onClick={() => {}}
     />
   );
 
@@ -286,21 +258,19 @@ const ViewerCitations = () => {
         className={review === Review.Unreviewed ? "review" : "reviewed"}
         style={{ top, left, width, height, color }}
       >
+        <div />
+        {citationPrev ? <Prev /> : <div />}
         {review === Review.Unreviewed ? (
           <>
-            <div />
-            {citationPrev ? <Prev /> : <div />}
             <Approve /> <Reject />
-            {citationNext ? <Next /> : <div />}
-            <div />
           </>
+        ) : review === Review.Approved ? (
+          <Approved />
         ) : (
-          <>
-            <div />
-            {review === Review.Approved ? <Approved /> : <Rejected />}
-            <div />
-          </>
+          <Rejected />
         )}
+        {citationNext ? <Next /> : <div />}
+        <div />
       </div>
     </div>
   );
