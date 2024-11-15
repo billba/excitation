@@ -301,48 +301,13 @@ button:focus-visible {
   grid-column-start: 2;
   display: grid;
   margin: 0 0 3px 0;
-  &.unselected {
-    grid-column-end: 4;
-    grid-template-columns: 5% 95%;
-    grid-template-rows: 1.5em;
-    .citation-excerpt {
-      margin-top: -1px;
-      overflow: clip;
-      border: transparent 2px solid;
-    }
-  }
-  &.unselected:hover {
-    cursor: pointer;
-    .citation-excerpt {
-      border-radius: 4px;
-      border-color: var(--color-highlight);
-    }
-  }
-  &.selected {
-    grid-column-end: 5;
-    grid-template-columns: var(--icon-size) var(--icon-size) var(--icon-size) auto var(--icon-size) var(--icon-size);
-    padding: 0 4px 0 4px;
-    border: solid 1.5px var(--color-highlight);
-    border-radius: 7px;
-    .citation-excerpt {
-      grid-column: 1 / 7;
-      line-height: inherit;
-    }
-    .editor-excerpt {
-      grid-column: 1 / 7;
-      line-height: inherit;
-      background-color: transparent;
-      border: none;
-      overflow: none;
-      resize: none;
-      font-family: inherit;
-      font-size: 100%;
-      margin: -2px 0 -9px -2px;
-      outline: none;
-    }
-    .edit-cancel {
-      grid-column: 5;
-    }
+  grid-column-end: 4;
+  grid-template-columns: 5% 95%;
+  grid-template-rows: 1.5em;
+  .citation-excerpt {
+    margin-top: -1px;
+    overflow: clip;
+    border: transparent 2px solid;
   }
 }
 

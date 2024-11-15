@@ -35,7 +35,7 @@ const unlocatedPage = maxPageNumber;
 interface PageGroup {
   firstPage: number;
   lastPage: number;
-  citationIndices: number[];
+  citationIndex: number;
 }
 
 const sortIndex = sortBy(
@@ -70,15 +70,14 @@ export function Sidebar() {
 
         const pageGroups = citations
           // we bind each citation to its index, because filter will change the index
-          // and since the reduce function will produce multiple indices, we just start that way
-          .map<[Citation, number[]]>((citation, citationIndex) => [
+          .map<[Citation, number]>((citation, citationIndex) => [
             citation,
-            [citationIndex],
+            citationIndex,
           ])
           // one document at a time
           .filter(([citation]) => citation.documentId === doc.documentId)
-          // some citations span pages, so we gather first and alst pages
-          .map(([citation, citationIndices]) => {
+          // some citations span pages, so we gather first and last pages
+          .map(([citation, citationIndex]) => {
             const pageNumbers = (
               citation.bounds ?? [{ pageNumber: unlocatedPage }]
             )
@@ -87,46 +86,46 @@ export function Sidebar() {
             return {
               firstPage: pageNumbers[0],
               lastPage: pageNumbers[pageNumbers.length - 1],
-              citationIndices,
+              citationIndex,
             };
           })
           // now we group citations that are on the same page
-          .reduce<PageGroup[]>((pageGroups, pageGroup) => {
-            const matchingPageGroup = pageGroups.find(
-              ({ firstPage, lastPage }) =>
-                firstPage == pageGroup.firstPage &&
-                lastPage == pageGroup.lastPage
-            );
-            if (matchingPageGroup) {
-              matchingPageGroup.citationIndices.push(
-                pageGroup.citationIndices[0]
-              );
-            } else {
-              pageGroups.push(pageGroup); // this is where it's handy to already be working with arrays of indices
-            }
-            return pageGroups;
-          }, [])
-          // sort the indices within each page group
-          .map(({ firstPage, lastPage, citationIndices }) => ({
-            firstPage,
-            lastPage,
-            citationIndices /*: citationIndices.sort(sortCitation(citations))*/,
-          }))
+          // .reduce<PageGroup[]>((pageGroups, pageGroup) => {
+          //   const matchingPageGroup = pageGroups.find(
+          //     ({ firstPage, lastPage }) =>
+          //       firstPage == pageGroup.firstPage &&
+          //       lastPage == pageGroup.lastPage
+          //   );
+          //   if (matchingPageGroup) {
+          //     matchingPageGroup.citationIndices.push(
+          //       pageGroup.citationIndices[0]
+          //     );
+          //   } else {
+          //     pageGroups.push(pageGroup); // this is where it's handy to already be working with arrays of indices
+          //   }
+          //   return pageGroups;
+          // }, [])
+          // // sort the indices within each page group
+          // .map(({ firstPage, lastPage, citationIndices }) => ({
+          //   firstPage,
+          //   lastPage,
+          //   citationIndices /*: citationIndices.sort(sortCitation(citations))*/,
+          // }))
           // and sort the page groups themselves
           .sort(sortIndex)
           // note whether a given page group is selected
-          .map(({ firstPage, lastPage, citationIndices }) => {
+          .map(({ firstPage, lastPage, citationIndex }) => {
             const pageGroupSelected =
               docSelected &&
               (selectedCitation
-                ? citationIndices.includes(selectedCitation.citationIndex)
+                ? selectedCitation.citationIndex === citationIndex
                 : pageNumber !== undefined &&
                   pageNumber >= firstPage &&
                   pageNumber <= lastPage);
             return {
               firstPage,
               lastPage,
-              citationIndices,
+              citationIndex,
               pageGroupSelected,
             };
           });
@@ -254,7 +253,7 @@ export function Sidebar() {
                       {
                         firstPage,
                         lastPage,
-                        citationIndices,
+                        citationIndex,
                         pageGroupSelected,
                         prevPageGroupSelected,
                         nextPageGroupSelected,
@@ -270,21 +269,14 @@ export function Sidebar() {
                         nextPageGroupSelected={nextPageGroupSelected}
                         key={key}
                       >
-                        {citationIndices.map((citationIndex) => {
-                          const { excerpt, review } = citations[citationIndex];
-                          return (
-                            <CitationUX
-                              key={citationIndex}
-                              citationIndex={citationIndex}
-                              excerpt={excerpt}
-                              review={review}
-                              selected={
-                                selectedCitation?.citationIndex == citationIndex
-                              }
-                              editing={selectedCitation?.editing}
-                            />
-                          );
-                        })}
+                        <CitationUX
+                          key={citationIndex}
+                          citationIndex={citationIndex}
+                          review={citations[citationIndex].review}
+                          selected={
+                            selectedCitation?.citationIndex == citationIndex
+                          }
+                        />
                       </PageGroupHeader>
                     )
                   )}
