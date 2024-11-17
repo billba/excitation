@@ -19,14 +19,8 @@ import {
   EditRegular,
   EditFilled,
 } from "@fluentui/react-icons";
-import {
-  useAsyncHelper,
-  useDispatchHandler,
-  useStopProp,
-} from "./Hooks";
-import {
-  HoverableIcon,
-} from './Hooks.tsx';
+import { useAsyncHelper, useDispatchHandler, useStopProp } from "./Hooks";
+import { HoverableIcon } from "./Hooks.tsx";
 import { SidebarHeader } from "./SidebarHeader";
 
 const maxPageNumber = 1000;
@@ -51,7 +45,6 @@ export function Sidebar() {
   const [state, dispatch] = useAppState();
   const { questions, ux } = state;
   const {
-    pageNumber,
     questionIndex,
     selectedCitation,
     documentId,
@@ -89,39 +82,13 @@ export function Sidebar() {
               citationIndex,
             };
           })
-          // now we group citations that are on the same page
-          // .reduce<PageGroup[]>((pageGroups, pageGroup) => {
-          //   const matchingPageGroup = pageGroups.find(
-          //     ({ firstPage, lastPage }) =>
-          //       firstPage == pageGroup.firstPage &&
-          //       lastPage == pageGroup.lastPage
-          //   );
-          //   if (matchingPageGroup) {
-          //     matchingPageGroup.citationIndices.push(
-          //       pageGroup.citationIndices[0]
-          //     );
-          //   } else {
-          //     pageGroups.push(pageGroup); // this is where it's handy to already be working with arrays of indices
-          //   }
-          //   return pageGroups;
-          // }, [])
-          // // sort the indices within each page group
-          // .map(({ firstPage, lastPage, citationIndices }) => ({
-          //   firstPage,
-          //   lastPage,
-          //   citationIndices /*: citationIndices.sort(sortCitation(citations))*/,
-          // }))
-          // and sort the page groups themselves
           .sort(sortIndex)
           // note whether a given page group is selected
           .map(({ firstPage, lastPage, citationIndex }) => {
             const pageGroupSelected =
               docSelected &&
-              (selectedCitation
-                ? selectedCitation.citationIndex === citationIndex
-                : pageNumber !== undefined &&
-                  pageNumber >= firstPage &&
-                  pageNumber <= lastPage);
+              selectedCitation != undefined &&
+              selectedCitation.citationIndex === citationIndex;
             return {
               firstPage,
               lastPage,
@@ -146,7 +113,7 @@ export function Sidebar() {
           noCitations: docSelected && !pageGroups.length,
         };
       }),
-    [citations, pageNumber, documentId, selectedCitation]
+    [citations, documentId, selectedCitation]
   );
 
   const unreviewedCitations = citations.filter(
@@ -209,13 +176,15 @@ export function Sidebar() {
     }
   }, [editingAnswer]);
 
-  const Edit = () => <HoverableIcon
-    DefaultIcon={EditRegular}
-    HoverIcon={EditFilled}
-    key="edit"
-    classes="edit off"
-    onClick={startEditAnswer}
-  />;
+  const Edit = () => (
+    <HoverableIcon
+      DefaultIcon={EditRegular}
+      HoverIcon={EditFilled}
+      key="edit"
+      classes="edit off"
+      onClick={startEditAnswer}
+    />
+  );
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
@@ -261,18 +230,26 @@ export function Sidebar() {
                       key
                     ) => (
                       <PageGroupHeader
-                        documentId={docSelected ? undefined : documentId}
                         firstPage={firstPage}
                         lastPage={lastPage}
                         pageGroupSelected={pageGroupSelected}
                         prevPageGroupSelected={prevPageGroupSelected}
                         nextPageGroupSelected={nextPageGroupSelected}
                         key={key}
+                        onClick={
+                          pageGroupSelected
+                            ? undefined
+                            : dispatchUnlessError({
+                                type: "selectCitation",
+                                citationIndex,
+                              })
+                        }
                       >
                         <CitationUX
                           key={citationIndex}
                           citationIndex={citationIndex}
                           review={citations[citationIndex].review}
+                          excerpt={citations[citationIndex].excerpt}
                           selected={
                             selectedCitation?.citationIndex == citationIndex
                           }
@@ -444,73 +421,59 @@ const DocHeader = ({
 };
 
 const PageGroupHeader = ({
-  documentId,
   firstPage,
   lastPage,
   pageGroupSelected,
   prevPageGroupSelected,
   nextPageGroupSelected,
+  onClick,
   children,
 }: {
-  documentId?: number;
   firstPage: number;
   lastPage: number;
   pageGroupSelected: boolean;
   prevPageGroupSelected: boolean;
   nextPageGroupSelected: boolean;
+  onClick?: (event: React.MouseEvent) => void;
   children: ReactNode;
-}) => {
-  const { dispatchUnlessError } = useDispatchHandler();
-
-  return (
+}) => (
+  <div
+    className={`page-group ${pageGroupSelected ? "selected" : "unselected"}`}
+    key={firstPage * maxPageNumber + lastPage}
+    onClick={onClick}
+  >
     <div
-      className={`page-group ${pageGroupSelected ? "selected" : "unselected"}`}
-      key={firstPage * maxPageNumber + lastPage}
+      className={`page-header ${pageGroupSelected ? "selected" : "unselected"}`}
     >
-      <div
-        className={`page-header ${
-          pageGroupSelected ? "selected" : "unselected"
-        }`}
-        onClick={
-          pageGroupSelected
-            ? undefined
-            : dispatchUnlessError({
-                type: "goto",
-                pageNumber: firstPage,
-                documentId,
-              })
-        }
-      >
-        {firstPage == lastPage ? (
-          firstPage == unlocatedPage ? (
-            <>
-              <DocumentOnePageAddRegular className="icon" />
-              Unable to locate citation
-            </>
-          ) : (
-            <>
-              <DocumentOnePageRegular className="icon" />
-              Page {firstPage}
-            </>
-          )
+      {firstPage == lastPage ? (
+        firstPage == unlocatedPage ? (
+          <>
+            <DocumentOnePageAddRegular className="icon" />
+            Unable to locate citation
+          </>
         ) : (
           <>
-            <DocumentOnePageMultipleRegular className="icon" />
-            Pages {firstPage}-{lastPage}
+            <DocumentOnePageRegular className="icon" />
+            Page {firstPage}
           </>
-        )}
-      </div>
-      {prevPageGroupSelected && (
-        <div className="top-right">
-          <div />
-        </div>
-      )}
-      {children}
-      {nextPageGroupSelected && (
-        <div className="bottom-right">
-          <div />
-        </div>
+        )
+      ) : (
+        <>
+          <DocumentOnePageMultipleRegular className="icon" />
+          Pages {firstPage}-{lastPage}
+        </>
       )}
     </div>
-  );
-};
+    {prevPageGroupSelected && (
+      <div className="top-right">
+        <div />
+      </div>
+    )}
+    {children}
+    {nextPageGroupSelected && (
+      <div className="bottom-right">
+        <div />
+      </div>
+    )}
+  </div>
+);
