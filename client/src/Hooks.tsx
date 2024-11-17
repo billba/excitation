@@ -3,7 +3,6 @@ import { FluentIcon, CircleFilled } from "@fluentui/react-icons";
 interface Props {
   DefaultIcon: FluentIcon;
   HoverIcon: FluentIcon;
-  key: string;
   classes: string;
   onClick: ((event: React.MouseEvent) => void) | undefined;
   floating?: true;
@@ -12,13 +11,11 @@ interface Props {
 export const HoverableIcon = ({
   DefaultIcon,
   HoverIcon,
-  key,
   classes,
   onClick,
   floating,
 }: Props) => (
   <div
-    key={key}
     className={`icon-container hoverable ${classes}`}
     onClick={onClick}
   >

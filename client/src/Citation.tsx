@@ -5,17 +5,14 @@ import {
   DismissCircleFilled,
 } from "@fluentui/react-icons";
 
-import { useDispatchHandler } from "./Hooks";
-
 interface Props {
   citationIndex: number; // the citation to render
   review: Review;
+  excerpt: string;
   selected: boolean; // is this citation currently selected?
 }
 
-export const CitationUX = ({ citationIndex, review, selected }: Props) => {
-  const { dispatchUnlessAsyncing } = useDispatchHandler();
-
+export const CitationUX = ({ citationIndex, review, excerpt, selected }: Props) => {
   const Unreviewed = () => (
     <div className="icon-container unreviewed">
       <CircleRegular className="icon" />
@@ -38,10 +35,6 @@ export const CitationUX = ({ citationIndex, review, selected }: Props) => {
     <div
       className={`citation ${selected ? "selected" : "unselected"}`}
       key={citationIndex}
-      onClick={dispatchUnlessAsyncing({
-        type: "selectCitation",
-        citationIndex,
-      })}
     >
       {review === Review.Unreviewed ? (
         <Unreviewed />
@@ -50,7 +43,7 @@ export const CitationUX = ({ citationIndex, review, selected }: Props) => {
       ) : (
         <Rejected />
       )}
-      <div className="citation-excerpt">stuff</div>
+      <div className="citation-excerpt">{excerpt}</div>
     </div>
   );
 };
