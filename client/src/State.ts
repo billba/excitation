@@ -206,7 +206,7 @@ const stateAtom = atom<State, [Action], void>(
               }
 
               ux.selectedCitation = undefined;
-              ux.editingAnswer = undefined;
+              ux.answeringQuestion = undefined;
             }
 
             function setAsync({
@@ -257,12 +257,12 @@ const stateAtom = atom<State, [Action], void>(
                 citationIndex,
                 citationHighlights,
               };
+              ux.answeringQuestion = undefined;
             }
 
             function selectQuestion(questionIndex: number) {
               ux.questionIndex = questionIndex;
               selectUnreviewedCitation();
-              ux.editingAnswer = undefined;
             }
 
             function selectUnreviewedCitation() {
@@ -403,6 +403,14 @@ const stateAtom = atom<State, [Action], void>(
                 ux.questionIndex = action.questionIndex;
                 selectCitation(action.citationIndex);
                 break;
+              
+              case "enterAnswerMode":
+                ux.answeringQuestion = true;
+                break;
+              
+              case "exitAnswerMode":
+                ux.answeringQuestion = undefined;
+                break;
 
               case "startEditExcerpt":
                 console.assert(!isAsyncing);
@@ -453,15 +461,8 @@ const stateAtom = atom<State, [Action], void>(
                 ux.selectedCitation!.editing = undefined;
                 break;
               
-              case "startEditAnswer":
-                console.assert(!isAsyncing);
-                ux.editingAnswer = true;
-                break;
-
               case "updateAnswer": {
                 console.assert(!isAsyncing);
-                console.assert(ux.editingAnswer === true);
-                ux.editingAnswer = undefined;
 
                 const { answer } = action;
 
@@ -489,12 +490,6 @@ const stateAtom = atom<State, [Action], void>(
 
               case "errorUpdateAnswer":
                 ux.questionIndex = action.questionIndex;
-                break;
-
-              case "cancelEditAnswer":
-                console.assert(!isAsyncing);
-                console.assert(ux.editingAnswer === true);
-                ux.editingAnswer = undefined;
                 break;
 
               case "asyncLoading":
