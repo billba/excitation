@@ -2,9 +2,9 @@ import { Sidebar } from "./Sidebar";
 import { Viewer } from "./Viewer";
 import { NavBar } from "./NavBar";
 
-export const ReviewCitations = () => {
+export const ReviewPanel = () => {
   return (
-    <div id="review-citations">
+    <div id="review-panel">
       <Sidebar />
       <div id="viewer">
         <NavBar />

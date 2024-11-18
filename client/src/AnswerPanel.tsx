@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatchHandler, useStopProp } from "./Hooks";
-import { useAppState, docFromId } from "./State";
+import { useDispatchHandler, useStopProp } from "./Hooks.ts";
+import { useAppState, docFromId } from "./State.ts";
 import { HoverableIcon } from "./Hooks.tsx";
 import {
   EditRegular,
@@ -8,16 +8,17 @@ import {
   DismissRegular,
   CheckmarkRegular,
 } from "@fluentui/react-icons";
+import { Review } from "./Types.ts";
 
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
 
-export const AnswerQuestion = () => {
+export const AnswerPanel = () => {
   const { dispatchHandler } = useDispatchHandler();
   const stopProp = useStopProp();
   const [
     {
-      ux: { questionIndex },
+      ux: { questionIndex, largeAnswerPanel },
       questions,
     },
     dispatch,
@@ -25,11 +26,14 @@ export const AnswerQuestion = () => {
 
   const { text, answer, citations } = questions[questionIndex];
 
+  const unreviewedCitations = citations.filter(
+    ({ review }) => review === Review.Unreviewed
+  );
+
   useEffect(() => {
     // console.log("ue", answerRef.current, answer);
     // if (answerRef.current && answer == undefined) {
     //   setEditAnswer("");
-
     //   answerRef.current.focus();
     //   answerRef.current.select();
     // }
@@ -80,21 +84,22 @@ export const AnswerQuestion = () => {
     [dispatch, editAnswer]
   );
 
-  return (
-    <div id="answer-question">
+  return largeAnswerPanel ? (
+    <div id="answer-panel" className="small">
       <h1>Answer Mode</h1>
       <h2>{text}</h2>
       <div id="answer-container">
-            <textarea
-              ref={answerRef}
-              className="answer-text"
-              id="edit-answer"
-              value={editAnswer}
-              onChange={onChangeAnswer}
-              onClick={stopProp}
-              disabled={editAnswer == undefined}
-            />
-          {editAnswer != undefined ? (
+        <textarea
+          ref={answerRef}
+          className="answer-text"
+          id="edit-answer"
+          value={editAnswer}
+          placeholder="If you have an answer, please enter it here."
+          onChange={onChangeAnswer}
+          onClick={stopProp}
+          disabled={editAnswer == undefined}
+        />
+        {editAnswer != undefined ? (
           <>
             <div
               className="icon-container edit-cancel"
@@ -113,33 +118,33 @@ export const AnswerQuestion = () => {
         )}
       </div>
       <h2>Approved Citations</h2>
-      {citations.map(({excerpt, documentId, bounds}, i) => {
-        const pageNumbers = (
-          bounds ?? [{ pageNumber: unlocatedPage }]
-        )
+      {citations.map(({ excerpt, documentId, bounds }, i) => {
+        const pageNumbers = (bounds ?? [{ pageNumber: unlocatedPage }])
           .map(({ pageNumber }) => pageNumber)
           .sort();
 
         const firstPage = pageNumbers[0];
         const lastPage = pageNumbers[pageNumbers.length - 1];
 
-        const range = firstPage == lastPage ?
-          firstPage == unlocatedPage ?
-            "Unable to locate citation" :
-            `Page ${firstPage}` :
-          `Pages ${firstPage}-${lastPage}`;
+        const range =
+          firstPage == lastPage
+            ? firstPage == unlocatedPage
+              ? "Unable to locate citation"
+              : `Page ${firstPage}`
+            : `Pages ${firstPage}-${lastPage}`;
 
-        
         return (
           <div key={i}>
-            <p>{excerpt}&nbsp;({docFromId[documentId].name}, {range})</p>
+            <p>
+              {excerpt}&nbsp;({docFromId[documentId].name}, {range})
+            </p>
           </div>
         );
       })}
-
-      <button onClick={dispatchHandler({ type: "exitAnswerMode" })}>
-        Exit Answer Mode
-      </button>
+    </div>
+  ) : (
+    <div id="answer-panel" className="large">
+      <div id="answer-text-small">{answer}</div>
     </div>
   );
 };

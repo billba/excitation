@@ -3,10 +3,13 @@ import { Bounds, DocumentIntelligenceResponse } from "./Utility";
 
 export type Action =
   | {
-      type: "enterAnswerMode";
+      type: "toggleQuestionPanel";
     }
   | {
-      type: "exitAnswerMode";
+      type: "toggleReviewPanel";
+    }
+  | {
+      type: "toggleAnswerPanel";
     }
   | {
       type: "selectCitation";
@@ -159,7 +162,11 @@ export interface CitationHighlight {
 
 export interface UXState {
   questionIndex: number;
-  answeringQuestion?: true;
+
+  largeQuestionPanel?: true;
+  largeReviewPanel?: true;
+  largeAnswerPanel?: true;
+
   documentId?: number;
   pageNumber?: number;
   range?: SerializedRange;

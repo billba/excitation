@@ -4,7 +4,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { Citation, Review } from "./Types";
+import { Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
@@ -13,7 +13,6 @@ import {
   DocumentOnePageAddRegular,
 } from "@fluentui/react-icons";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
-import { SidebarHeader } from "./SidebarHeader";
 
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
@@ -102,10 +101,6 @@ export function Sidebar() {
     [citations, documentId, selectedCitation]
   );
 
-  const unreviewedCitations = citations.filter(
-    ({ review }) => review === Review.Unreviewed
-  );
-
   const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
 
   const addSelection = useCallback(
@@ -119,9 +114,7 @@ export function Sidebar() {
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
-      <SidebarHeader />
       <div className="sidebar-divider" />
-      <h4 id="citations-label">Citations</h4>
       <div className="sidebar-divider" />
       <div id="docs">
         {groupedCitations.map(
@@ -234,24 +227,6 @@ export function Sidebar() {
                 </>
               )}
             </div>
-            <h4>Answer</h4>
-            {unreviewedCitations.length ? (
-              <div className="answer-section">
-                Before you can answer the question you must review all suggested
-                citations.
-              </div>
-            ) : (
-              <div className="answer-section">
-                When you are ready, you can
-                <span
-                  className="action"
-                  onClick={dispatchHandler({ type: "enterAnswerMode" })}
-                >
-                  &nbsp;answer the question
-                </span>
-                .
-              </div>
-            )}
           </div>
           <br />
           <br />

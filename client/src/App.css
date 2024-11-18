@@ -30,6 +30,7 @@
 
   --rounding-height: 3px;
   --icon-size: 30px;
+  --small-panel: 50px;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -69,13 +70,17 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-#review-citations {
+#review-panel {
+  border: solid 2px blue;
+
   position: relative;
   display: grid;
   grid-template-columns: 400px auto;
   align-items: start;
   background-color: var(--color-base);
   color: var(--color-text);
+
+  overflow: scroll;
 }
 
 #navbar {
@@ -447,6 +452,10 @@ button:focus-visible {
   outline: none;
 }
 
+#answer-text-small {
+  border: solid 1px black;
+}
+
 .action {
   color: blue;
   cursor: pointer;
@@ -506,6 +515,44 @@ button:focus-visible {
   color: white;
 }
 
-#answer-question {
-  margin: 20px 50px 20px 50px;
+#answer-panel {
+  border: solid 2px red;
+  padding: 10px 10px 10px 10px;
+  overflow-y: hidden;
 }
+
+#app {
+  max-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr;
+
+  &.question-large.review-large.answer-small {
+    grid-template-rows: 1fr 1fr var(--small-panel);
+  }
+  &.question-large.review-small.answer-large {
+    grid-template-rows: 1fr var(--small-panel) 1fr;
+  }
+  &.question-large.review-small.answer-small {
+    grid-template-rows: 1fr var(--small-panel) var(--small-panel);
+  }
+  &.question-small.review-large.answer-small {
+    grid-template-rows: var(--small-panel) 1fr var(--small-panel);
+  }
+  &.question-small.review-small.answer-large {
+    grid-template-rows: var(--small-panel) var(--small-panel) 1fr;
+  }
+  /* code ensures that we never end up with the other 3 combinations */
+}
+
+#question-panel {
+  border: solid 2px green;
+}
+
+/*
+If all citations are reviewed
+  [Large, Small Large]
+  [Small, Large, Small]
+Else
+  [Large, Small, Small]
+  [Small, Large, Small]
+*/

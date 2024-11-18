@@ -13,6 +13,7 @@ import {
   FormDocument,
   LoadForm,
   AsyncState,
+  UXState,
 } from "./Types";
 import {
   createCitationId,
@@ -131,17 +132,19 @@ function indexOfNextUnreviewedCitation(
     .sort(sortUnreviewedCitations(documentId, pageNumber))[0]?.[1];
 }
 
-function initialUXState(questionIndex: number, citations: Citation[]) {
+function initialUXState(questionIndex: number, citations: Citation[]): UXState {
   if (citations.length == 0)
     return {
+      largeReviewPanel: true,
       questionIndex,
       documentId: undefined,
-    };
+    }
 
   const citationIndex = indexOfNextUnreviewedCitation(citations);
 
   if (citationIndex == undefined)
     return {
+      largeReviewPanel: true,
       questionIndex,
       documentId: undefined,
     };
@@ -150,6 +153,7 @@ function initialUXState(questionIndex: number, citations: Citation[]) {
   const citationHighlights = citationHighlightsFor(citation);
 
   return {
+    largeReviewPanel: true,
     questionIndex,
     documentId: citation.documentId,
     pageNumber: citationHighlights[0]?.pageNumber ?? 1,
@@ -206,7 +210,6 @@ const stateAtom = atom<State, [Action], void>(
               }
 
               ux.selectedCitation = undefined;
-              ux.answeringQuestion = undefined;
             }
 
             function setAsync({
@@ -257,7 +260,6 @@ const stateAtom = atom<State, [Action], void>(
                 citationIndex,
                 citationHighlights,
               };
-              ux.answeringQuestion = undefined;
             }
 
             function selectQuestion(questionIndex: number) {
@@ -404,12 +406,31 @@ const stateAtom = atom<State, [Action], void>(
                 selectCitation(action.citationIndex);
                 break;
               
-              case "enterAnswerMode":
-                ux.answeringQuestion = true;
+              case "toggleQuestionPanel":
+                if (ux.largeQuestionPanel && !ux.largeReviewPanel && !ux.largeAnswerPanel) {
+                  ux.largeReviewPanel = true;
+                  ux.largeAnswerPanel = true;
+                } else {
+                  ux.largeQuestionPanel = ux.largeQuestionPanel ? undefined : true;
+                }
                 break;
               
-              case "exitAnswerMode":
-                ux.answeringQuestion = undefined;
+              case "toggleReviewPanel":
+                if (ux.largeReviewPanel && !ux.largeQuestionPanel && !ux.largeAnswerPanel) {
+                  ux.largeQuestionPanel = true;
+                  ux.largeAnswerPanel = true;
+                } else {
+                  ux.largeReviewPanel = ux.largeReviewPanel ? undefined : true;
+                }
+                break;
+              
+              case "toggleAnswerPanel":
+                if (ux.largeAnswerPanel && !ux.largeReviewPanel && !ux.largeQuestionPanel) {
+                  ux.largeQuestionPanel = true;
+                  ux.largeReviewPanel = true;
+                } else {
+                  ux.largeAnswerPanel = ux.largeAnswerPanel ? undefined : true;
+                }
                 break;
 
               case "startEditExcerpt":

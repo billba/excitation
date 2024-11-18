@@ -2,11 +2,24 @@ import { useAppStateValue } from "./State";
 import {
   TriangleLeftFilled,
   TriangleRightFilled,
+  ChevronRightRegular,
+  ChevronRightFilled,
+  ChevronDownRegular,
+  ChevronDownFilled,
 } from "@fluentui/react-icons";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
+import { HoverableIcon } from "./Hooks.tsx";
 
-export const SidebarHeader = () => {
-  const { questions, ux: { questionIndex } } = useAppStateValue();
+export const QuestionPanel = () => {
+  const {
+    questions,
+    ux: {
+      questionIndex,
+      largeQuestionPanel,
+      largeAnswerPanel,
+      largeReviewPanel,
+    },
+  } = useAppStateValue();
   const { prefix, text } = questions[questionIndex];
 
   const { isError } = useAsyncHelper();
@@ -15,11 +28,25 @@ export const SidebarHeader = () => {
   const disablePrev = isError || questionIndex === 0;
   const disableNext = isError || questionIndex === questions.length - 1;
 
-  return (
-    <div id="sidebar-header">
-      <p/>
+  const Chevron = () => (
+    <HoverableIcon
+      DefaultIcon={
+        largeQuestionPanel ? ChevronDownRegular : ChevronRightRegular
+      }
+      HoverIcon={largeQuestionPanel ? ChevronDownFilled : ChevronRightFilled}
+      key="chevron"
+      classes="chevron"
+      onClick={dispatchUnlessError({ type: "toggleQuestionPanel" })}
+    />
+  );
+
+  return largeQuestionPanel ? (
+    <div id="question-panel">
       <div id="sidebar-question-nav">
-        <TriangleLeftFilled
+        <Chevron />
+        Question
+        <div />
+        {/* <TriangleLeftFilled
           className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
           onClick={
             disablePrev
@@ -40,8 +67,15 @@ export const SidebarHeader = () => {
               ? undefined
               : dispatchUnlessError({ type: "nextQuestion" })
           }
-        />
+        /> */}
+      </div>
+    </div>
+  ) : (
+    <div id="question-panel">
+      <div id="sidebar-question-nav">
+        <Chevron />
+        Question
       </div>
     </div>
   );
-}
+};
