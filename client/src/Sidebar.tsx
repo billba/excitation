@@ -2,10 +2,7 @@ import { docs, useAppState, sortBy } from "./State";
 import {
   ReactNode,
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
 } from "react";
 import { Citation, Review } from "./Types";
 import { CitationUX } from "./Citation";
@@ -14,13 +11,8 @@ import {
   DocumentOnePageRegular,
   DocumentOnePageMultipleRegular,
   DocumentOnePageAddRegular,
-  DismissRegular,
-  CheckmarkRegular,
-  EditRegular,
-  EditFilled,
 } from "@fluentui/react-icons";
-import { useAsyncHelper, useDispatchHandler, useStopProp } from "./Hooks";
-import { HoverableIcon } from "./Hooks.tsx";
+import { useAsyncHelper, useDispatchHandler } from "./Hooks";
 import { SidebarHeader } from "./SidebarHeader";
 
 const maxPageNumber = 1000;
@@ -44,17 +36,11 @@ const sortIndex = sortBy(
 export function Sidebar() {
   const [state, dispatch] = useAppState();
   const { questions, ux } = state;
-  const {
-    questionIndex,
-    selectedCitation,
-    documentId,
-    editingAnswer,
-  } = ux;
+  const { questionIndex, selectedCitation, documentId } = ux;
   const question = questions[questionIndex];
-  const { citations, answer } = question;
+  const { citations } = question;
 
   const { isAsyncing, isError } = useAsyncHelper();
-  const stopProp = useStopProp();
 
   const groupedCitations = useMemo(
     () =>
@@ -129,61 +115,6 @@ export function Sidebar() {
       event.stopPropagation();
     },
     [dispatch]
-  );
-
-  const answerRef = useRef<HTMLTextAreaElement>(null);
-  const [editAnswer, setEditAnswer] = useState<string | undefined>(undefined);
-
-  const startEditAnswer = useCallback(
-    (e: React.MouseEvent) => {
-      setEditAnswer(answer);
-      dispatch({ type: "startEditAnswer" });
-      e.stopPropagation();
-    },
-    [dispatch, setEditAnswer, answer]
-  );
-
-  const cancelEditAnswer = useCallback(
-    (e: React.MouseEvent) => {
-      setEditAnswer(undefined);
-      dispatch({ type: "cancelEditAnswer" });
-      e.stopPropagation();
-    },
-    [dispatch]
-  );
-
-  const onChangeAnswer = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setEditAnswer(e.target.value);
-      e.stopPropagation();
-    },
-    []
-  );
-
-  const updateAnswer = useCallback(
-    (e: React.MouseEvent) => {
-      dispatch({ type: "updateAnswer", answer: editAnswer! });
-      setEditAnswer(undefined);
-      e.stopPropagation();
-    },
-    [dispatch, editAnswer]
-  );
-
-  useEffect(() => {
-    if (editingAnswer && answerRef.current) {
-      answerRef.current.focus();
-      answerRef.current.select();
-    }
-  }, [editingAnswer]);
-
-  const Edit = () => (
-    <HoverableIcon
-      DefaultIcon={EditRegular}
-      HoverIcon={EditFilled}
-      key="edit"
-      classes="edit off"
-      onClick={startEditAnswer}
-    />
   );
 
   return (
@@ -304,49 +235,22 @@ export function Sidebar() {
               )}
             </div>
             <h4>Answer</h4>
-            {editingAnswer ? (
-              <>
-                <textarea
-                  ref={answerRef}
-                  className="answer-section"
-                  id="edit-answer"
-                  value={editAnswer}
-                  onChange={onChangeAnswer}
-                  onClick={stopProp}
-                />
-                <div
-                  className="icon-container edit-cancel"
-                  onClick={cancelEditAnswer}
-                >
-                  <DismissRegular className="icon" />
-                </div>
-                <div
-                  className="icon-container edit-save"
-                  onClick={updateAnswer}
-                >
-                  <CheckmarkRegular className="icon" />
-                </div>
-              </>
-            ) : unreviewedCitations.length ? (
+            {unreviewedCitations.length ? (
               <div className="answer-section">
                 Before you can answer the question you must review all suggested
                 citations.
               </div>
-            ) : answer === undefined ? (
-              <>
-                <div className="answer-section">
-                  When you are ready, you can&nbsp;
-                  <span className="action" onClick={startEditAnswer}>
-                    answer the question
-                  </span>
-                  .
-                </div>
-              </>
             ) : (
-              <>
-                <div className="answer-section">{answer}</div>
-                <Edit />
-              </>
+              <div className="answer-section">
+                When you are ready, you can
+                <span
+                  className="action"
+                  onClick={dispatchHandler({ type: "enterAnswerMode" })}
+                >
+                  &nbsp;answer the question
+                </span>
+                .
+              </div>
             )}
           </div>
           <br />

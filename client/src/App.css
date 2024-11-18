@@ -69,7 +69,7 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-#app {
+#review-citations {
   position: relative;
   display: grid;
   grid-template-columns: 400px auto;
@@ -417,13 +417,20 @@ button:focus-visible {
   padding-right: 15px;
 }
 
-#answer {
+#answer-container {
   display: grid;
-  grid-template-columns: var(--icon-size) auto var(--icon-size) var(--icon-size);
+  grid-template-columns: auto var(--icon-size) var(--icon-size);
 
   .edit-cancel {
+    grid-column: 2;
+  }
+  .edit-start {
     grid-column: 3;
   }
+}
+
+.answer-text {
+  grid-column: 1 / 4;
 }
 
 .answer-section {
@@ -497,4 +504,8 @@ button:focus-visible {
 
 .background {
   color: white;
+}
+
+#answer-question {
+  margin: 20px 50px 20px 50px;
 }

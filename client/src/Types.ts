@@ -3,6 +3,12 @@ import { Bounds, DocumentIntelligenceResponse } from "./Utility";
 
 export type Action =
   | {
+      type: "enterAnswerMode";
+    }
+  | {
+      type: "exitAnswerMode";
+    }
+  | {
       type: "selectCitation";
       citationIndex?: number;
     }
@@ -65,12 +71,6 @@ export type Action =
       type: "errorUpdateExcerpt";
       questionIndex: number;
       citationIndex: number;
-    }
-  | {
-      type: "startEditAnswer";
-    }
-  | {
-      type: "cancelEditAnswer";
     }
   | {
       type: "updateAnswer";
@@ -159,10 +159,10 @@ export interface CitationHighlight {
 
 export interface UXState {
   questionIndex: number;
+  answeringQuestion?: true;
   documentId?: number;
   pageNumber?: number;
   range?: SerializedRange;
-  editingAnswer?: true;
   selectedCitation?: {
     citationIndex: number;
     citationHighlights: CitationHighlight[];
@@ -253,7 +253,7 @@ export type Event =
       creator: string;
     }
   | {
-    type: "updateAnswer";
+      type: "updateAnswer";
       formId: number;
       questionId: number;
       answer: string;
