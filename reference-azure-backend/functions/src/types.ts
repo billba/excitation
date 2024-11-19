@@ -4,7 +4,7 @@ export enum Review {
   Rejected,
 }
 
-export interface BoundingRegion {
+export interface Bounds {
   pageNumber: number;
   polygon: number[];
 }
@@ -15,22 +15,22 @@ export type Event =
     formId: number;
     questionId: number;
     documentId: number;
-    citationId: number;
+    citationId: string;
     excerpt: string;
-    bounds: BoundingRegion[];
+    bounds: Bounds[];
     review: Review;
     creator: string;
   }
   | {
     type: "updateReview";
-    citationId: number;
+    citationId: string;
     review: Review;
     creator: string;
   }
   | {
     type: "updateBounds";
-    citationId: number;
-    bounds: BoundingRegion[];
+    citationId: string;
+    bounds: Bounds[];
     creator: string;
   };
 
@@ -44,7 +44,7 @@ interface Citation {
   questionId: number;
   documentId: number;
   excerpt: string;
-  bounds: BoundingRegion[];
+  bounds: Bounds[];
 }
 
 export interface Form {

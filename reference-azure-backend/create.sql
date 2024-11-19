@@ -1,63 +1,61 @@
-DROP TABLE IF EXISTS documents, templates, questions, forms, citations, events;
-
-CREATE TABLE documents (
-  id SERIAL PRIMARY KEY,
-  file_name TEXT NOT NULL,
-  friendly_name TEXT,
-  pdf_url TEXT NOT NULL,
-  di_url TEXT,
-  creator TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
+DROP TABLE IF EXISTS templates, questions, forms, documents, citations, events;
 
 CREATE TABLE templates (
-  id SERIAL PRIMARY KEY,
+  template_id SERIAL PRIMARY KEY,
   template_name TEXT NOT NULL,
   creator TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  modified_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE questions (
-  id SERIAL PRIMARY KEY,
-  template_id INTEGER NOT NULL,
+  question_id SERIAL PRIMARY KEY,
+  template_id INTEGER REFERENCES templates(template_id),
   prefix TEXT,
   text TEXT NOT NULL,
   creator TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  modified_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE forms (
-  id SERIAL PRIMARY KEY,
-  template_id INTEGER NOT NULL,
-  document_ids INTEGER[] NOT NULL,
+  form_id SERIAL PRIMARY KEY,
+  template_id INTEGER REFERENCES templates(template_id),
   form_name TEXT NOT NULL,
   creator TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  modified_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE documents (
+  document_id SERIAL PRIMARY KEY,
+  form_id INTEGER REFERENCES forms(form_id),
+  name TEXT,
+  pdf_url TEXT NOT NULL,
+  di_url TEXT,
+  creator TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  modified_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE citations (
-  id SERIAL PRIMARY KEY,
-  citation_id TEXT NOT NULL UNIQUE,
-  form_id INTEGER NOT NULL,
-  question_id INTEGER NOT NULL,
-  document_id INTEGER NOT NULL,
+  citation_id TEXT PRIMARY KEY,
+  form_id INTEGER REFERENCES forms(form_id),
+  question_id INTEGER REFERENCES questions(question_id),
+  document_id INTEGER REFERENCES documents(document_id),
   excerpt TEXT NOT NULL,
   bounds JSONB,
   review INTEGER NOT NULL DEFAULT 0,
   creator TEXT NOT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  modified_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE events (
-  id SERIAL PRIMARY KEY,
+  event_id SERIAL PRIMARY KEY,
   body JSONB NOT NULL,
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-
-INSERT INTO documents (file_name, friendly_name, pdf_url, di_url, creator) 
-VALUES 
-  ('PressReleaseFY24Q3.pdf', 'PressReleaseFY24Q3', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf.json', 'system'),
-  ('Microsoft 10Q FY24Q3 1.pdf', 'Microsoft 10Q FY24Q3 1', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf.json', 'system');
 
 INSERT INTO templates (template_name, creator)
 VALUES
@@ -72,19 +70,24 @@ VALUES
   (1, '5', 'Are there any ongoing legal proceedings?', 'system'),
   (1, '6', 'What is an excerpt that spans two pages?', 'system');
 
-INSERT INTO forms (template_id, document_ids, form_name, creator)
+INSERT INTO forms (template_id, form_name, creator)
 VALUES
-  (1,'{1,2}', 'FY24Q3', 'system');
+  (1, 'FY24Q3', 'system');
+
+INSERT INTO documents (form_id, name, pdf_url, di_url, creator) 
+VALUES 
+  (1, 'PressReleaseFY24Q3', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf.json', 'system'),
+  (1, 'Microsoft 10Q FY24Q3 1', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf.json', 'system');
 
 INSERT INTO citations (citation_id, form_id, question_id, document_id, excerpt, creator)
 VALUES
-  (gen_random_uuid(), 1, 1, 1, 'Revenue was $61.9 billion and increased 17%', 'system'),
-  (gen_random_uuid(), 1, 1, 2, '61,858', 'system'),
-  (gen_random_uuid(), 1, 2, 1, '$2.94', 'system'),
-  (gen_random_uuid(), 1, 3, 1, 'Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third quarter of fiscal year 2024.', 'system'),
-  (gen_random_uuid(), 1, 4, 1, '$484,275', 'system'),
-  (gen_random_uuid(), 1, 4, 2, '484,275', 'system'),
-  (gen_random_uuid(), 1, 5, 1, 'claims against us that may result in adverse outcomes in legal disputes;', 'system'),
-  (gen_random_uuid(), 1, 5, 2, 'Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused their brain tumors and other adverse health effects.', 'system'),
-  (gen_random_uuid(), 1, 6, 1, '· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage; · claims against us that may result in adverse outcomes in legal disputes;', 'system');
+  ('1-system-1732038032110', 1, 1, 1, 'Revenue was $61.9 billion and increased 17%', 'system'),
+  ('1-system-1732038042614', 1, 1, 2, '61,858', 'system'),
+  ('1-system-1732038059108', 1, 2, 1, '$2.94', 'system'),
+  ('1-system-1732038077289', 1, 3, 1, 'Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third quarter of fiscal year 2024.', 'system'),
+  ('1-system-1732038088500', 1, 4, 1, '$484,275', 'system'),
+  ('1-system-1732038098469', 1, 4, 2, '484,275', 'system'),
+  ('1-system-1732038112929', 1, 5, 1, 'claims against us that may result in adverse outcomes in legal disputes;', 'system'),
+  ('1-system-1732038120838', 1, 5, 2, 'Microsoft Mobile Oy, a subsidiary of Microsoft, along with other handset manufacturers and network operators, is a defendant in 45 lawsuits filed in the Superior Court for the District of Columbia by individual plaintiffs who allege that radio emissions from cellular handsets caused their brain tumors and other adverse health effects.', 'system'),
+  ('1-system-1732038136246', 1, 6, 1, '· laws and regulations relating to the handling of personal data that may impede the adoption of our services or result in increased costs, legal claims, fines, or reputational damage; · claims against us that may result in adverse outcomes in legal disputes;', 'system');
   
