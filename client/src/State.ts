@@ -14,6 +14,7 @@ import {
   LoadForm,
   AsyncState,
   PseudoBoolean,
+  UXState,
 } from "./Types";
 import {
   createCitationId,
@@ -139,7 +140,7 @@ function indexOfNextUnreviewedCitation(
     .sort(sortUnreviewedCitations(documentId, pageNumber))[0]?.[1];
 }
 
-function initialUXState(questionIndex: number, citations: Citation[]) {
+function initialUXState(questionIndex: number, citations: Citation[]): UXState {
   if (citations.length == 0)
     return {
       questionIndex,
