@@ -244,7 +244,6 @@ const ViewerCitations = () => {
       style={{
         ...viewer,
         zIndex: 1000, //isError ? 1000 : 1,
-        border: "1px solid red",
       }}
     >
       <div
