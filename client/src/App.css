@@ -373,13 +373,14 @@ button:focus-visible {
     }
   }
 }
-
+/* 
 .edit-start {
   color: var(--color-icon);
   :hover {
     color: var(--color-edit);
   }
 }
+
 
 .edit-cancel {
   color: var(--color-icon);
@@ -393,7 +394,7 @@ button:focus-visible {
   :hover {
     color: var(--color-edit-hover);
   }
-}
+} */
 
 .hoverable {
   .hover {
@@ -437,37 +438,6 @@ button:focus-visible {
 .buttons {
   grid-column: 2 / 6;
   padding-right: 15px;
-}
-
-#answer-container {
-  display: grid;
-  grid-template-columns: auto var(--icon-size) var(--icon-size);
-
-  .edit-cancel {
-    grid-column: 2;
-  }
-  .edit-start {
-    grid-column: 3;
-  }
-}
-
-.answer-text {
-  grid-column: 1 / 4;
-}
-
-.answer-section {
-  grid-column: 1 / 5;
-}
-
-#edit-answer {
-  margin: 10px;
-  width: 80%;
-  line-height: inherit;
-  overflow: none;
-  resize: vertical;
-  font-family: inherit;
-  font-size: 100%;
-  outline: none;
 }
 
 .action {
@@ -536,8 +506,50 @@ button:focus-visible {
   color: white;
 }
 
+#answer-container {
+  display: grid;
+  grid-template-columns: auto var(--icon-size) var(--icon-size);
+
+  .edit-cancel {
+    grid-column: 2;
+  }
+}
+
+.answer-text {
+  grid-column: 1 / 4;
+}
+
+.answer-section {
+  grid-column: 1 / 5;
+}
+
+#edit-answer {
+  grid-column: 1/3;
+
+  width: 100%;
+  line-height: inherit;
+  overflow: none;
+  resize: vertical;
+  font-family: inherit;
+  font-size: large;
+  outline: none;
+  cursor: inherit;
+  height: 5em;
+
+  &.small {
+    height: 1.5em;
+  }
+}
+
 #answer-panel {
   background-color: lightgoldenrodyellow;
+  padding: 10px 10% 0 10%;
+
+  &.small {
+    #edit-answer {
+      height: 1.5em;
+    }
+  }
 }
 
 #app {
