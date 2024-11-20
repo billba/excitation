@@ -40,8 +40,6 @@ export type Action =
     }
   | {
       type: "setViewerSize";
-      top: number;
-      left: number;
       width: number;
       height: number;
     }
@@ -210,8 +208,6 @@ export interface Question {
 }
 
 export interface ViewerState {
-  top: number;
-  left: number;
   width: number;
   height: number;
 }

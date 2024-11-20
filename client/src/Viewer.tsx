@@ -24,6 +24,13 @@ const colors = ["#00acdc", "#00ac00", "#f07070"];
 const multiple = 72;
 const padding = 3;
 
+// this type is defined deep in react-pdf and I can't figure out how to import it
+// so here I just define the parts I need
+interface PageCallback {
+  height: number;
+  width: number;
+}
+
 export function Viewer() {
   const [{ ux }, dispatch] = useAppState();
   const { documentId } = ux;
@@ -60,30 +67,17 @@ export function Viewer() {
     };
   }, [selectionChange, editing]);
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
-  const updateViewerSize = useCallback(() => {
-    if (!canvasRef.current) return;
-
-    const canvasRect = canvasRef.current.getBoundingClientRect();
-    
-    console.log("viewer", canvasRect, window.scrollY);
-
-    const { top, left, width, height } = canvasRect;
-    dispatch({
-      type: "setViewerSize",
-      top: top + window.scrollY,
-      left: left + window.scrollX,
-      width,
-      height,
-    });
-  }, [dispatch]);
-
-  useEffect(
-    () => window.addEventListener("resize", updateViewerSize),
-    [updateViewerSize]
+  const updateViewerSize = useCallback(
+    ({ height, width }: PageCallback) => {
+      dispatch({
+        type: "setViewerSize",
+        width,
+        height,
+      });
+    },
+    [dispatch]
   );
 
   const range = documentId == undefined ? undefined : ux.range;
@@ -126,7 +120,6 @@ export function Viewer() {
             onLoadSuccess={onDocumentLoadSuccess}
           >
             <Page
-              canvasRef={canvasRef}
               pageNumber={ux.pageNumber}
                   onRenderSuccess={updateViewerSize}
                   className="viewer-page"
@@ -251,7 +244,7 @@ const ViewerCitations = () => {
       style={{
         ...viewer,
         zIndex: 1000, //isError ? 1000 : 1,
-        // border: `2px solid red`,
+        border: "1px solid red",
       }}
     >
       <div

@@ -78,7 +78,7 @@ async function loadForm(url: string): Promise<State> {
       ...form,
       ux: initialUXState(0, form.questions[0].citations),
       asyncState: { status: "idle" },
-      viewer: { top: 0, left: 0, width: 1024, height: 768 },
+      viewer: { width: 1024, height: 768 },
     };
   } catch (error) {
     console.error("error loading form", error);
@@ -319,8 +319,8 @@ const stateAtom = atom<State, [Action], void>(
                 break;
 
               case "setViewerSize": {
-                const { top, left, width, height } = action;
-                state.viewer = { top, left, width, height };
+                const { width, height } = action;
+                state.viewer = { width, height };
                 break;
               }
 
