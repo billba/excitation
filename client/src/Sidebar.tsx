@@ -231,17 +231,6 @@ export function Sidebar() {
                 </>
               )}
             </div>
-            <h4>Answer</h4>
-            {unreviewedCitations.length ? (
-              <div className="answer-section">
-                Before you can answer the question you must review all suggested
-                citations.
-              </div>
-            ) : (
-              <div className="answer-section">
-                When you are ready, you can answer the question
-              </div>
-            )}
           </div>
           <br />
           <br />
