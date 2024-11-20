@@ -13,7 +13,6 @@ import {
   DocumentOnePageAddRegular,
 } from "@fluentui/react-icons";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks";
-import { SidebarHeader } from "./SidebarHeader";
 
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
@@ -119,7 +118,6 @@ export function Sidebar() {
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
-      <SidebarHeader />
       <div className="sidebar-divider" />
       <h4 id="citations-label">Citations</h4>
       <div className="sidebar-divider" />
@@ -242,14 +240,7 @@ export function Sidebar() {
               </div>
             ) : (
               <div className="answer-section">
-                When you are ready, you can
-                <span
-                  className="action"
-                  onClick={dispatchHandler({ type: "enterAnswerMode" })}
-                >
-                  &nbsp;answer the question
-                </span>
-                .
+                When you are ready, you can answer the question
               </div>
             )}
           </div>

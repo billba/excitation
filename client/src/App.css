@@ -69,13 +69,21 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-#review-citations {
-  position: relative;
-  display: grid;
-  grid-template-columns: 400px auto;
-  align-items: start;
-  background-color: var(--color-base);
-  color: var(--color-text);
+#review-panel {
+
+  &.large {
+    position: relative;
+    display: grid;
+    grid-template-columns: 400px auto;
+    align-items: start;
+    background-color: var(--color-base);
+    color: var(--color-text);
+    overflow: scroll;
+  }
+
+  &.small {
+    background-color: var(--color-base);
+  }
 }
 
 #navbar {
@@ -149,13 +157,26 @@ button:focus-visible {
   margin: 0 10px 0 10px;
 }
 
-#sidebar-question-nav {
+#question-nav {
   display: grid;
-  grid-template-columns: 10% 80% 10%;
+  grid-template-columns: var(--icon-size) 1fr var(--icon-size) var(--icon-size);
+  grid-template-rows: var(--icon-size);
+  .chevron {
+    grid-column: 5;
+  }
 }
 
 .sidebar-divider {
   background-color: var(--color-doc-active);
+}
+
+.question {
+  font-size: large;
+  font-weight: bold;
+  text-align: center;;
+}
+
+.question-prefix {
 }
 
 .question-text {
@@ -438,7 +459,8 @@ button:focus-visible {
 }
 
 #edit-answer {
-  width: 100%;
+  margin: 10px;
+  width: 80%;
   line-height: inherit;
   overflow: none;
   resize: vertical;
@@ -456,6 +478,10 @@ button:focus-visible {
 }
 
 #viewer {
+}
+
+.viewer-page {
+  border: 1px solid purple;
 }
 
 .viewer-citations {
@@ -506,6 +532,45 @@ button:focus-visible {
   color: white;
 }
 
-#answer-question {
-  margin: 20px 50px 20px 50px;
+#answer-panel {
+  background-color: lightgoldenrodyellow;
+}
+
+#app {
+  max-height: 100vh;
+  display: grid;
+  grid-template-columns: 100%;
+
+  &.question-large.review-large.answer-small {
+    grid-template-rows: 1fr 1fr var(--small-panel);
+  }
+  &.question-large.review-small.answer-large {
+    grid-template-rows: 1fr var(--small-panel) 1fr;
+  }
+  &.question-small.review-large.answer-small {
+    grid-template-rows: var(--small-panel) 1fr var(--small-panel);
+  }
+  &.question-small.review-small.answer-large {
+    grid-template-rows: var(--small-panel) var(--small-panel) 1fr;
+  }
+  /* code ensures that we never end up with the other 4 combinations */
+}
+
+#question-panel {
+  padding: 10px;
+  background-color: lightcyan
+}
+
+.large-icon {
+  min-height: var(--icon-size);
+  width: var(--icon-size);
+}
+
+.panel {
+  &.small {
+    overflow-y: hidden;
+    &:hover {
+      cursor: pointer;
+    }
+  }
 }

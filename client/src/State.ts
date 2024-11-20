@@ -13,6 +13,7 @@ import {
   FormDocument,
   LoadForm,
   AsyncState,
+  PseudoBoolean,
 } from "./Types";
 import {
   createCitationId,
@@ -23,6 +24,13 @@ import { calculateRange } from "./Range";
 
 export const docs: FormDocument[] = [];
 export const docFromId: { [id: number]: FormDocument } = {};
+
+export function togglePseudoBoolean(pb: PseudoBoolean): PseudoBoolean {
+  return pb ? undefined : true;
+}
+
+export const largeSmall = (large: PseudoBoolean) => (large ? "large" : "small");
+
 
 async function loadForm(url: string): Promise<State> {
   try {
@@ -135,6 +143,7 @@ function initialUXState(questionIndex: number, citations: Citation[]) {
   if (citations.length == 0)
     return {
       questionIndex,
+      largeReviewPanel: true,
       documentId: undefined,
     };
 
@@ -143,6 +152,7 @@ function initialUXState(questionIndex: number, citations: Citation[]) {
   if (citationIndex == undefined)
     return {
       questionIndex,
+      largeReviewPanel: true,
       documentId: undefined,
     };
 
@@ -151,6 +161,7 @@ function initialUXState(questionIndex: number, citations: Citation[]) {
 
   return {
     questionIndex,
+    largeReviewPanel: true,
     documentId: citation.documentId,
     pageNumber: citationHighlights[0]?.pageNumber ?? 1,
     range: undefined,
@@ -206,7 +217,6 @@ const stateAtom = atom<State, [Action], void>(
               }
 
               ux.selectedCitation = undefined;
-              ux.answeringQuestion = undefined;
             }
 
             function setAsync({
@@ -257,7 +267,6 @@ const stateAtom = atom<State, [Action], void>(
                 citationIndex,
                 citationHighlights,
               };
-              ux.answeringQuestion = undefined;
             }
 
             function selectQuestion(questionIndex: number) {
@@ -403,13 +412,21 @@ const stateAtom = atom<State, [Action], void>(
                 ux.questionIndex = action.questionIndex;
                 selectCitation(action.citationIndex);
                 break;
-              
-              case "enterAnswerMode":
-                ux.answeringQuestion = true;
+
+              case "toggleQuestionPanel":
+                ux.largeQuestionPanel = togglePseudoBoolean(
+                  ux.largeQuestionPanel
+                );
                 break;
-              
-              case "exitAnswerMode":
-                ux.answeringQuestion = undefined;
+
+              case "expandReviewPanel":
+                ux.largeReviewPanel = true;
+                ux.largeAnswerPanel = undefined;
+                break;
+
+              case "expandAnswerPanel":
+                ux.largeReviewPanel = undefined;
+                ux.largeAnswerPanel = true;
                 break;
 
               case "startEditExcerpt":
@@ -460,7 +477,7 @@ const stateAtom = atom<State, [Action], void>(
                 console.assert(ux.selectedCitation?.editing !== undefined);
                 ux.selectedCitation!.editing = undefined;
                 break;
-              
+
               case "updateAnswer": {
                 console.assert(!isAsyncing);
 

@@ -2,9 +2,10 @@ import "./App.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import { pdfjs } from "react-pdf";
-import { useAppStateValue, useAsyncStateMachine } from "./State";
-import { AnswerQuestion } from "./AnswerQuestion";
-import { ReviewCitations } from "./ReviewCitations";
+import { largeSmall, useAppStateValue, useAsyncStateMachine } from "./State";
+import { QuestionPanel } from "./QuestionPanel";
+import { AnswerPanel } from "./AnswerPanel";
+import { ReviewPanel } from "./ReviewPanel";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.js",
@@ -14,11 +15,14 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 function App() {
   useAsyncStateMachine();
 
-  const {
-    ux: { answeringQuestion },
-  } = useAppStateValue();
-
-  return answeringQuestion ? <AnswerQuestion /> : <ReviewCitations />;
+  const { ux: { largeQuestionPanel, largeAnswerPanel, largeReviewPanel } } = useAppStateValue();
+  return (
+    <div id="app" className={`question-${largeSmall(largeQuestionPanel)} review-${largeSmall(largeReviewPanel)} answer-${largeSmall(largeAnswerPanel)}`}>
+      <QuestionPanel />
+      <ReviewPanel />
+      <AnswerPanel />
+    </div>
+  )
 }
 
 export default App;

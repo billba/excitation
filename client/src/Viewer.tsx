@@ -67,8 +67,11 @@ export function Viewer() {
   const updateViewerSize = useCallback(() => {
     if (!canvasRef.current) return;
 
-    const { top, left, width, height } =
-      canvasRef.current.getBoundingClientRect();
+    const canvasRect = canvasRef.current.getBoundingClientRect();
+    
+    console.log("viewer", canvasRect, window.scrollY);
+
+    const { top, left, width, height } = canvasRect;
     dispatch({
       type: "setViewerSize",
       top: top + window.scrollY,
@@ -125,7 +128,8 @@ export function Viewer() {
             <Page
               canvasRef={canvasRef}
               pageNumber={ux.pageNumber}
-              onRenderSuccess={updateViewerSize}
+                  onRenderSuccess={updateViewerSize}
+                  className="viewer-page"
             />
           </Document>
           <ViewerCitations />
@@ -247,6 +251,7 @@ const ViewerCitations = () => {
       style={{
         ...viewer,
         zIndex: 1000, //isError ? 1000 : 1,
+        // border: `2px solid red`,
       }}
     >
       <div

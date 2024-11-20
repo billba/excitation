@@ -1,12 +1,17 @@
 import { SerializedRange } from "./Range";
 import { Bounds, DocumentIntelligenceResponse } from "./Utility";
 
+export type PseudoBoolean = undefined | true;
+
 export type Action =
   | {
-      type: "enterAnswerMode";
+      type: "toggleQuestionPanel";
     }
   | {
-      type: "exitAnswerMode";
+      type: "expandReviewPanel";
+    }
+  | {
+      type: "expandAnswerPanel";
     }
   | {
       type: "selectCitation";
@@ -159,7 +164,11 @@ export interface CitationHighlight {
 
 export interface UXState {
   questionIndex: number;
-  answeringQuestion?: true;
+
+  largeQuestionPanel?: true;
+  largeReviewPanel?: true;
+  largeAnswerPanel?: true;
+
   documentId?: number;
   pageNumber?: number;
   range?: SerializedRange;

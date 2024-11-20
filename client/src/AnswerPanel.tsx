@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatchHandler, useStopProp } from "./Hooks";
-import { useAppState, docFromId } from "./State";
+import { useDispatchHandler, useStopProp } from "./Hooks.ts";
+import { useAppState, docFromId } from "./State.ts";
 import { HoverableIcon } from "./Hooks.tsx";
 import {
   EditRegular,
@@ -12,18 +12,22 @@ import {
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
 
-export const AnswerQuestion = () => {
+export const AnswerPanel = () => {
   const { dispatchHandler } = useDispatchHandler();
   const stopProp = useStopProp();
   const [
     {
-      ux: { questionIndex },
+      ux: { questionIndex, largeAnswerPanel },
       questions,
     },
     dispatch,
   ] = useAppState();
 
-  const { text, answer, citations } = questions[questionIndex];
+  const { answer, citations } = questions[questionIndex];
+
+  // const unreviewedCitations = citations.filter(
+  //   ({ review }) => review === Review.Unreviewed
+  // );
 
   useEffect(() => {
     // console.log("ue", answerRef.current, answer);
@@ -80,10 +84,8 @@ export const AnswerQuestion = () => {
     [dispatch, editAnswer]
   );
 
-  return (
-    <div id="answer-question">
-      <h1>Answer Mode</h1>
-      <h2>{text}</h2>
+  return largeAnswerPanel ? (
+    <div id="answer-panel" className="panel large">
       <div id="answer-container">
             <textarea
               ref={answerRef}
@@ -91,7 +93,8 @@ export const AnswerQuestion = () => {
               id="edit-answer"
               value={editAnswer}
               onChange={onChangeAnswer}
-              onClick={stopProp}
+          onClick={stopProp}
+          placeholder="Type your answer here..."
               disabled={editAnswer == undefined}
             />
           {editAnswer != undefined ? (
@@ -136,10 +139,11 @@ export const AnswerQuestion = () => {
           </div>
         );
       })}
-
-      <button onClick={dispatchHandler({ type: "exitAnswerMode" })}>
-        Exit Answer Mode
-      </button>
+    </div>
+  ) : (
+      <div id="answer-panel" className="panel small" onClick={dispatchHandler({ type: 'expandAnswerPanel' })}>
+        Small answer panel.
+      <div id="answer-text-small">{answer}</div>
     </div>
   );
 };
