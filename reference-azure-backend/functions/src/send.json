@@ -26,25 +26,25 @@
   },
   {
     "type": "updateReview",
-    "citationId": 1,
+    "citationId": "1-system-1732038032110",
     "review": 1,
     "creator": "lee"
   },
   {
     "type": "updateReview",
-    "citationId": 2,
+    "citationId": "1-system-1732038042614",
     "review": 2,
     "creator": "lee"
   },
   {
     "type": "updateReview",
-    "citationId": 2,
+    "citationId": "1-system-1732038042614",
     "review": 0,
     "creator": "lee"
   },
   {
     "type": "updateBounds",
-    "citationId": 1,
+    "citationId": "1-system-1732038032110",
     "bounds": [
       {
         "pageNumber": 1,

@@ -3,16 +3,22 @@ import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { eq } from 'drizzle-orm';
 import postgres from 'postgres';
 import { citations, events } from '../schema'
-import { BoundingRegion, Review, Event } from '../types'
+import { Bounds, Review, Event } from '../types'
+
+export const createCitationId = (formId: number, creator: string) => {
+  return formId + '-' + creator + '-' + Date.now();
+}
 
 // ============================================================================
 // db operations
 // ============================================================================
 
 // Inserts into db citations table
-async function insertCitation(db: PostgresJsDatabase, form_id: number, question_id: number, document_id: number, excerpt: string, bounds: BoundingRegion[], review: Review, creator: string) {
+async function insertCitation(db: PostgresJsDatabase, form_id: number, question_id: number, document_id: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
+  const citation_id = createCitationId(form_id, creator);
   /* @ts-ignore */
   return await db.insert(citations).values({
+    citation_id,
     form_id,
     question_id,
     document_id,
@@ -24,23 +30,23 @@ async function insertCitation(db: PostgresJsDatabase, form_id: number, question_
 }
 
 // Updates db citations table
-async function updateCitationBounds(db: PostgresJsDatabase, citation_id: number, bounds: BoundingRegion[]) {
+async function updateCitationBounds(db: PostgresJsDatabase, citation_id: string, bounds: Bounds[]) {
   return db.update(citations).set({
     /* @ts-ignore */
     bounds,
-  }).where(eq(citations.id, citation_id)).returning({
-    id: citations.id,
+  }).where(eq(citations.citation_id, citation_id)).returning({
+    citation_id: citations.citation_id,
     excerpt: citations.excerpt,
     bounds: citations.bounds
   });
 }
 
-async function updateCitationReview(db: PostgresJsDatabase, citation_id: number, review: Review) {
+async function updateCitationReview(db: PostgresJsDatabase, citation_id: string, review: Review) {
   return db.update(citations).set({
     /* @ts-ignore */
     review
-  }).where(eq(citations.id, citation_id)).returning({
-    id: citations.id,
+  }).where(eq(citations.citation_id, citation_id)).returning({
+    citation_id: citations.citation_id,
     excerpt: citations.excerpt,
     review: citations.review
   });
@@ -90,7 +96,7 @@ async function addCitation(db: PostgresJsDatabase, context: InvocationContext, e
   if (event.type === "addCitation") {
     let citation = await insertCitation(db, event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
     context.log("Created citation:", citation);
-    event.citationId = citation[0].id;
+    event.citationId = citation[0].citation_id;
     let addEvent = await insertAddEvent(db, event);
     context.log("Created event:", addEvent);
   }
