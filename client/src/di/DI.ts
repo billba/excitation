@@ -97,13 +97,11 @@ function createSummary(
 
       // get polygon(s) from this region
       let polygons = words.map((word) => word.polygon);
-      let polys = combinePolygons(polygons as Polygon4[]);
-      for (const poly of polys) {
-        summary.polygons.push({
-          polygon: poly,
-          page: pageIndex + 1 // 1-indexed
-        });
-      }
+      let poly = combinePolygons(polygons as Polygon4[]);
+      summary.polygons.push({
+        polygon: poly,
+        page: pageIndex + 1 // 1-indexed
+      });
     }
   }
   return summary;

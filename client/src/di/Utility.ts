@@ -1,4 +1,4 @@
-import { Point, Polygon4, PolygonC, PolygonN, Range } from "./Types";
+import { Point, Polygon4, PolygonC, Range } from "./Types";
 
 // ===============
 // === GETTERS ===
@@ -146,84 +146,6 @@ export function comparePoints(
   return 0;
 }
 
-// ==================
-// === POLYGONIZE ===
-// ==================
-
-// there's six possible shapes that can result from this
-// ========
-//  #####   single polygon4,   shape (A)
-// ========
-//      ###
-// ####     two polygon4s,     shape (B)
-// ========
-//    #####
-// #####    one polygonN, N=8, shape (C)
-// ========
-//    #####
-// ######## one polygonN, N=6, shape (D)
-// ========
-// ########
-// #####    one polygonN, N=6, shape (E)
-// ========
-//    #####
-// ######## one polygonN, N=8, shape (F)
-// #####
-// ========
-export function polygonize(
-  poly: PolygonC
-): PolygonN[] {
-  let hx: Range;
-  let hy: Range;
-  let bx: Range;
-  let by: Range;
-  let tx: Range;
-  let ty: Range;
-
-  switch (poly.type) {
-    case "h":
-      return [poly.head];
-    case "b":
-      return [poly.body];
-    case "t":
-      return [poly.tail];
-
-    case "ht":
-      if (!adjacent(poly.head, poly.tail, 0.2))
-        return [poly.head, poly.tail]; // (B)
-
-      [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-      [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-      return [[hx[0], hy[0], hx[1], hy[0],
-               hx[1], hy[1], tx[1], hy[1],
-               tx[1], ty[1], tx[0], ty[1],
-               tx[0], ty[0], hx[0], ty[0]]]; // (C)
-
-    case "hb":
-      [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-      [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-      return [[hx[0], hy[0], bx[1], hy[0],
-               bx[1], by[1], bx[0], by[1],
-               bx[0], by[0], hx[0], by[0]]]; // (D)
-
-    case "bt":
-      [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-      [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-      return [[bx[0], by[0], bx[1], by[0],
-               bx[1], by[1], tx[1], by[1],
-               tx[1], ty[1], bx[0], ty[1]]]; // (E)
-
-    case "hbt":
-      [ hx, hy ] = [ getX(poly.head), getY(poly.head) ];
-      [ bx, by ] = [ getX(poly.body), getY(poly.body) ];
-      [ tx, ty ] = [ getX(poly.tail), getY(poly.tail) ];
-      return [[hx[0], hy[0], bx[1], hy[0],
-               bx[1], by[1], tx[1], by[1],
-               tx[1], ty[1], bx[0], ty[1],
-               bx[0], by[0], hx[0], by[0]]]; // (F)
-  }
-}
-
 // ===================
 // === COMBINATION ===
 // ===================
@@ -249,9 +171,29 @@ export function combinePolygons4(
 }
 
 // Combine an array of polygon4 into one polygon
+// there's six possible shapes that can result from this
+// ========
+//  #####   single polygon4, shape (A) "h" or "b"
+// ========
+//      ###
+// ####     two polygon4s,   shape (B) "ht"
+// ========
+//    #####
+// #####    two polygon4s,   shape (C) "ht"
+// ========
+//    #####
+// ######## two polygon4s,   shape (D) "hb" or perhaps "ht"
+// ========
+// ########
+// #####    two polygon4s,   shape (E) "bt" or perhaps "ht"
+// ========
+//    #####
+// ######## three polygon4s, shape (F) "hbt"
+// #####
+// ========
 export function combinePolygons(
   polygons: Polygon4[]
-): PolygonN[] {
+): PolygonC {
   let zero = [0,0,0,0,0,0,0,0] as Polygon4;
   let head = zero;
   let body = zero;
@@ -281,29 +223,29 @@ export function combinePolygons(
 
   // now we create the poly
   if (body == zero) {
-    if (tail == zero) return polygonize ({ type: "h", head: head });
+    if (tail == zero) return { type: "h", head: head }; // (A)
 
     // if the head and the tail are the same width, just return a single poly
-    if (comparePolyWidth(head, tail) == 0) return polygonize({ type: "b", body: combinePolygons4([head, tail]) });
+    if (comparePolyWidth(head, tail) == 0) return { type: "b", body: combinePolygons4([head, tail]) }; // (A)
 
-    return polygonize({ type: "ht", head: head, tail: tail });
+    return { type: "ht", head: head, tail: tail }; // (B) or (C)
   }
   // we need to do a few checks...
   // is the head actually just a body line?
   if (comparePolyWidth(head, body) >= 0) {
     body = combinePolygons4([head, body]);
     head = zero;
-    if (tail == zero) return polygonize({ type: "b", body: body });
+    if (tail == zero) return { type: "b", body: body }; // (A)
   }
 
   // is the tail actually just a body line?
   if (comparePolyWidth(tail, body) >= 0) {
     body = combinePolygons4([body, tail]);
     tail = zero;
-    if (head == zero) return polygonize({ type: "b", body: body });
-    return polygonize({ type: "hb", head: head, body: body });
+    if (head == zero) return { type: "b", body: body }; // (A)
+    return { type: "hb", head: head, body: body }; // (D)
   }
 
-  if (head == zero) return polygonize({type: "bt", body: body, tail: tail });
-  return polygonize({ type: "hbt", head: head, body: body, tail: tail });
+  if (head == zero) return {type: "bt", body: body, tail: tail }; // (E)
+  return { type: "hbt", head: head, body: body, tail: tail }; // (F)
 }

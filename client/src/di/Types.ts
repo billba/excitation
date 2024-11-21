@@ -49,7 +49,7 @@ export type PolygonC =
   };
 
 export interface PolygonOnPage {
-  polygon: Polygon;
+  polygon: PolygonC;
   page: number;
 }
 

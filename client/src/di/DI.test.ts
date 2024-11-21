@@ -10,7 +10,7 @@ const rangeToSummaryTest = (
   range: CursorRange,
   di: DocIntResponse,
   expected: Summary
-) => test(`rangeToSummaryTest | ${description}`, () => {
+) => test(`rangeToSummaryTest  | ${description}`, () => {
   let actual = rangeToSummary(range, di);
   expect(actual).toEqual(expected);
 })
@@ -53,10 +53,13 @@ const range1b = {
 const summary1 = {
   excerpt: "Microsoft",
   polygons: [
-    { polygon: [0.998, 1.0456,
-                1.8337, 1.0408,
-                1.8289, 1.2318,
-                0.9933, 1.2174],
+    { polygon: 
+      {
+        type: "h",
+        head: [0.998, 1.0456,
+              1.8337, 1.0408,
+              1.8289, 1.2318,
+              0.9933, 1.2174]},
       page: 1 }
   ]
 }
@@ -72,10 +75,12 @@ const range2 = {
 const summary2 = {
   excerpt: "Microsoft Cloud Strength Fuels Third Quarter Results",
   polygons: [
-    { polygon: [0.9933, 1.0408,
-                5.4916, 1.0408,
-                5.4916, 1.2413,
-                0.9933, 1.2413],
+    { polygon: {
+        type: "h",
+        head: [0.9933, 1.0408,
+              5.4916, 1.0408,
+              5.4916, 1.2413,
+              0.9933, 1.2413]},
       page: 1 }
   ]
 };
@@ -91,20 +96,21 @@ const range3 = {
 const summary3 = {
 	excerpt: "following results for the quarter",
 	polygons: [
-		{ polygon: [5.8402, 1.4371,
-								7.3253, 1.4371,
-								7.3253, 1.6089,
-								5.8402, 1.6089],
-			page: 1 },
-		{ polygon: [0.9885, 1.6662,
-								1.4326, 1.6615,
-								1.4374,	1.819,
-								0.9933,	1.819],
+		{ polygon: {
+        type: "ht",
+        head: [5.8402, 1.4371,
+              7.3253, 1.4371,
+              7.3253, 1.6089,
+              5.8402, 1.6089],
+        tail: [0.9885, 1.6662,
+              1.4326, 1.6615,
+              1.4374,	1.819,
+              0.9933,	1.819]},
 			page: 1 }
 	]
 }
 rangeToSummaryTest("summary should continue across line breaks", range3, di0, summary3);
-excerptToSummaryTest("summary should be 2 poly4s", summary3.excerpt, di0, summary3);
+excerptToSummaryTest("summary should continue across line breaks", summary3.excerpt, di0, summary3);
 
 const point4a = { x: 1.3, y: 9.8 };
 const point4b = { x: 7.2, y: 1.1 };
@@ -115,15 +121,19 @@ const range4 = {
 const summary4 = {
   excerpt: "· Search and news advertising revenue excluding traffic acquisition costs increased 12% Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third",
   polygons: [
-    { polygon: [1.2368, 9.7109,
-                6.7427, 9.7109,
-                6.7427, 9.878,
-                1.2368, 9.878],
+    { polygon: {
+        type: "h",
+        head: [1.2368, 9.7109,
+              6.7427, 9.7109,
+              6.7427, 9.878,
+              1.2368, 9.878]},
       page: 1 },
-    { polygon: [0.9885, 1.0265,
-                7.4685, 1.0265,
-                7.4685, 1.1888,
-                0.9885,1.1888],
+    { polygon: {
+        type: "h",
+        head: [0.9885, 1.0265,
+              7.4685, 1.0265,
+              7.4685, 1.1888,
+              0.9885,1.1888]},
       page: 2 }
   ]
 };
@@ -139,12 +149,16 @@ const range5 = {
 const summary5 = {
   excerpt: `"Microsoft Copilot and Copilot stack are orchestrating a new era of Al transformation, driving better business outcomes across every role and industry,"`,
   polygons: [
-    { polygon: [0.998, 3.0221,
-                7.1056, 3.0221,
-                7.1056, 3.1892,
-                4.1067, 3.1892,
-                4.1067, 3.3993,
-                0.998, 3.3993],
+    { polygon: {
+        type: "ht",
+        head: [0.998, 3.0221,
+              7.1056, 3.0221,
+              7.1056, 3.1892,
+              0.998, 3.1892],
+        tail: [0.998, 3.2322,
+              4.1067, 3.2322,
+              4.1067, 3.3993,
+              0.998, 3.3993]},
       page: 1 }
   ]
 }
@@ -160,14 +174,20 @@ const range6 = {
 const summary6 = {
   excerpt: "driven by strong execution by our sales teams and partners,\" said Amy Hood, executive vice president and chief financial officer of Microsoft.",
   polygons: [
-    { polygon: [5.8975, 3.8242,
-                7.3253, 3.8242,
-                7.3253, 4.2109,
-                2.2062, 4.2109,
-                2.2062, 4.4067,
-                0.9885, 4.4067,
-                0.9885, 4.0343,
-                5.8975, 4.0343],
+    { polygon: {
+        type: "hbt",
+        head: [5.8975, 3.8242,
+              6.9098, 3.8242,
+              6.9098, 4.0009,
+              5.8975, 4.0009],
+        body: [0.9885, 4.0343,
+              7.3253, 4.0343,
+              7.3253, 4.2109,
+              0.9885, 4.2109],
+        tail: [0.9933, 4.2491,
+              2.2062, 4.2491,
+              2.2062, 4.4067,
+              0.9933, 4.4067]},
       page: 1 }
   ]
 };
@@ -183,15 +203,19 @@ const range7 = {
 const summary7 = {
   excerpt: "officer of Microsoft. Business Highlights",
   polygons: [
-    { polygon: [0.9933, 4.2491,
-                 2.2062, 4.2491,
-                 2.2062, 4.4067,
-                 0.9933,4.4067],
+    { polygon: {
+        type: "h",
+        head: [0.9933, 4.2491,
+                2.2062, 4.2491,
+                2.2062, 4.4067,
+                0.9933,4.4067]},
       page: 1 },
-    { polygon: [0.998, 4.6311,
-                 2.2635, 4.6311,
-                 2.2635, 4.7982,
-                 0.998, 4.7982],
+    { polygon: {
+        type: "h",
+        head: [0.998, 4.6311,
+              2.2635, 4.6311,
+              2.2635, 4.7982,
+              0.998, 4.7982]},
       page: 1 }
   ]
 };
@@ -207,10 +231,12 @@ const range8 = {
 const summary8 = {
   excerpt: "Windows revenue increased 11% with Windows OEM revenue growth of 11% and Windows Commercial products and cloud services revenue growth of 13% (up 12% in constant currency)",
   polygons: [
-    { polygon: [1.4899, 8.651,
-                7.2871, 8.651,
-                7.2871, 9.0282,
-                1.4899, 9.0282],
+    { polygon: {
+        type: "b",
+        body: [1.4899, 8.651,
+              7.2871, 8.651,
+              7.2871, 9.0282,
+              1.4899, 9.0282]},
       page: 1 }
   ]
 };
