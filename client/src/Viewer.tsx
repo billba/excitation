@@ -101,7 +101,7 @@ export function Viewer() {
   }, [range]);
 
   return (
-    <div ref={viewerRef} id="viewer">
+    <div ref={viewerRef} id="viewer-viewport">
       {documentId == undefined ? (
         <div>
           <p>You can select a document in the sidebar.</p>

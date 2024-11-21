@@ -140,6 +140,7 @@ button:focus-visible {
   display: grid;
   grid-template-columns: 10px 10px 10px 10px auto 10px;
   background-color: var(--color-base);
+  overflow-y: scroll;
 
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -449,8 +450,13 @@ button:focus-visible {
 }
 
 #viewer {
+  /* position: relative;
+  max-height: 100%; */
+}
+
+#viewer-viewport {
   position: relative;
-  max-height: 100%;
+  overflow: scroll;
 }
 
 .viewer-page {

@@ -27,11 +27,11 @@ export const AnswerPanel = () => {
   const { answer, citations } = questions[questionIndex];
 
   const unreviewedCitations =
-  citations.filter(({ review }) => review === Review.Unreviewed).length > 0;
-  
+    citations.filter(({ review }) => review === Review.Unreviewed).length > 0;
+
   const answerRef = useRef<HTMLTextAreaElement>(null);
   const [editAnswer, setEditAnswer] = useState<string | undefined>(undefined);
-  
+
   const cancelEditAnswer = useCallback((e: React.MouseEvent) => {
     setEditAnswer(undefined);
     e.stopPropagation();
@@ -114,34 +114,36 @@ export const AnswerPanel = () => {
           </>
         )}
       </div>
-      <div>
-      <h2>Approved Citations</h2>
-      {citations.map(({ excerpt, documentId, bounds, review }, i) => {
-        if (review !== Review.Approved) return <div key={i}/>;
+      {largeAnswerPanel && (
+        <div>
+          <h2>Approved Citations</h2>
+          {citations.map(({ excerpt, documentId, bounds, review }, i) => {
+            if (review !== Review.Approved) return <div key={i} />;
 
-        const pageNumbers = (bounds ?? [{ pageNumber: unlocatedPage }])
-          .map(({ pageNumber }) => pageNumber)
-          .sort();
+            const pageNumbers = (bounds ?? [{ pageNumber: unlocatedPage }])
+              .map(({ pageNumber }) => pageNumber)
+              .sort();
 
-        const firstPage = pageNumbers[0];
-        const lastPage = pageNumbers[pageNumbers.length - 1];
+            const firstPage = pageNumbers[0];
+            const lastPage = pageNumbers[pageNumbers.length - 1];
 
-        const range =
-          firstPage == lastPage
-            ? firstPage == unlocatedPage
-              ? "Unable to locate citation"
-              : `Page ${firstPage}`
-            : `Pages ${firstPage}-${lastPage}`;
+            const range =
+              firstPage == lastPage
+                ? firstPage == unlocatedPage
+                  ? "Unable to locate citation"
+                  : `Page ${firstPage}`
+                : `Pages ${firstPage}-${lastPage}`;
 
-        return (
-          <div key={i}>
-            <p>
-              {excerpt}&nbsp;({docFromId[documentId].name}, {range})
-            </p>
-          </div>
-        );
-      })}
-      </div>
+            return (
+              <div key={i}>
+                <p>
+                  {excerpt}&nbsp;({docFromId[documentId].name}, {range})
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
