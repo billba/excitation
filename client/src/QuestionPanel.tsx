@@ -41,49 +41,57 @@ export const QuestionPanel = () => {
   const Chevron = () => ChevronIcon(largeQuestionPanel);
 
   return (
-    <div id="question-panel" className={`panel ${largeSmall(largeQuestionPanel)}`}>
-      <div id="question-nav">
-        <TriangleLeftFilled
-          className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
-          onClick={
-            disablePrev
-              ? undefined
-              : dispatchUnlessError({ type: "prevQuestion" })
-          }
-        />
-        <div className="question">
-          <span className="question-prefix">
-            {prefix ? <>{prefix}. </> : null}
-          </span>
-          <span className="question-text">{text}</span>
+    <div
+      id="question-panel"
+      className={`panel ${largeSmall(largeQuestionPanel)}`}
+    >
+      <div id="question-container">
+        <div id="question-nav">
+          <TriangleLeftFilled
+            className={`question-nav ${disablePrev ? "disabled" : "enabled"}`}
+            onClick={
+              disablePrev
+                ? undefined
+                : dispatchUnlessError({ type: "prevQuestion" })
+            }
+          />
+          <div className="question">
+            <span className="question-prefix">
+              {prefix ? <>{prefix}. </> : null}
+            </span>
+            <span className="question-text">{text}</span>
+          </div>
+          <TriangleRightFilled
+            className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
+            onClick={
+              disableNext
+                ? undefined
+                : dispatchUnlessError({ type: "nextQuestion" })
+            }
+          />
+          <Chevron />
         </div>
-        <TriangleRightFilled
-          className={`question-nav ${disableNext ? "disabled" : "enabled"}`}
-          onClick={
-            disableNext
-              ? undefined
-              : dispatchUnlessError({ type: "nextQuestion" })
-          }
-        />
-        <Chevron />
+        {largeQuestionPanel && (
+          <div id="question-guidance">
+            <h4>Guidance</h4>
+            <p>
+              Many customers have questionaires or forms where the fields have a
+              concise label of question, but there are significant supplementary
+              materials, sometimes described as "guidelines".
+            </p>
+            <ul>
+              <li>These are often bulleted</li>
+              <li>There may be links to other documents</li>
+              <li>They may be quite long indeed.</li>
+              <li>There may be a lot of guidelines.</li>
+              <li>
+                And so there has to be a way for users to access said guidance,
+                both when reviewing citations and answering the question.
+              </li>
+            </ul>
+          </div>
+        )}
       </div>
-      {largeQuestionPanel && (
-        <div id="question-guidance">
-          <h4>Guidance</h4>
-          <p>
-            Many customers have questionaires or forms where the fields have a
-            concise label of question, but there are significant supplementary
-            materials, sometimes described as "guidelines".
-          </p>
-          <ul>
-            <li>These are often bulleted</li>
-            <li>There may be links to other documents</li>
-            <li>They may be quite long indeed.</li>
-            <li>There may be a lot of guidelines.</li>
-            <li>And so there has to be a way for users to access said guidance, both when reviewing citations and answering the question.</li>
-          </ul>
-        </div>
-      )}
     </div>
   );
-}
+};
