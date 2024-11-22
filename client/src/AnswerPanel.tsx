@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatchHandler, useStopProp } from "./Hooks.ts";
+import { useCallback, useRef, useState } from "react";
 import { useAppState, docFromId, largeSmall } from "./State.ts";
 import { HoverableIcon } from "./Hooks.tsx";
 import {
@@ -14,8 +13,6 @@ const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
 
 export const AnswerPanel = () => {
-  const { dispatchHandler } = useDispatchHandler();
-  const stopProp = useStopProp();
   const [
     {
       ux: { questionIndex, largeAnswerPanel },
@@ -93,57 +90,59 @@ export const AnswerPanel = () => {
       onClick={onClickOnSmallAnswer}
     >
       <div id="answer-container">
-        <textarea
-          ref={answerRef}
-          className="answer-text"
-          id="edit-answer"
-          value={editAnswer ?? answer ?? ""}
-          onChange={onChangeAnswer}
-          onClick={onClickOnSmallAnswer}
-          placeholder={
-            unreviewedCitations
-              ? "Before you can answer this question you must review all the suggested citations."
-              : "Type your answer here..."
-          }
-          disabled={unreviewedCitations}
-        />
-        {editAnswer && (
+        <div id="answer-and-buttons">
+          <textarea
+            ref={answerRef}
+            className="answer-text"
+            id="edit-answer"
+            value={editAnswer ?? answer ?? ""}
+            onChange={onChangeAnswer}
+            onClick={onClickOnSmallAnswer}
+            placeholder={
+              unreviewedCitations
+                ? "Before you can answer this question you must review all the suggested citations."
+                : "Type your answer here..."
+            }
+            disabled={unreviewedCitations}
+          />
+          {editAnswer && (
+            <>
+              <Cancel />
+              <Save />
+            </>
+          )}
+        </div>
+        {largeAnswerPanel && (
           <>
-            <Cancel />
-            <Save />
+            <h2>Approved Citations</h2>
+            {citations.map(({ excerpt, documentId, bounds, review }, i) => {
+              if (review !== Review.Approved) return <div key={i} />;
+
+              const pageNumbers = (bounds ?? [{ pageNumber: unlocatedPage }])
+                .map(({ pageNumber }) => pageNumber)
+                .sort();
+
+              const firstPage = pageNumbers[0];
+              const lastPage = pageNumbers[pageNumbers.length - 1];
+
+              const range =
+                firstPage == lastPage
+                  ? firstPage == unlocatedPage
+                    ? "Unable to locate citation"
+                    : `Page ${firstPage}`
+                  : `Pages ${firstPage}-${lastPage}`;
+
+              return (
+                <div key={i}>
+                  <p>
+                    {excerpt}&nbsp;({docFromId[documentId].name}, {range})
+                  </p>
+                </div>
+              );
+            })}
           </>
         )}
       </div>
-      {largeAnswerPanel && (
-        <div>
-          <h2>Approved Citations</h2>
-          {citations.map(({ excerpt, documentId, bounds, review }, i) => {
-            if (review !== Review.Approved) return <div key={i} />;
-
-            const pageNumbers = (bounds ?? [{ pageNumber: unlocatedPage }])
-              .map(({ pageNumber }) => pageNumber)
-              .sort();
-
-            const firstPage = pageNumbers[0];
-            const lastPage = pageNumbers[pageNumbers.length - 1];
-
-            const range =
-              firstPage == lastPage
-                ? firstPage == unlocatedPage
-                  ? "Unable to locate citation"
-                  : `Page ${firstPage}`
-                : `Pages ${firstPage}-${lastPage}`;
-
-            return (
-              <div key={i}>
-                <p>
-                  {excerpt}&nbsp;({docFromId[documentId].name}, {range})
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 };

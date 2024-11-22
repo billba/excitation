@@ -87,6 +87,10 @@ button:focus-visible {
   }
 }
 
+#review-container {
+  padding: 10px 10% 0 10%;
+}
+
 #navbar {
   padding: 5px 0 5px 0;
   width: 100%;
@@ -514,13 +518,16 @@ button:focus-visible {
 
 #answer-container {
   padding: 10px 10% 0 10%;
+}
 
+#answer-and-buttons {
   display: grid;
   grid-template-columns: auto var(--icon-size) var(--icon-size);
 
   .edit-cancel {
     grid-column: 2;
   }
+
 }
 
 .answer-text {
@@ -623,6 +630,8 @@ button:focus-visible {
 }
 
 .panel {
+  transition: height 0.25s;
+
   overflow-y: hidden;
   &.small {
     &:hover {
