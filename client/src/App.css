@@ -30,7 +30,7 @@
 
   --rounding-height: 3px;
   --icon-size: 30px;
-  --small-panel: 50px;
+  --small-panel: 4em;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -513,6 +513,8 @@ button:focus-visible {
 }
 
 #answer-container {
+  padding: 10px 10% 0 10%;
+
   display: grid;
   grid-template-columns: auto var(--icon-size) var(--icon-size);
 
@@ -549,7 +551,6 @@ button:focus-visible {
 
 #answer-panel {
   background-color: lightgoldenrodyellow;
-  padding: 10px 10% 0 10%;
 
   &.small {
     #edit-answer {
@@ -559,28 +560,61 @@ button:focus-visible {
 }
 
 #app {
-  max-height: 100vh;
-  display: grid;
-  grid-template-columns: 100%;
+  height: 100vh;
 
   &.question-large.review-large.answer-small {
-    grid-template-rows: 1fr 1fr var(--small-panel);
+    #question-panel {
+      height: calc((100vh - var(--small-panel))/2);
+    }
+    #review-panel {
+      height: calc((100vh - var(--small-panel))/2);
+    }
+    #answer-panel {
+      height: var(--small-panel);
+    }
   }
   &.question-large.review-small.answer-large {
-    grid-template-rows: 1fr var(--small-panel) 1fr;
+    #question-panel {
+      height: calc((100vh - var(--small-panel))/2);
+    }
+    #review-panel {
+      height: var(--small-panel);
+    }
+    #answer-panel {
+      height: calc((100vh - var(--small-panel))/2);
+    }
   }
   &.question-small.review-large.answer-small {
-    grid-template-rows: var(--small-panel) 1fr var(--small-panel);
+    #question-panel {
+      height: var(--small-panel);
+    }
+    #review-panel {
+      height: calc(100vh - var(--small-panel) * 2);
+    }
+    #answer-panel {
+      height: var(--small-panel);
+    }
   }
   &.question-small.review-small.answer-large {
-    grid-template-rows: var(--small-panel) var(--small-panel) 1fr;
+    #question-panel {
+      height: var(--small-panel);
+    }
+    #review-panel {
+      height: var(--small-panel);
+    }
+    #answer-panel {
+      height: calc(100vh - var(--small-panel) * 2);
+    }
   }
   /* code ensures that we never end up with the other 4 combinations */
 }
 
 #question-panel {
-  padding: 10px;
   background-color: lightcyan
+}
+
+#question-container {
+  padding: 10px;
 }
 
 .large-icon {
@@ -589,8 +623,8 @@ button:focus-visible {
 }
 
 .panel {
+  overflow-y: hidden;
   &.small {
-    overflow-y: hidden;
     &:hover {
       cursor: pointer;
     }
