@@ -33,9 +33,11 @@ export const ReviewPanel = () => {
       className="panel small"
       onClick={dispatchHandler({ type: "expandReviewPanel" })}
     >
-      {unreviewedCitations.length
-        ? `There are ${unreviewedCitations.length} suggested citations left to review.`
-        : "All suggested citations have been reviewed. Click here to change your reviews and add citations that you consider relevent to answering the question."}
+      <div id="review-container">
+        {unreviewedCitations.length
+          ? `There are ${unreviewedCitations.length} suggested citations left to review.`
+          : "All suggested citations have been reviewed. Click here to change your reviews and manually add citations."}
+      </div>
     </div>
   );
 };
