@@ -14,9 +14,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 function App() {
   useAsyncStateMachine();
 
-  const { ux: { largeQuestionPanel, largeAnswerPanel, largeReviewPanel } } = useAppStateValue();
+  const { ux: { largeQuestionPanel } } = useAppStateValue();
   return (
-    <div id="app" className={`question-${largeSmall(largeQuestionPanel)} review-${largeSmall(largeReviewPanel)} answer-${largeSmall(largeAnswerPanel)}`}>
+    <div id="app" className={`question-${largeSmall(largeQuestionPanel)} `}>
       <QuestionPanel />
       <AnswerPanel />
     </div>

@@ -8,7 +8,7 @@ export type Action =
       type: "toggleQuestionPanel";
     }
   | {
-      type: "expandReviewPanel";
+      type: "contractAnswerPanel";
     }
   | {
       type: "expandAnswerPanel";
@@ -164,7 +164,6 @@ export interface UXState {
   questionIndex: number;
 
   largeQuestionPanel?: true;
-  largeReviewPanel?: true;
   largeAnswerPanel?: true;
 
   documentId?: number;
