@@ -44,7 +44,7 @@ export const ApprovedCitations = ({addExcerptToAnswer}: Props) => {
 
     <div>
       <span
-        onClick={dispatchHandler({ type: "expandReviewPanel" })}
+        onClick={dispatchHandler({ type: "contractAnswerPanel" })}
       >
         Expando
       </span>

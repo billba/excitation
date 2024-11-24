@@ -556,12 +556,6 @@ button:focus-visible {
 
 #answer-panel {
   background-color: var(--color-base);
-
-  &.small {
-    #edit-answer {
-      height: 1.5em;
-    }
-  }
 }
 
 #app {
@@ -572,7 +566,7 @@ button:focus-visible {
       height: var(--large-panel);
     }
     #answer-panel {
-      height: calc(100vh - var(--small-panel));
+      height: calc(100vh - var(--large-panel));
     }
   }
   &.question-small {
@@ -580,7 +574,7 @@ button:focus-visible {
       height: var(--small-panel);
     }
     #answer-panel {
-      height: calc(100vh - var(--large-panel));
+      height: calc(100vh - var(--small-panel));
     }
   }
 }

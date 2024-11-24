@@ -144,7 +144,6 @@ function initialUXState(questionIndex: number, citations: Citation[]): UXState {
   if (citations.length == 0)
     return {
       questionIndex,
-      largeReviewPanel: true,
       documentId: undefined,
     };
 
@@ -153,7 +152,6 @@ function initialUXState(questionIndex: number, citations: Citation[]): UXState {
   if (citationIndex == undefined)
     return {
       questionIndex,
-      largeReviewPanel: true,
       documentId: undefined,
     };
 
@@ -162,7 +160,6 @@ function initialUXState(questionIndex: number, citations: Citation[]): UXState {
 
   return {
     questionIndex,
-    largeReviewPanel: true,
     documentId: citation.documentId,
     pageNumber: citationHighlights[0]?.pageNumber ?? 1,
     range: undefined,
@@ -420,13 +417,11 @@ const stateAtom = atom<State, [Action], void>(
                 );
                 break;
 
-              case "expandReviewPanel":
-                ux.largeReviewPanel = true;
+              case "contractAnswerPanel":
                 ux.largeAnswerPanel = undefined;
                 break;
 
               case "expandAnswerPanel":
-                ux.largeReviewPanel = undefined;
                 ux.largeAnswerPanel = true;
                 break;
 
