@@ -4,7 +4,7 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { Citation, Review } from "./Types";
+import { Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
@@ -26,11 +26,6 @@ interface PageGroup {
 const sortIndex = sortBy(
   ({ firstPage, lastPage }: PageGroup) => firstPage * maxPageNumber + lastPage
 );
-
-// const sortCitation = (questionCitations: Citation[]) => sortBy((citationIndex: number) => {
-//   const { review } = questionCitations[citationIndex];
-//   return review * 1000 + citationIndex;
-// });
 
 export function Sidebar() {
   const [state, dispatch] = useAppState();
@@ -101,10 +96,6 @@ export function Sidebar() {
     [citations, documentId, selectedCitation]
   );
 
-  const unreviewedCitations = citations.filter(
-    ({ review }) => review === Review.Unreviewed
-  );
-
   const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
 
   const addSelection = useCallback(
@@ -118,7 +109,7 @@ export function Sidebar() {
 
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
-      <h4 id="citations-label">Citations</h4>
+      <h3 id="citations-label">Review Citations</h3>
       <div className="sidebar-divider" />
       <div id="docs">
         {groupedCitations.map(

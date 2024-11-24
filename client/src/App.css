@@ -31,6 +31,7 @@
   --rounding-height: 3px;
   --icon-size: 30px;
   --small-panel: 4em;
+  --large-panel: 9em;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -71,20 +72,13 @@ button:focus-visible {
 }
 
 #review-panel {
-
-  &.large {
-    position: relative;
-    display: grid;
-    grid-template-columns: 400px auto;
-    align-items: start;
-    background-color: var(--color-base);
-    color: var(--color-text);
-    overflow: scroll;
-  }
-
-  &.small {
-    background-color: var(--color-base);
-  }
+  position: relative;
+  display: grid;
+  grid-template-columns: 400px auto;
+  align-items: start;
+  background-color: var(--color-base);
+  color: var(--color-text);
+  overflow: scroll;
 }
 
 #review-container {
@@ -179,7 +173,7 @@ button:focus-visible {
 .question {
   font-size: large;
   font-weight: bold;
-  text-align: center;;
+  text-align: center;
 }
 
 .question-prefix {
@@ -499,10 +493,14 @@ button:focus-visible {
   display: grid;
   grid-template-rows: var(--icon-size);
   &.review {
-    grid-template-columns: auto var(--icon-size) var(--icon-size) var(--icon-size) var(--icon-size) auto;
+    grid-template-columns: auto var(--icon-size) var(--icon-size) var(
+        --icon-size
+      ) var(--icon-size) auto;
   }
   &.reviewed {
-    grid-template-columns: auto var(--icon-size) var(--icon-size) var(--icon-size) auto;
+    grid-template-columns: auto var(--icon-size) var(--icon-size) var(
+        --icon-size
+      ) auto;
   }
 }
 
@@ -517,7 +515,7 @@ button:focus-visible {
 }
 
 #answer-container {
-  padding: 10px 10% 0 10%;
+  padding: 10px 10% 10px 10%;
 }
 
 #answer-and-buttons {
@@ -527,7 +525,6 @@ button:focus-visible {
   .edit-cancel {
     grid-column: 2;
   }
-
 }
 
 .answer-text {
@@ -547,7 +544,8 @@ button:focus-visible {
   resize: vertical;
   font-family: inherit;
   font-size: large;
-  outline: none;
+  /* outline: none; */
+  resize: none;
   cursor: inherit;
   height: 5em;
 
@@ -557,7 +555,7 @@ button:focus-visible {
 }
 
 #answer-panel {
-  background-color: lightgoldenrodyellow;
+  background-color: var(--color-base);
 
   &.small {
     #edit-answer {
@@ -569,55 +567,26 @@ button:focus-visible {
 #app {
   height: 100vh;
 
-  &.question-large.review-large.answer-small {
+  &.question-large {
     #question-panel {
-      height: calc((100vh - var(--small-panel))/2);
-    }
-    #review-panel {
-      height: calc((100vh - var(--small-panel))/2);
+      height: var(--large-panel);
     }
     #answer-panel {
-      height: var(--small-panel);
+      height: calc(100vh - var(--small-panel));
     }
   }
-  &.question-large.review-small.answer-large {
-    #question-panel {
-      height: calc((100vh - var(--small-panel))/2);
-    }
-    #review-panel {
-      height: var(--small-panel);
-    }
-    #answer-panel {
-      height: calc((100vh - var(--small-panel))/2);
-    }
-  }
-  &.question-small.review-large.answer-small {
+  &.question-small {
     #question-panel {
       height: var(--small-panel);
     }
-    #review-panel {
-      height: calc(100vh - var(--small-panel) * 2);
-    }
     #answer-panel {
-      height: var(--small-panel);
+      height: calc(100vh - var(--large-panel));
     }
   }
-  &.question-small.review-small.answer-large {
-    #question-panel {
-      height: var(--small-panel);
-    }
-    #review-panel {
-      height: var(--small-panel);
-    }
-    #answer-panel {
-      height: calc(100vh - var(--small-panel) * 2);
-    }
-  }
-  /* code ensures that we never end up with the other 4 combinations */
 }
 
 #question-panel {
-  background-color: lightcyan
+  background-color: var(--color-base);
 }
 
 #question-container {

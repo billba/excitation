@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { useAppState, docFromId, largeSmall } from "./State.ts";
+import { useAppState, largeSmall } from "./State.ts";
 import { HoverableIcon } from "./Hooks.tsx";
 import {
   DismissRegular,
@@ -8,9 +8,9 @@ import {
   CheckmarkFilled,
 } from "@fluentui/react-icons";
 import { Review } from "./Types.ts";
+import { ReviewPanel } from "./ReviewPanel.tsx";
+import { ApprovedCitations } from "./ApprovedCitations.tsx";
 
-const maxPageNumber = 1000;
-const unlocatedPage = maxPageNumber;
 
 export const AnswerPanel = () => {
   const [
@@ -63,6 +63,8 @@ export const AnswerPanel = () => {
     [dispatch, unreviewedCitations]
   );
 
+  const addExcerptToAnswer = (excerpt: string) => () => setEditAnswer((prev) => (prev ?? "") + excerpt);
+
   const Cancel = () => (
     <HoverableIcon
       DefaultIcon={DismissRegular}
@@ -86,7 +88,7 @@ export const AnswerPanel = () => {
   return (
     <div
       id="answer-panel"
-      className={`panel ${largeSmall(largeAnswerPanel)}`}
+      className = {largeSmall(largeAnswerPanel)}
       onClick={onClickOnSmallAnswer}
     >
       <div id="answer-container">
@@ -105,44 +107,15 @@ export const AnswerPanel = () => {
             }
             disabled={unreviewedCitations}
           />
-          {editAnswer && (
+          {(editAnswer !== undefined) && (
             <>
               <Cancel />
               <Save />
             </>
           )}
         </div>
-        {largeAnswerPanel && (
-          <>
-            <h2>Approved Citations</h2>
-            {citations.map(({ excerpt, documentId, bounds, review }, i) => {
-              if (review !== Review.Approved) return <div key={i} />;
-
-              const pageNumbers = (bounds ?? [{ pageNumber: unlocatedPage }])
-                .map(({ pageNumber }) => pageNumber)
-                .sort();
-
-              const firstPage = pageNumbers[0];
-              const lastPage = pageNumbers[pageNumbers.length - 1];
-
-              const range =
-                firstPage == lastPage
-                  ? firstPage == unlocatedPage
-                    ? "Unable to locate citation"
-                    : `Page ${firstPage}`
-                  : `Pages ${firstPage}-${lastPage}`;
-
-              return (
-                <div key={i}>
-                  <p>
-                    {excerpt}&nbsp;({docFromId[documentId].name}, {range})
-                  </p>
-                </div>
-              );
-            })}
-          </>
-        )}
       </div>
+      {largeAnswerPanel ? <ApprovedCitations addExcerptToAnswer={addExcerptToAnswer} /> : <ReviewPanel />}
     </div>
   );
 };
