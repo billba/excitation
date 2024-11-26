@@ -16,6 +16,7 @@ export type Action =
   | {
       type: "selectCitation";
       citationIndex?: number;
+      reviewCitation?: true;
     }
   | {
       type: "prevQuestion";

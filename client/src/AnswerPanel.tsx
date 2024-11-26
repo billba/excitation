@@ -8,7 +8,7 @@ import {
   CheckmarkFilled,
 } from "@fluentui/react-icons";
 import { Review } from "./Types.ts";
-import { ReviewPanel } from "./ReviewPanel.tsx";
+import { ReviewPanel } from "./ReviewCitations.tsx";
 import { ApprovedCitations } from "./ApprovedCitations.tsx";
 
 
@@ -54,7 +54,6 @@ export const AnswerPanel = () => {
 
   const onClickOnSmallAnswer = useCallback(
     (e: React.MouseEvent) => {
-      console.log("clicking");
       if (!unreviewedCitations) {
         dispatch({ type: "expandAnswerPanel" });
         e.stopPropagation();
@@ -63,7 +62,7 @@ export const AnswerPanel = () => {
     [dispatch, unreviewedCitations]
   );
 
-  const addExcerptToAnswer = (excerpt: string) => () => setEditAnswer((prev) => (prev ?? "") + excerpt);
+  const addExcerptToAnswer = (excerpt: string) => setEditAnswer((prev) => (prev ?? answer ?? "") + excerpt);
 
   const Cancel = () => (
     <HoverableIcon
@@ -89,7 +88,7 @@ export const AnswerPanel = () => {
     <div
       id="answer-panel"
       className={largeSmall(largeAnswerPanel)}
-      onClick={onClickOnSmallAnswer}
+      onClick={largeAnswerPanel ? undefined : onClickOnSmallAnswer}
     >
       <div id="answer-container">
         <div id="answer-and-buttons">
