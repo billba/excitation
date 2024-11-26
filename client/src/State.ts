@@ -32,7 +32,6 @@ export function togglePseudoBoolean(pb: PseudoBoolean): PseudoBoolean {
 
 export const largeSmall = (large: PseudoBoolean) => (large ? "large" : "small");
 
-
 async function loadForm(url: string): Promise<State> {
   try {
     const form: LoadForm = await (await fetch(url)).json();
@@ -244,7 +243,10 @@ const stateAtom = atom<State, [Action], void>(
                 .sort()[0];
             }
 
-            function selectCitation(citationIndex?: number) {
+            function selectCitation(
+              citationIndex?: number,
+              reviewCitations?: true
+            ) {
               if (citationIndex == undefined) {
                 ux.selectedCitation = undefined;
                 return;
@@ -265,6 +267,8 @@ const stateAtom = atom<State, [Action], void>(
                 citationIndex,
                 citationHighlights,
               };
+
+              if (reviewCitations) ux.largeAnswerPanel = undefined;
             }
 
             function selectQuestion(questionIndex: number) {
@@ -288,7 +292,7 @@ const stateAtom = atom<State, [Action], void>(
 
             switch (action.type) {
               case "selectCitation": {
-                selectCitation(action.citationIndex);
+                selectCitation(action.citationIndex, action.reviewCitation);
                 break;
               }
 
