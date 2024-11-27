@@ -35,7 +35,17 @@
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	"forwardPorts": [8000, 5173]
+	"forwardPorts": [8000, 5173],
+	"portsAttributes": {
+		"5173": {
+			"label": "Citation Client",
+			"onAutoForward": "openBrowser"
+		},
+		"8000": {
+			"label": "Citation Local Backend",
+			"onAutoForward": "openBrowser"
+		}
+	}
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 	// Configure tool-specific properties.
