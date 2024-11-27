@@ -15,6 +15,7 @@ import {
   AsyncState,
   PseudoBoolean,
   UXState,
+  Question,
 } from "./Types";
 import {
   createCitationId,
@@ -76,7 +77,7 @@ async function loadForm(url: string): Promise<State> {
 
     return {
       ...form,
-      ux: initialUXState(0, form.questions[0].citations),
+      ux: initialUXState(0, form.questions[0]),
       asyncState: { status: "idle" },
       viewer: { width: 1024, height: 768 },
     };
@@ -139,7 +140,7 @@ function indexOfNextUnreviewedCitation(
     .sort(sortUnreviewedCitations(documentId, pageNumber))[0]?.[1];
 }
 
-function initialUXState(questionIndex: number, citations: Citation[]): UXState {
+function initialUXState(questionIndex: number, {citations, answer}: Question): UXState {
   if (citations.length == 0)
     return {
       questionIndex,
@@ -150,7 +151,7 @@ function initialUXState(questionIndex: number, citations: Citation[]): UXState {
 
   if (citationIndex == undefined)
     return {
-      largeAnswerPanel: true,
+      largeAnswerPanel: answer === undefined ? undefined : true,
       questionIndex,
       documentId: undefined,
     };
@@ -275,7 +276,7 @@ const stateAtom = atom<State, [Action], void>(
             function selectQuestion(questionIndex: number) {
               ux.questionIndex = questionIndex;
               selectUnreviewedCitation();
-              ux.largeAnswerPanel = ux.selectedCitation ? undefined : true;
+              ux.largeAnswerPanel = questions[questionIndex].answer === undefined ? undefined : true;
             }
 
             function selectUnreviewedCitation() {

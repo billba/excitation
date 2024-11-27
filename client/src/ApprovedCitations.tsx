@@ -3,8 +3,8 @@ import { useDispatchHandler } from "./Hooks.ts";
 import { HoverableIcon } from "./Hooks.tsx";
 import { Review } from "./Types.ts";
 import {
-  DismissCircleFilled,
-  DismissCircleRegular,
+  // DismissCircleFilled,
+  // DismissCircleRegular,
   AddCircleRegular,
   AddCircleFilled,
 } from "@fluentui/react-icons";
@@ -61,27 +61,26 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
     <HoverableIcon
       DefaultIcon={AddCircleRegular}
       HoverIcon={AddCircleFilled}
-      key="addExcerptToAnswer"
       classes="large-icon add-excerpt-to-answer"
       onClick={_addExcerptToAnswer(parent, excerpt)}
       floating={true}
     />
   );
 
-  const Reject = ({ citationIndex }: { citationIndex: number }) => (
-    <HoverableIcon
-      DefaultIcon={DismissCircleRegular}
-      HoverIcon={DismissCircleFilled}
-      key="reject"
-      classes="rejected on large-icon"
-      onClick={dispatchHandler({
-        type: "reviewCitation",
-        citationIndex,
-        review: Review.Rejected,
-      })}
-      floating={true}
-    />
-  );
+  // const Reject = ({ citationIndex }: { citationIndex: number }) => (
+  //   <HoverableIcon
+  //     DefaultIcon={DismissCircleRegular}
+  //     HoverIcon={DismissCircleFilled}
+  //     key="reject"
+  //     classes="rejected on large-icon"
+  //     onClick={dispatchHandler({
+  //       type: "reviewCitation",
+  //       citationIndex,
+  //       review: Review.Rejected,
+  //     })}
+  //     floating={true}
+  //   />
+  // );
 
   return (
     <div id="approved-citations" className="unselectable">
@@ -105,7 +104,7 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
               : `Pages ${firstPage}-${lastPage}`;
 
           return (
-            <div id={`citation-${citationIndex}`} key={citationIndex}>
+            <div id={`citation-${citationIndex}`} key={citationIndex} className="approved-citation-container">
               <AddExcerptToAnswer
                 parent={`citation-${citationIndex}`}
                 excerpt={excerpt}

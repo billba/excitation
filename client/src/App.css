@@ -606,6 +606,14 @@ button:focus-visible {
   padding: 0px 10% 10px 10%;
 }
 
+.approved-citation-container {
+  &:hover {
+    .add-excerpt-to-answer {
+      visibility: visible;
+    }
+  }
+}
+
 .approved-citation {
   margin-top: -10px;
   padding: 10px;
@@ -633,6 +641,7 @@ button:focus-visible {
 }
 
 .add-excerpt-to-answer {
+  visibility: hidden;
   left: -15px;
   top: 5px;
 }
