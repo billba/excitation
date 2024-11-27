@@ -150,6 +150,7 @@ function initialUXState(questionIndex: number, citations: Citation[]): UXState {
 
   if (citationIndex == undefined)
     return {
+      largeAnswerPanel: true,
       questionIndex,
       documentId: undefined,
     };
@@ -274,6 +275,7 @@ const stateAtom = atom<State, [Action], void>(
             function selectQuestion(questionIndex: number) {
               ux.questionIndex = questionIndex;
               selectUnreviewedCitation();
+              ux.largeAnswerPanel = ux.selectedCitation ? undefined : true;
             }
 
             function selectUnreviewedCitation() {
