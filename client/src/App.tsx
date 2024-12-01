@@ -1,26 +1,42 @@
 import "./App.css";
-import "react-pdf/dist/Page/TextLayer.css";
-import "react-pdf/dist/Page/AnnotationLayer.css";
-import { pdfjs } from "react-pdf";
-import { largeSmall, useAppStateValue, useAsyncStateMachine } from "./State";
+import {
+  largeSmall,
+  useLoadForm,
+  useAppStateValue,
+  useAsyncStateMachine,
+} from "./State";
 import { QuestionPanel } from "./QuestionPanel";
 import { AnswerPanel } from "./AnswerPanel";
+import { useParams } from "react-router";
+import { FormStatus, LoadedState } from "./Types";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.js",
-  import.meta.url
-).toString();
+export function FormQuestion() {
+  const { formId, questionId } = useParams();
+  useLoadForm(Number(formId), Number(questionId));
+  const { formStatus } = useAppStateValue();
+  
+  return formStatus == FormStatus.None ? (
+    <div>NO FORM</div>
+  ) : formStatus == FormStatus.Error ? (
+    <div>ERROR</div>
+  ) : formStatus == FormStatus.Loading ? (
+    <div>LOADING</div>
+  ) : (
+    <QandA/>
+  );
+}
 
-function App() {
+const QandA = () => {
   useAsyncStateMachine();
+  const { ux: {largeQuestionPanel}} = useAppStateValue() as LoadedState;
 
-  const { ux: { largeQuestionPanel } } = useAppStateValue();
   return (
-    <div id="app" className={`question-${largeSmall(largeQuestionPanel)} `}>
+    <div
+      id="app"
+      className={`question-${largeSmall(largeQuestionPanel)} `}
+    >
       <QuestionPanel />
       <AnswerPanel />
     </div>
-  )
+  );
 }
-
-export default App;

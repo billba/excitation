@@ -1,10 +1,10 @@
-import { docs, useAppState, sortBy } from "./State";
+import { useAppState, sortBy } from "./State";
 import {
   ReactNode,
   useCallback,
   useMemo,
 } from "react";
-import { Citation } from "./Types";
+import { Citation, LoadedState } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
@@ -29,7 +29,7 @@ const sortIndex = sortBy(
 
 export function Sidebar() {
   const [state, dispatch] = useAppState();
-  const { questions, ux } = state;
+  const { questions, ux, docs } = state as LoadedState;
   const { questionIndex, selectedCitation, documentId } = ux;
   const question = questions[questionIndex];
   const { citations } = question;

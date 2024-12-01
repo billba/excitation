@@ -1,6 +1,6 @@
 import { useDispatchAppState, asyncHelpers, useAppStateValue } from "./State";
 import { useCallback } from "react";
-import { Action } from "./Types";
+import { Action, LoadedState } from "./Types";
 
 export enum DispatchBehavior {
   Always,
@@ -40,7 +40,7 @@ export const useDispatchHandler = () => {
 };
 
 export const useAsyncHelper = () => {
-  const { asyncState } = useAppStateValue();
+  const { asyncState } = useAppStateValue() as LoadedState;
   return asyncHelpers(asyncState);
 }
 

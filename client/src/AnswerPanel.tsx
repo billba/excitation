@@ -7,19 +7,17 @@ import {
   CheckmarkRegular,
   CheckmarkFilled,
 } from "@fluentui/react-icons";
-import { Review } from "./Types.ts";
+import { LoadedState, Review } from "./Types.ts";
 import { ReviewPanel } from "./ReviewCitations.tsx";
 import { ApprovedCitations } from "./ApprovedCitations.tsx";
 
-
 export const AnswerPanel = () => {
-  const [
-    {
-      ux: { questionIndex, largeAnswerPanel },
-      questions,
-    },
-    dispatch,
-  ] = useAppState();
+  const [state, dispatch] = useAppState();
+
+  const {
+    ux: { questionIndex, largeAnswerPanel },
+    questions,
+  } = state as LoadedState;
 
   const { answer, citations } = questions[questionIndex];
 

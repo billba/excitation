@@ -9,7 +9,8 @@ import {
 } from "@fluentui/react-icons";
 import { useAsyncHelper, useDispatchHandler } from "./Hooks.ts";
 import { HoverableIcon } from "./Hooks.tsx";
-import { PseudoBoolean } from "./Types.ts";
+import { LoadedState, PseudoBoolean } from "./Types.ts";
+import { Breadcrumbs } from "./Breadcrumbs.tsx";
 
 export const ChevronIcon = (large: PseudoBoolean) => {
   const { dispatchUnlessError } = useDispatchHandler();
@@ -29,7 +30,8 @@ export const QuestionPanel = () => {
   const {
     questions,
     ux: { questionIndex, largeQuestionPanel },
-  } = useAppStateValue();
+    metadata: { formId }
+  } = useAppStateValue() as LoadedState;
   const { prefix, text } = questions[questionIndex];
 
   const { isError } = useAsyncHelper();
@@ -45,6 +47,7 @@ export const QuestionPanel = () => {
       id="question-panel"
       className={`panel ${largeSmall(largeQuestionPanel)}`}
     >
+      <Breadcrumbs breadcrumbs={[["Home", "/"], ["Form", `/${formId}`]]} />
       <div id="question-container">
         <div id="question-nav">
           <TriangleLeftFilled

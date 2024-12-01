@@ -1,7 +1,7 @@
-import { docFromId, useAppStateValue } from "./State.ts";
+import { useDocFromId, useAppStateValue } from "./State.ts";
 import { useDispatchHandler } from "./Hooks.ts";
 import { HoverableIcon } from "./Hooks.tsx";
-import { Review } from "./Types.ts";
+import { LoadedState, Review } from "./Types.ts";
 import {
   // DismissCircleFilled,
   // DismissCircleRegular,
@@ -16,13 +16,12 @@ interface Props {
 
 export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
   const { dispatchHandler } = useDispatchHandler();
-
   const {
     ux: { questionIndex },
     questions,
-  } = useAppStateValue();
-
+  } = useAppStateValue() as LoadedState;
   const { citations } = questions[questionIndex];
+  const docFromId = useDocFromId();
 
   const maxPageNumber = 1000;
   const unlocatedPage = maxPageNumber;
