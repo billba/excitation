@@ -5,6 +5,19 @@ export type PseudoBoolean = undefined | true;
 
 export type Action =
   | {
+      type: "loadForm";
+    }
+  | {
+      type: "loadFormError";
+      error: string;
+    }
+  | {
+      type: "loadFormSuccess";
+      form: Form;
+      questionIndex: number;
+      docs: FormDocument[];
+    }
+  | {
       type: "toggleQuestionPanel";
     }
   | {
@@ -17,6 +30,10 @@ export type Action =
       type: "selectCitation";
       citationIndex?: number;
       reviewCitation?: true;
+    }
+  | {
+      type: "gotoQuestion";
+      questionIndex: number;
     }
   | {
       type: "prevQuestion";
@@ -161,6 +178,13 @@ export interface CitationHighlight {
   polygons: number[][];
 }
 
+export enum FormStatus {
+  None,
+  Loading,
+  Error,
+  Loaded,
+}
+
 export interface UXState {
   questionIndex: number;
 
@@ -227,11 +251,26 @@ export interface LoadForm extends Form {
   documents: FormDocument[];
 }
 
-export interface State extends Form {
+export type LoadedState = {
+  formStatus: FormStatus.Loaded;
   ux: UXState;
   asyncState: AsyncState;
   viewer: ViewerState;
-}
+  docs: FormDocument[];
+} & Form;
+
+export type State =
+  | {
+      formStatus: FormStatus.None;
+    }
+  | {
+      formStatus: FormStatus.Loading;
+    }
+  | {
+      formStatus: FormStatus.Error;
+      error: string;
+    }
+  | LoadedState;
 
 export type Event =
   | {

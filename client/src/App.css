@@ -645,3 +645,7 @@ button:focus-visible {
   left: -15px;
   top: 5px;
 }
+
+.form-question {
+  cursor: pointer;
+}

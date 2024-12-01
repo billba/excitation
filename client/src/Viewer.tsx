@@ -9,7 +9,7 @@ import {
   MoreCircleFilled,
 } from "@fluentui/react-icons";
 
-import { docFromId, useAppState } from "./State";
+import { useDocFromId, useAppState, useAppStateValue } from "./State";
 import {
   calculateRange,
   calculateSerializedRange,
@@ -18,7 +18,7 @@ import {
 } from "./Range";
 import { useDispatchHandler } from "./Hooks";
 import { HoverableIcon } from "./Hooks.tsx";
-import { Review } from "./Types";
+import { LoadedState, Review } from "./Types";
 
 const colors = ["#00acdc", "#00ac00", "#f07070"];
 const multiple = 72;
@@ -32,10 +32,11 @@ interface PageCallback {
 }
 
 export function Viewer() {
-  const [{ ux }, dispatch] = useAppState();
-  const { documentId } = ux;
-  const editing = ux.selectedCitation?.editing;
-
+  const [state, dispatch] = useAppState();
+  const { ux } = state as LoadedState;
+  const { documentId, selectedCitation } = ux;
+  const editing = selectedCitation?.editing;
+  const docFromId = useDocFromId();
   const viewerRef = useRef<HTMLDivElement>(null);
 
   const selectionChange = useCallback(() => {
@@ -100,6 +101,8 @@ export function Viewer() {
     selection.addRange(realRange);
   }, [range]);
 
+  if (documentId !== undefined) console.log("pdf", docFromId[documentId].pdfUrl);
+
   return (
     <div ref={viewerRef} id="viewer-viewport">
       {documentId == undefined ? (
@@ -134,11 +137,11 @@ export function Viewer() {
 
 const ViewerCitations = () => {
   const { dispatchUnlessAsyncing } = useDispatchHandler();
-  const [{ ux, questions, viewer }] = useAppState();
-
-  if (!ux.selectedCitation) return null;
-
+  const { ux, questions, viewer } = useAppStateValue() as LoadedState;
   const { questionIndex, pageNumber, selectedCitation } = ux;
+
+  if (!selectedCitation) return null;
+
   const { citationIndex, citationHighlights } = selectedCitation;
 
   const citation = questions[questionIndex].citations[citationIndex];
