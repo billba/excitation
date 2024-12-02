@@ -29,7 +29,7 @@ const FormView = () => {
 
   return (
     <div>
-      <Breadcrumbs breadcrumbs={[["Home", "/"]]} />
+      <Breadcrumbs breadcrumbs={[["Home", "/"], ["Form"]]} />
       <h3>
         {templateName}: {formName}
       </h3>

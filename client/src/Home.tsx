@@ -1,7 +1,9 @@
+import { Breadcrumbs } from "./Breadcrumbs";
+
 export const Home = () => {
   return (
     <div>
-      <h1>Home</h1>
+      <Breadcrumbs breadcrumbs={[["Home"]]} />
       <p>
         In the future this is where a user will authenticate and see a list of
         forms to review.

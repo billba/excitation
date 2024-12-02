@@ -9,6 +9,7 @@ import {
   AddCircleFilled,
 } from "@fluentui/react-icons";
 import { useCallback } from "react";
+import { Link } from "react-router";
 
 interface Props {
   addExcerptToAnswer: (excerpt: string) => void;
@@ -19,6 +20,7 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
   const {
     ux: { questionIndex },
     questions,
+    metadata: { formId },
   } = useAppStateValue() as LoadedState;
   const { citations } = questions[questionIndex];
   const docFromId = useDocFromId();
@@ -65,6 +67,8 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
       floating={true}
     />
   );
+
+  const nextUnansweredQuestion = questions.findIndex(({ answer }) => answer === undefined);
 
   // const Reject = ({ citationIndex }: { citationIndex: number }) => (
   //   <HoverableIcon
@@ -135,6 +139,11 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
       >
         Review citations
       </h4>
+      {nextUnansweredQuestion == -1 ? (
+        <h4>All questions have been answered.</h4>
+      ) : (
+      <Link to={`/${formId}/${nextUnansweredQuestion}`}>Next unanswered question</Link>
+      )}
     </div>
   );
 };

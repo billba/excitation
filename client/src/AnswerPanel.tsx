@@ -83,12 +83,11 @@ export const AnswerPanel = () => {
   );
 
   return (
-    <div
-      id="answer-panel"
-      className={largeSmall(largeAnswerPanel)}
-      onClick={largeAnswerPanel ? undefined : onClickOnSmallAnswer}
-    >
-      <div id="answer-container">
+    <div id="answer-panel" className={largeSmall(largeAnswerPanel)}>
+      <div
+        id="answer-container"
+        onClick={largeAnswerPanel ? undefined : onClickOnSmallAnswer}
+      >
         <div id="answer-and-buttons">
           <textarea
             ref={answerRef}

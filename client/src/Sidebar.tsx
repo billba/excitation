@@ -93,7 +93,7 @@ export function Sidebar() {
           noCitations: docSelected && !pageGroups.length,
         };
       }),
-    [citations, documentId, selectedCitation]
+    [citations, documentId, selectedCitation, docs]
   );
 
   const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
@@ -194,7 +194,7 @@ export function Sidebar() {
             );
           }
         )}
-        <div className="buttons" key="buttons">
+        <div className="answer-epilogue" key="answer-epilogue">
           {isError && (
             <div>
               &nbsp;
