@@ -47,7 +47,7 @@ export const QuestionPanel = () => {
       id="question-panel"
       className={`panel ${largeSmall(largeQuestionPanel)}`}
     >
-      <Breadcrumbs breadcrumbs={[["Home", "/"], ["Form", `/${formId}`]]} />
+      <Breadcrumbs breadcrumbs={[["Home", "/"], ["Form", `/${formId}`], ["Question"]]} />
       <div id="question-container">
         <div id="question-nav">
           <TriangleLeftFilled
