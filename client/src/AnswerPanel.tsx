@@ -10,16 +10,18 @@ import {
 import { LoadedState, Review } from "./Types.ts";
 import { ReviewPanel } from "./ReviewCitations.tsx";
 import { ApprovedCitations } from "./ApprovedCitations.tsx";
+import { Breadcrumbs } from "./Breadcrumbs.tsx";
 
 export const AnswerPanel = () => {
   const [state, dispatch] = useAppState();
-
   const {
     ux: { questionIndex, largeAnswerPanel },
     questions,
+    metadata: { formId },
   } = state as LoadedState;
+  const question = questions[questionIndex];
+  const { answer, citations, prefix, text } = question;
 
-  const { answer, citations } = questions[questionIndex];
 
   const unreviewedCitations =
     citations.filter(({ review }) => review === Review.Unreviewed).length > 0;
@@ -84,11 +86,20 @@ export const AnswerPanel = () => {
 
   return (
     <div id="answer-panel" className={largeSmall(largeAnswerPanel)}>
+      <Breadcrumbs
+        breadcrumbs={[["Home", "/"], ["Form", `/${formId}`], ["Question"]]}
+      />
       <div
         id="answer-container"
         onClick={largeAnswerPanel ? undefined : onClickOnSmallAnswer}
       >
         <div id="answer-and-buttons">
+          <div className="question">
+            <span className="question-prefix">
+              {prefix ? <>{prefix}. </> : null}
+            </span>
+            <span className="question-text">{text}</span>
+          </div>
           <textarea
             ref={answerRef}
             className={`answer-text ${largeSmall(largeAnswerPanel)}`}

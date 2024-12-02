@@ -35,7 +35,6 @@ const QandA = () => {
       id="app"
       className={`question-${largeSmall(largeQuestionPanel)} `}
     >
-      <QuestionPanel />
       <AnswerPanel />
     </div>
   );
