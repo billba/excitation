@@ -171,16 +171,17 @@ button:focus-visible {
 }
 
 .question {
+  padding-bottom: 5px;
   font-size: large;
-  font-weight: bold;
-  text-align: center;
+  /* font-weight: bold; */
+  /* text-align: center; */
 }
 
 .question-prefix {
 }
 
 .question-text {
-  font-style: italic;
+  /* font-style: italic; */
 }
 
 .question-nav {
