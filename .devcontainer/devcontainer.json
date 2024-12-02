@@ -38,11 +38,11 @@
 	"forwardPorts": [8000, 5173],
 	"portsAttributes": {
 		"5173": {
-			"label": "Citation Client",
+			"label": "Excitation Client",
 			"onAutoForward": "openBrowser"
 		},
 		"8000": {
-			"label": "Citation Local Backend",
+			"label": "Excitation Local Backend",
 			"onAutoForward": "openBrowser"
 		}
 	}
