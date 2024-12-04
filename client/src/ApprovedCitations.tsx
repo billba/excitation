@@ -12,10 +12,11 @@ import { useCallback } from "react";
 import { Link } from "react-router";
 
 interface Props {
+  answer: string | undefined;
   addExcerptToAnswer: (excerpt: string) => void;
 }
 
-export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
+export const ApprovedCitations = ({ answer, addExcerptToAnswer }: Props) => {
   const { dispatchHandler } = useDispatchHandler();
   const {
     ux: { questionIndex },
@@ -68,7 +69,9 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
     />
   );
 
-  const nextUnansweredQuestion = questions.findIndex(({ answer }) => answer === undefined);
+  const nextUnansweredQuestion = questions.findIndex(
+    ({ answer }) => answer === undefined
+  );
 
   // const Reject = ({ citationIndex }: { citationIndex: number }) => (
   //   <HoverableIcon
@@ -107,7 +110,11 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
               : `Pages ${firstPage}-${lastPage}`;
 
           return (
-            <div id={`citation-${citationIndex}`} key={citationIndex} className="approved-citation-container">
+            <div
+              id={`citation-${citationIndex}`}
+              key={citationIndex}
+              className="approved-citation-container"
+            >
               <AddExcerptToAnswer
                 parent={`citation-${citationIndex}`}
                 excerpt={excerpt}
@@ -139,10 +146,14 @@ export const ApprovedCitations = ({ addExcerptToAnswer }: Props) => {
       >
         Review citations
       </h4>
-      {nextUnansweredQuestion == -1 ? (
+      {answer == undefined ? (
+        <div />
+      ) : nextUnansweredQuestion == -1 ? (
         <h4>All questions have been answered.</h4>
       ) : (
-      <Link to={`/${formId}/${nextUnansweredQuestion}`}>Next unanswered question</Link>
+        <Link to={`/${formId}/${nextUnansweredQuestion}`}>
+          Next unanswered question
+        </Link>
       )}
     </div>
   );
