@@ -126,6 +126,7 @@ export function Viewer() {
               pageNumber={ux.pageNumber}
                   onRenderSuccess={updateViewerSize}
                   className="viewer-page"
+                  renderAnnotationLayer={false}
             />
           </Document>
           <ViewerCitations />
