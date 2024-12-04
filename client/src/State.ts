@@ -167,10 +167,11 @@ export const asyncHelpers = (asyncState: AsyncState) => {
   return { isAsyncing, isError };
 };
 
+const apiUrl = import.meta.env.VITE_API_URL;
 const formId = window.location.pathname.split("/")[1];
 console.log("form id:", formId);
 const _stateAtom = atom<State>(
-  await loadForm("http://localhost:8000/form/" + formId)
+  await loadForm(apiUrl + formId)
 );
 
 const stateAtom = atom<State, [Action], void>(
