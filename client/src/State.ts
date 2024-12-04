@@ -58,22 +58,16 @@ export function useLoadForm(formId: number, questionIndex = 0) {
   const { formStatus } = state;
   const docFromId = useDocFromId();
 
-  console.log("LoadForm", state, formId, questionIndex);
-
   if (formStatus == FormStatus.Loading) {
-    console.log("LoadForm: already loading");
     return;
   }
 
   if (formStatus == FormStatus.Error) {
-    console.log("LoadForm: error");
     return;
   }
 
   if (formStatus == FormStatus.Loaded && state.metadata.formId == formId) {
-    console.log("LoadForm: form already loaded");
     if (state.ux.questionIndex != questionIndex) {
-      console.log("LoadForm: setting current question");
       dispatch({ type: "gotoQuestion", questionIndex });
     }
     return;
