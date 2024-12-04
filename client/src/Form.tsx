@@ -15,11 +15,15 @@ export const Form = () => {
   ) : formStatus == FormStatus.Loading ? (
     <div>LOADING</div>
   ) : (
-    <FormView />
+    <FormView formId={formId!} />
   );
 };
 
-const FormView = () => {
+interface Props {
+  formId: string;
+}
+
+const FormView = ({ formId }: Props) => {
   const [state] = useAppState();
 
   const {
@@ -28,21 +32,21 @@ const FormView = () => {
   } = state as LoadedState;
 
   return (
-    <div>
+    <div id="form">
       <Breadcrumbs breadcrumbs={[["Home", "/"], ["Form"]]} />
       <h3>
         {templateName}: {formName}
       </h3>
       <dl>
-
         {questions.map(({ prefix, text, answer }, questionIndex) => (
-          <p key={questionIndex} className="form-question">
-            <dt>
-              {prefix}.{text}
-            </dt>
-            <Link to={`${questionIndex}`}>Edit</Link>
-            <dd>{answer}</dd>
-          </p>
+          <Link to={`/${formId}/${questionIndex}`} key={questionIndex} >
+            <div className="form-question">
+              <div>
+                {prefix}.{text}
+              </div>
+              <div className="form-answer">{answer ?? <>&nbsp;</>}</div>
+            </div>
+          </Link>
         ))}
       </dl>
     </div>

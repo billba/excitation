@@ -122,7 +122,7 @@ export const AnswerPanel = () => {
           )}
         </div>
       </div>
-      {largeAnswerPanel ? <ApprovedCitations addExcerptToAnswer={addExcerptToAnswer} /> : <ReviewPanel />}
+      {largeAnswerPanel ? <ApprovedCitations answer={answer}  addExcerptToAnswer={addExcerptToAnswer} /> : <ReviewPanel />}
     </div>
   );
 };
