@@ -1,33 +1,18 @@
-import { docs, useAppState, sortBy } from "./State";
+import { useAppState, sortBy } from "./State";
 import {
   ReactNode,
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
-  useState,
 } from "react";
-import { Citation, Review } from "./Types";
+import { Citation, LoadedState } from "./Types";
 import { CitationUX } from "./Citation";
 import {
   DocumentRegular,
   DocumentOnePageRegular,
   DocumentOnePageMultipleRegular,
   DocumentOnePageAddRegular,
-  DismissRegular,
-  CheckmarkRegular,
-  EditRegular,
-  EditFilled,
 } from "@fluentui/react-icons";
-import {
-  useAsyncHelper,
-  useDispatchHandler,
-  useStopProp,
-} from "./Hooks";
-import {
-  useHoverableIcon,
-} from './Hooks.tsx';
-import { SidebarHeader } from "./SidebarHeader";
+import { useAsyncHelper, useDispatchHandler } from "./Hooks";
 
 const maxPageNumber = 1000;
 const unlocatedPage = maxPageNumber;
@@ -35,33 +20,21 @@ const unlocatedPage = maxPageNumber;
 interface PageGroup {
   firstPage: number;
   lastPage: number;
-  citationIndices: number[];
+  citationIndex: number;
 }
 
 const sortIndex = sortBy(
   ({ firstPage, lastPage }: PageGroup) => firstPage * maxPageNumber + lastPage
 );
 
-// const sortCitation = (questionCitations: Citation[]) => sortBy((citationIndex: number) => {
-//   const { review } = questionCitations[citationIndex];
-//   return review * 1000 + citationIndex;
-// });
-
 export function Sidebar() {
   const [state, dispatch] = useAppState();
-  const { questions, ux } = state;
-  const {
-    pageNumber,
-    questionIndex,
-    selectedCitation,
-    documentId,
-    editingAnswer,
-  } = ux;
+  const { questions, ux, docs } = state as LoadedState;
+  const { questionIndex, selectedCitation, documentId } = ux;
   const question = questions[questionIndex];
-  const { citations, answer } = question;
+  const { citations } = question;
 
   const { isAsyncing, isError } = useAsyncHelper();
-  const stopProp = useStopProp();
 
   const groupedCitations = useMemo(
     () =>
@@ -70,15 +43,14 @@ export function Sidebar() {
 
         const pageGroups = citations
           // we bind each citation to its index, because filter will change the index
-          // and since the reduce function will produce multiple indices, we just start that way
-          .map<[Citation, number[]]>((citation, citationIndex) => [
+          .map<[Citation, number]>((citation, citationIndex) => [
             citation,
-            [citationIndex],
+            citationIndex,
           ])
           // one document at a time
           .filter(([citation]) => citation.documentId === doc.documentId)
-          // some citations span pages, so we gather first and alst pages
-          .map(([citation, citationIndices]) => {
+          // some citations span pages, so we gather first and last pages
+          .map(([citation, citationIndex]) => {
             const pageNumbers = (
               citation.bounds ?? [{ pageNumber: unlocatedPage }]
             )
@@ -87,46 +59,20 @@ export function Sidebar() {
             return {
               firstPage: pageNumbers[0],
               lastPage: pageNumbers[pageNumbers.length - 1],
-              citationIndices,
+              citationIndex,
             };
           })
-          // now we group citations that are on the same page
-          .reduce<PageGroup[]>((pageGroups, pageGroup) => {
-            const matchingPageGroup = pageGroups.find(
-              ({ firstPage, lastPage }) =>
-                firstPage == pageGroup.firstPage &&
-                lastPage == pageGroup.lastPage
-            );
-            if (matchingPageGroup) {
-              matchingPageGroup.citationIndices.push(
-                pageGroup.citationIndices[0]
-              );
-            } else {
-              pageGroups.push(pageGroup); // this is where it's handy to already be working with arrays of indices
-            }
-            return pageGroups;
-          }, [])
-          // sort the indices within each page group
-          .map(({ firstPage, lastPage, citationIndices }) => ({
-            firstPage,
-            lastPage,
-            citationIndices /*: citationIndices.sort(sortCitation(citations))*/,
-          }))
-          // and sort the page groups themselves
           .sort(sortIndex)
           // note whether a given page group is selected
-          .map(({ firstPage, lastPage, citationIndices }) => {
+          .map(({ firstPage, lastPage, citationIndex }) => {
             const pageGroupSelected =
               docSelected &&
-              (selectedCitation
-                ? citationIndices.includes(selectedCitation.citationIndex)
-                : pageNumber !== undefined &&
-                  pageNumber >= firstPage &&
-                  pageNumber <= lastPage);
+              selectedCitation != undefined &&
+              selectedCitation.citationIndex === citationIndex;
             return {
               firstPage,
               lastPage,
-              citationIndices,
+              citationIndex,
               pageGroupSelected,
             };
           });
@@ -147,11 +93,7 @@ export function Sidebar() {
           noCitations: docSelected && !pageGroups.length,
         };
       }),
-    [citations, pageNumber, documentId, selectedCitation]
-  );
-
-  const unreviewedCitations = citations.filter(
-    ({ review }) => review === Review.Unreviewed
+    [citations, documentId, selectedCitation, docs]
   );
 
   const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
@@ -165,64 +107,9 @@ export function Sidebar() {
     [dispatch]
   );
 
-  const answerRef = useRef<HTMLTextAreaElement>(null);
-  const [editAnswer, setEditAnswer] = useState<string | undefined>(undefined);
-
-  const startEditAnswer = useCallback(
-    (e: React.MouseEvent) => {
-      setEditAnswer(answer);
-      dispatch({ type: "startEditAnswer" });
-      e.stopPropagation();
-    },
-    [dispatch, setEditAnswer, answer]
-  );
-
-  const cancelEditAnswer = useCallback(
-    (e: React.MouseEvent) => {
-      setEditAnswer(undefined);
-      dispatch({ type: "cancelEditAnswer" });
-      e.stopPropagation();
-    },
-    [dispatch]
-  );
-
-  const onChangeAnswer = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setEditAnswer(e.target.value);
-      e.stopPropagation();
-    },
-    []
-  );
-
-  const updateAnswer = useCallback(
-    (e: React.MouseEvent) => {
-      dispatch({ type: "updateAnswer", answer: editAnswer! });
-      setEditAnswer(undefined);
-      e.stopPropagation();
-    },
-    [dispatch, editAnswer]
-  );
-
-  useEffect(() => {
-    if (editingAnswer && answerRef.current) {
-      answerRef.current.focus();
-      answerRef.current.select();
-    }
-  }, [editingAnswer]);
-
-  const Edit = useHoverableIcon(
-    EditRegular,
-    EditFilled,
-    "edit",
-    "edit-start",
-    startEditAnswer
-  );
-
   return (
     <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
-      <SidebarHeader />
-      <div className="sidebar-divider" />
-      <h4 id="citations-label">Citations</h4>
+      <h3 id="citations-label">Review Citations</h3>
       <div className="sidebar-divider" />
       <div id="docs">
         {groupedCitations.map(
@@ -254,7 +141,7 @@ export function Sidebar() {
                       {
                         firstPage,
                         lastPage,
-                        citationIndices,
+                        citationIndex,
                         pageGroupSelected,
                         prevPageGroupSelected,
                         nextPageGroupSelected,
@@ -262,29 +149,30 @@ export function Sidebar() {
                       key
                     ) => (
                       <PageGroupHeader
-                        documentId={docSelected ? undefined : documentId}
                         firstPage={firstPage}
                         lastPage={lastPage}
                         pageGroupSelected={pageGroupSelected}
                         prevPageGroupSelected={prevPageGroupSelected}
                         nextPageGroupSelected={nextPageGroupSelected}
                         key={key}
+                        onClick={
+                          pageGroupSelected
+                            ? undefined
+                            : dispatchUnlessError({
+                                type: "selectCitation",
+                                citationIndex,
+                              })
+                        }
                       >
-                        {citationIndices.map((citationIndex) => {
-                          const { excerpt, review } = citations[citationIndex];
-                          return (
-                            <CitationUX
-                              key={citationIndex}
-                              citationIndex={citationIndex}
-                              excerpt={excerpt}
-                              review={review}
-                              selected={
-                                selectedCitation?.citationIndex == citationIndex
-                              }
-                              editing={selectedCitation?.editing}
-                            />
-                          );
-                        })}
+                        <CitationUX
+                          key={citationIndex}
+                          citationIndex={citationIndex}
+                          review={citations[citationIndex].review}
+                          excerpt={citations[citationIndex].excerpt}
+                          selected={
+                            selectedCitation?.citationIndex == citationIndex
+                          }
+                        />
                       </PageGroupHeader>
                     )
                   )}
@@ -306,7 +194,7 @@ export function Sidebar() {
             );
           }
         )}
-        <div className="buttons" key="buttons">
+        <div className="answer-epilogue" key="answer-epilogue">
           {isError && (
             <div>
               &nbsp;
@@ -334,51 +222,6 @@ export function Sidebar() {
                 </>
               )}
             </div>
-            <h4>Answer</h4>
-            {editingAnswer ? (
-              <>
-                <textarea
-                  ref={answerRef}
-                  className="answer-section"
-                  id="edit-answer"
-                  value={editAnswer}
-                  onChange={onChangeAnswer}
-                  onClick={stopProp}
-                />
-                <div
-                  className="icon-container edit-cancel"
-                  onClick={cancelEditAnswer}
-                >
-                  <DismissRegular className="icon" />
-                </div>
-                <div
-                  className="icon-container edit-save"
-                  onClick={updateAnswer}
-                >
-                  <CheckmarkRegular className="icon" />
-                </div>
-              </>
-            ) : unreviewedCitations.length ? (
-              <div className="answer-section">
-                Before you can answer the question you must review all suggested
-                citations.
-              </div>
-            ) : answer === undefined ? (
-              <>
-                <div className="answer-section">
-                  When you are ready, you can&nbsp;
-                  <span className="action" onClick={startEditAnswer}>
-                    answer the question
-                  </span>
-                  .
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="answer-section">{answer}</div>
-                <Edit />
-              </>
-            )}
           </div>
           <br />
           <br />
@@ -452,73 +295,59 @@ const DocHeader = ({
 };
 
 const PageGroupHeader = ({
-  documentId,
   firstPage,
   lastPage,
   pageGroupSelected,
   prevPageGroupSelected,
   nextPageGroupSelected,
+  onClick,
   children,
 }: {
-  documentId?: number;
   firstPage: number;
   lastPage: number;
   pageGroupSelected: boolean;
   prevPageGroupSelected: boolean;
   nextPageGroupSelected: boolean;
+  onClick?: (event: React.MouseEvent) => void;
   children: ReactNode;
-}) => {
-  const { dispatchUnlessError } = useDispatchHandler();
-
-  return (
+}) => (
+  <div
+    className={`page-group ${pageGroupSelected ? "selected" : "unselected"}`}
+    key={firstPage * maxPageNumber + lastPage}
+    onClick={onClick}
+  >
     <div
-      className={`page-group ${pageGroupSelected ? "selected" : "unselected"}`}
-      key={firstPage * maxPageNumber + lastPage}
+      className={`page-header ${pageGroupSelected ? "selected" : "unselected"}`}
     >
-      <div
-        className={`page-header ${
-          pageGroupSelected ? "selected" : "unselected"
-        }`}
-        onClick={
-          pageGroupSelected
-            ? undefined
-            : dispatchUnlessError({
-                type: "goto",
-                pageNumber: firstPage,
-                documentId,
-              })
-        }
-      >
-        {firstPage == lastPage ? (
-          firstPage == unlocatedPage ? (
-            <>
-              <DocumentOnePageAddRegular className="icon" />
-              Unable to locate citation
-            </>
-          ) : (
-            <>
-              <DocumentOnePageRegular className="icon" />
-              Page {firstPage}
-            </>
-          )
+      {firstPage == lastPage ? (
+        firstPage == unlocatedPage ? (
+          <>
+            <DocumentOnePageAddRegular className="icon" />
+            Unable to locate citation
+          </>
         ) : (
           <>
-            <DocumentOnePageMultipleRegular className="icon" />
-            Pages {firstPage}-{lastPage}
+            <DocumentOnePageRegular className="icon" />
+            Page {firstPage}
           </>
-        )}
-      </div>
-      {prevPageGroupSelected && (
-        <div className="top-right">
-          <div />
-        </div>
-      )}
-      {children}
-      {nextPageGroupSelected && (
-        <div className="bottom-right">
-          <div />
-        </div>
+        )
+      ) : (
+        <>
+          <DocumentOnePageMultipleRegular className="icon" />
+          Pages {firstPage}-{lastPage}
+        </>
       )}
     </div>
-  );
-};
+    {prevPageGroupSelected && (
+      <div className="top-right">
+        <div />
+      </div>
+    )}
+    {children}
+    {nextPageGroupSelected && (
+      <div className="bottom-right">
+        <div />
+      </div>
+    )}
+  </div>
+);

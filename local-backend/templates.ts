@@ -2,17 +2,17 @@ import { Template, FormDocument } from "./excitation.ts";
 
 export const documents: FormDocument[] = [
   {
-    pdfUrl: "PressReleaseFY24Q3.pdf",
+    pdfUrl: "/files/PressReleaseFY24Q3.pdf",
     name: "Microsoft Press Release FY24Q3",
     diUrl: "http://localhost:8000/file/PressReleaseFY24Q3.pdf.json",
   },
   {
-    pdfUrl: "Microsoft 10Q FY24Q3 1.pdf",
+    pdfUrl: "/files/Microsoft 10Q FY24Q3 1.pdf",
     name: "Microsoft Form 10Q FY24Q3",
     diUrl: "http://localhost:8000/file/Microsoft 10Q FY24Q3 1.pdf.json",
   },
   {
-    pdfUrl: "compressed.tracemonkey-pldi-09.pdf",
+    pdfUrl: "/files/compressed.tracemonkey-pldi-09.pdf",
     name: "compressed.tracemonkey-pldi-09",
     diUrl: "http://localhost:8000/file/compressed.tracemonkey-pldi-09.pdf.json",
   },
