@@ -168,10 +168,11 @@ export const asyncHelpers = (asyncState: AsyncState) => {
 };
 
 const apiUrl = import.meta.env.VITE_API_URL;
+const formPath = "/form/";
 const formId = window.location.pathname.split("/")[1];
 console.log("form id:", formId);
 const _stateAtom = atom<State>(
-  await loadForm(apiUrl + formId)
+  await loadForm(`${apiUrl}${formPath}${formId}`)
 );
 
 const stateAtom = atom<State, [Action], void>(
@@ -595,8 +596,9 @@ export const useAsyncStateMachine = () => {
 };
 
 async function dispatchEvents(events: Event[]): Promise<string | void> {
+  const apiUrl = import.meta.env.VITE_API_URL;
   console.log("dispatching events", events);
-  const response = await fetch("http://localhost:8000/event", {
+  const response = await fetch(`${apiUrl}/event`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
