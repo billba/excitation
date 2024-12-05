@@ -22,7 +22,6 @@ export const AnswerPanel = () => {
   const question = questions[questionIndex];
   const { answer, citations, prefix, text } = question;
 
-
   const unreviewedCitations =
     citations.filter(({ review }) => review === Review.Unreviewed).length > 0;
 
@@ -62,7 +61,8 @@ export const AnswerPanel = () => {
     [dispatch, unreviewedCitations]
   );
 
-  const addExcerptToAnswer = (excerpt: string) => setEditAnswer((prev) => (prev ?? answer ?? "") + excerpt);
+  const addExcerptToAnswer = (excerpt: string) =>
+    setEditAnswer((prev) => (prev ?? answer ?? "") + excerpt);
 
   const Cancel = () => (
     <HoverableIcon
@@ -85,7 +85,7 @@ export const AnswerPanel = () => {
   );
 
   return (
-    <div id="answer-panel" className={largeSmall(largeAnswerPanel)}>
+    <div>
       <Breadcrumbs
         breadcrumbs={[["Home", "/"], ["Form", `/${formId}`], ["Question"]]}
       />
@@ -114,7 +114,7 @@ export const AnswerPanel = () => {
             }
             disabled={unreviewedCitations}
           />
-          {(editAnswer !== undefined) && (
+          {editAnswer !== undefined && (
             <>
               <Cancel />
               <Save />
@@ -122,7 +122,14 @@ export const AnswerPanel = () => {
           )}
         </div>
       </div>
-      {largeAnswerPanel ? <ApprovedCitations answer={answer}  addExcerptToAnswer={addExcerptToAnswer} /> : <ReviewPanel />}
+      {largeAnswerPanel ? (
+        <ApprovedCitations
+          answer={answer}
+          addExcerptToAnswer={addExcerptToAnswer}
+        />
+      ) : (
+        <ReviewPanel />
+      )}
     </div>
   );
 };

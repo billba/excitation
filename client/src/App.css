@@ -30,8 +30,6 @@
 
   --rounding-height: 3px;
   --icon-size: 30px;
-  --small-panel: 4em;
-  --large-panel: 15em;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -47,29 +45,6 @@ h1 {
   font-size: 3.2em;
   line-height: 1.1;
 }
-/* 
-button {
-  border-radius: 8px;
-  height: 50px;
-  width: 100px;
-  border: 1px solid transparent;
-  padding: 0.4em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: var(--color-button-enabled);
-  color: var(--color-text-button);
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  background-color: var(--color-button-hover);
-  transition: 0.25s;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-} */
 
 #review-panel {
   position: relative;
@@ -89,13 +64,6 @@ button:focus-visible {
   padding: 5px 0 5px 0;
   width: 100%;
   background-color: var(--color-doc-active);
-
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 
 .navbar-page {
@@ -139,13 +107,6 @@ button:focus-visible {
   grid-template-columns: 10px 10px 10px 10px auto 10px;
   background-color: var(--color-base);
   overflow-y: scroll;
-
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  -khtml-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
 }
 
 #citations-label {
@@ -173,15 +134,6 @@ button:focus-visible {
 .question {
   padding-bottom: 5px;
   font-size: large;
-  /* font-weight: bold; */
-  /* text-align: center; */
-}
-
-.question-prefix {
-}
-
-.question-text {
-  /* font-style: italic; */
 }
 
 .question-nav {
@@ -448,17 +400,9 @@ button:focus-visible {
   }
 }
 
-#viewer {
-  /* position: relative;
-  max-height: 100%; */
-}
-
 #viewer-viewport {
   position: relative;
   overflow: scroll;
-}
-
-.viewer-page {
 }
 
 .viewer-citations {
@@ -537,7 +481,7 @@ button:focus-visible {
 }
 
 #edit-answer {
-  grid-column: 1/3;
+  grid-column: 1/4;
 
   line-height: inherit;
   overflow: none;
@@ -552,33 +496,8 @@ button:focus-visible {
   }
 }
 
-#answer-panel {
-  background-color: var(--color-base);
-}
-
 #app {
   height: 100vh;
-  position: relative;
-
-  &.question-large {
-    #question-panel {
-      height: var(--large-panel);
-    }
-    #answer-panel {
-      height: calc(100vh - var(--large-panel));
-    }
-  }
-  &.question-small {
-    #question-panel {
-      height: var(--small-panel);
-    }
-    #answer-panel {
-      height: calc(100vh - var(--small-panel));
-    }
-  }
-}
-
-#question-panel {
   background-color: var(--color-base);
 }
 
@@ -589,17 +508,6 @@ button:focus-visible {
 .large-icon {
   min-height: var(--icon-size);
   width: var(--icon-size);
-}
-
-.panel {
-  transition: height 0.25s;
-
-  overflow-y: hidden;
-  &.small {
-    &:hover {
-      cursor: pointer;
-    }
-  }
 }
 
 #approved-citations {
@@ -678,5 +586,4 @@ button:focus-visible {
 
 #breadcrumbs {
   background-color: var(--color-base);
-  
 }

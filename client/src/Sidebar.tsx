@@ -108,7 +108,7 @@ export function Sidebar() {
   );
 
   return (
-    <div id="sidebar" onClick={dispatchUnlessError({ type: "selectCitation" })}>
+    <div id="sidebar" className="unselectable" onClick={dispatchUnlessError({ type: "selectCitation" })}>
       <h3 id="citations-label">Review Citations</h3>
       <div className="sidebar-divider" />
       <div id="docs">

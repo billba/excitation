@@ -535,12 +535,6 @@ const stateAtom = atom<State, [Action], void>(
                     selectCitation(action.citationIndex);
                     break;
 
-                  case "toggleQuestionPanel":
-                    ux.largeQuestionPanel = togglePseudoBoolean(
-                      ux.largeQuestionPanel
-                    );
-                    break;
-
                   case "contractAnswerPanel":
                     ux.largeAnswerPanel = undefined;
                     break;

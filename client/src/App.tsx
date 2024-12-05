@@ -1,20 +1,14 @@
 import "./App.css";
-import {
-  largeSmall,
-  useLoadForm,
-  useAppStateValue,
-  useAsyncStateMachine,
-} from "./State";
-import { QuestionPanel } from "./QuestionPanel";
+import { useLoadForm, useAppStateValue, useAsyncStateMachine } from "./State";
 import { AnswerPanel } from "./AnswerPanel";
 import { useParams } from "react-router";
-import { FormStatus, LoadedState } from "./Types";
+import { FormStatus } from "./Types";
 
 export function FormQuestion() {
   const { formId, questionId } = useParams();
   useLoadForm(Number(formId), Number(questionId));
   const { formStatus } = useAppStateValue();
-  
+
   return formStatus == FormStatus.None ? (
     <div>NO FORM</div>
   ) : formStatus == FormStatus.Error ? (
@@ -22,20 +16,16 @@ export function FormQuestion() {
   ) : formStatus == FormStatus.Loading ? (
     <div>LOADING</div>
   ) : (
-    <QandA/>
+    <QandA />
   );
 }
 
 const QandA = () => {
   useAsyncStateMachine();
-  const { ux: {largeQuestionPanel}} = useAppStateValue() as LoadedState;
 
   return (
-    <div
-      id="app"
-      className={`question-${largeSmall(largeQuestionPanel)} `}
-    >
+    <div id="app">
       <AnswerPanel />
     </div>
   );
-}
+};
