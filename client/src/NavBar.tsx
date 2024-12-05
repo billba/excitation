@@ -35,7 +35,7 @@ export const NavBar = () => {
   const citationNext = enableNext && pageNumbers.includes(pageNumber! + 1) || undefined;
 
   return (
-    <div id="navbar">
+    <div id="navbar" className="unselectable">
       <div className="navbar-page">
         <div className="navbar-column">
           <span

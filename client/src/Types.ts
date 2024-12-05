@@ -188,7 +188,6 @@ export enum FormStatus {
 export interface UXState {
   questionIndex: number;
 
-  largeQuestionPanel?: true;
   largeAnswerPanel?: true;
 
   documentId?: number;
