@@ -1,23 +1,26 @@
-import { useMemo } from "react";
-import { FluentIcon } from "@fluentui/react-icons";
+import { FluentIcon, CircleFilled } from "@fluentui/react-icons";
 
-export const useHoverableIcon = (
-  DefaultIcon: FluentIcon,
-  HoverIcon: FluentIcon,
-  key: string,
-  classes: string,
-  onClick?: (event: React.MouseEvent) => void
-) =>
-  useMemo(
-    () => () => (
-      <div
-        key={key}
-        className={`icon-container hoverable ${classes}`}
-        onClick={onClick}
-      >
-        <DefaultIcon className="icon default" />
-        <HoverIcon className="icon hover" />
-      </div>
-    ),
-    [DefaultIcon, HoverIcon, key, classes, onClick]
-  );
+interface Props {
+  DefaultIcon: FluentIcon;
+  HoverIcon: FluentIcon;
+  classes: string;
+  onClick: ((event: React.MouseEvent) => void) | undefined;
+  floating?: true;
+}
+
+export const HoverableIcon = ({
+  DefaultIcon,
+  HoverIcon,
+  classes,
+  onClick,
+  floating,
+}: Props) => (
+  <div
+    className={`icon-container hoverable ${classes}`}
+    onClick={onClick}
+  >
+    {floating && <CircleFilled className="icon floating background" />}
+    <DefaultIcon className={`icon default ${floating ? "floating" : ""}`} />
+    <HoverIcon className={`icon hover ${floating ? "floating" : ""}`} />
+  </div>
+);
