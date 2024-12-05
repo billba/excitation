@@ -32,23 +32,25 @@ const FormView = ({ formId }: Props) => {
   } = state as LoadedState;
 
   return (
-    <div id="form">
+    <div>
       <Breadcrumbs breadcrumbs={[["Home", "/"], ["Form"]]} />
-      <h3>
-        {templateName}: {formName}
-      </h3>
-      <dl>
-        {questions.map(({ prefix, text, answer }, questionIndex) => (
-          <Link to={`/${formId}/${questionIndex}`} key={questionIndex} >
-            <div className="form-question">
-              <div>
-                {prefix}.{text}
+      <div id="form">
+        <h3>
+          {templateName}: {formName}
+        </h3>
+        <dl>
+          {questions.map(({ prefix, text, answer }, questionIndex) => (
+            <Link to={`/${formId}/${questionIndex}`} key={questionIndex}>
+              <div className="form-question">
+                <div>
+                  {prefix}.{text}
+                </div>
+                <div className="form-answer">{answer ?? <>&nbsp;</>}</div>
               </div>
-              <div className="form-answer">{answer ?? <>&nbsp;</>}</div>
-            </div>
-          </Link>
-        ))}
-      </dl>
+            </Link>
+          ))}
+        </dl>
+      </div>
     </div>
   );
 };

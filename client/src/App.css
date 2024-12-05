@@ -648,7 +648,7 @@ button:focus-visible {
 
 #form {
   height: 100vh;
-  padding: 0px 10% 10px 10%;
+  padding: 10px 10% 0px 10%;
   background-color: var(--color-base);
 
   a {
@@ -673,5 +673,10 @@ button:focus-visible {
   font-family: inherit;
   font-size: large;
   border: 1px solid black;
-  background-color: var(--color-doc-active);
+  background-color: var(--color-page-active);
+}
+
+#breadcrumbs {
+  background-color: var(--color-base);
+  
 }
