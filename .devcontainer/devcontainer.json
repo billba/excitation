@@ -20,6 +20,7 @@
 			"extensions": [
 				"azurite.azurite",
 				"denoland.vscode-deno",
+				"github.copilot",
 				"github.vscode-github-actions",
 				"ms-vscode.azure-account",
 				"ms-azuretools.vscode-azurefunctions"

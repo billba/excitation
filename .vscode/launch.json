@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Backend: local dev",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "deno task dev",
+            "cwd": "${workspaceFolder}/local-backend"
+        },
+        {
+            "name": "Frontend",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}/client"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Run Whole App",
+            "configurations": ["Frontend", "Backend: local dev"]
+        }
+    ]
+}
