@@ -85,7 +85,7 @@ export const AnswerPanel = () => {
   );
 
   return (
-    <div>
+    <>
       <Breadcrumbs
         breadcrumbs={[["Home", "/"], ["Form", `/${formId}`], ["Question"]]}
       />
@@ -130,6 +130,6 @@ export const AnswerPanel = () => {
       ) : (
         <ReviewPanel />
       )}
-    </div>
+    </>
   );
 };
