@@ -75,10 +75,11 @@ export function useLoadForm(formId: number, questionIndex = 0) {
 
   dispatch({ type: "loadForm" });
 
+  const apiUrl = import.meta.env.VITE_API_URL;
   (async () => {
     try {
       const form: LoadForm = await (
-        await fetch("http://localhost:8000/form/" + formId)
+        await fetch(`${apiUrl}/form/${formId}`)
       ).json();
       const docs: FormDocument[] = [];
 
@@ -722,8 +723,9 @@ export const useAsyncStateMachine = () => {
 };
 
 async function dispatchEvents(events: Event[]): Promise<string | void> {
+  const apiUrl = import.meta.env.VITE_API_URL;
   console.log("dispatching events", events);
-  const response = await fetch("http://localhost:8000/event", {
+  const response = await fetch(`${apiUrl}/event`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
