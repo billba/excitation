@@ -1,67 +1,71 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
-import { and, eq } from 'drizzle-orm';
-import postgres from 'postgres';
-import { citations, documents, forms, questions, templates } from '../schema';
+import 'reflect-metadata';
+import { AppDataSource } from '../data-source';
+import { DataSource } from 'typeorm';
+import { Documents } from "../entity/Documents";
+import { Forms } from "../entity/Forms";
+import { Questions } from "../entity/Questions";
+import { Citations } from "../entity/Citations";
+import { Templates } from "../entity/Templates";
 
 // ============================================================================
 // db operations
 // ============================================================================
-async function getFormMetadata(db: PostgresJsDatabase, formId: number) {
+async function getFormMetadata(db: DataSource, formId: number) {
+  const formsRepository = db.getRepository(Forms);
+  const templatesRepository = db.getRepository(Templates);
+
   // get template id
-  const form = await db.select({
-    formName: forms.form_name,
-    templateId: forms.template_id
-  }).from(forms).where(eq(forms.form_id, formId));
+  const form = await formsRepository.findOne({
+    where: { form_id: formId },
+    select: ['form_name', 'template_id']
+  });
   let formName = form[0].formName;
   const templateId = form[0].templateId;
 
   // get template info
-  const template = await db.select({
-    templateName: templates.template_name
-  }).from(templates).where(eq(templates.template_id, templateId));
-
+  const template = await templatesRepository.findOne({
+    where: { template_id: templateId },
+    select: ['template_name']
+  });
   let templateName = template[0].templateName;
   return { formName, templateName };
 }
 
-async function getQuestionsWithCitations(db: PostgresJsDatabase, formId: number) {
-  const form = await db.select({
-    templateId: forms.template_id
-  }).from(forms).where(eq(forms.form_id, formId));
+async function getQuestionsWithCitations(db: DataSource, formId: number) {
+  const formsRepository = db.getRepository(Forms);
+  const questionsRepository = db.getRepository(Questions);
+  const citationsRepository = db.getRepository(Citations);
+
+  const form = formsRepository.findOne({
+    where: { form_id: formId },
+    select: ['template_id']
+  });
   const templateId = form[0].templateId;
 
-  const qs = await db.select({
-    id: questions.question_id,
-    prefix: questions.prefix,
-    text: questions.text
-  }).from(questions)
-    .where(eq(questions.template_id, templateId))
-    .orderBy(questions.prefix, questions.question_id);
+  const qs = await questionsRepository.find({
+    where: { template_id: templateId },
+    order: { prefix: 'ASC', question_id: 'ASC' },
+    select: ['question_id', 'prefix', 'text']
+  });
 
-  return await Promise.all(qs.map(async ({id, prefix, text}) => ({
+  return await Promise.all(qs.map(async ({question_id, prefix, text}) => ({
     prefix,
     text,
-    citations: await db.select({
-      citationId: citations.citation_id,
-      documentId: citations.document_id,
-      excerpt: citations.excerpt,
-      review: citations.review,
-      bounds: citations.bounds
-    }).from(citations)
-      .where(and(eq(citations.form_id, formId), eq(citations.question_id, id)))
-      .orderBy(citations.document_id, citations.citation_id)
+    citations: citationsRepository.find({
+      where: { form_id: formId, question_id: question_id },
+      order: { document_id: 'ASC', citation_id: 'ASC' },
+      select: ['citation_id', 'document_id', 'excerpt', 'review', 'bounds']
     })
-  ));
+  })));
 }
 
-async function getDocuments(db: PostgresJsDatabase, formId: number, context: InvocationContext) {
-  return await db.select({
-    documentId: documents.document_id,
-    name: documents.name,
-    pdfUrl: documents.pdf_url,
-    diUrl: documents.di_url
-  }).from(documents).where(eq(documents.form_id, formId));
+async function getDocuments(db: DataSource, formId: number) {
+  const documentRepository = db.getRepository(Documents);
+  return await documentRepository.find({ 
+    where: {form_id: formId}, 
+    select: ['document_id', 'name', 'pdf_url', 'di_url']
+  });
 }
 
 // ============================================================================
@@ -70,21 +74,17 @@ async function getDocuments(db: PostgresJsDatabase, formId: number, context: Inv
 export async function get(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
-  /* @ts-ignore */
-  const queryClient = postgres(process.env["POSTGRES"]);
-  const db = drizzle(queryClient);
-
   let formId = Number(request.params.id);
   if (isNaN(formId)) { return { status: 400 }; }
 
-  let { formName, templateName } = await getFormMetadata(db, formId);
+  let { formName, templateName } = await getFormMetadata(AppDataSource, formId);
   context.log("formName:", formName);
   context.log("templateName:", templateName);
 
-  let docArray = await getDocuments(db, formId, context);
+  let docArray = await getDocuments(AppDataSource, formId);
   context.log("documents:", docArray);
 
-  let questionsWithCitations = await getQuestionsWithCitations(db, formId);
+  let questionsWithCitations = await getQuestionsWithCitations(AppDataSource, formId);
   context.log("questions&citations:", questionsWithCitations);
 
   return {
