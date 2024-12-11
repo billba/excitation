@@ -13,7 +13,7 @@ async function getToken() {
     return tokenResponse.token;
 }
 
-export async function initializeDataSource() {
+export async function getDataSource() {
     const token = await getToken();
 
     return new DataSource({

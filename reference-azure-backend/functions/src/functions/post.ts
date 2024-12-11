@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/fu
 import { citations, events } from '../schema'
 import { Bounds, Review, Event } from '../types'
 import { DataSource } from 'typeorm';
-import { initializeDataSource } from "../data-source";
+import { getDataSource } from "../data-source";
 import { Citations } from "../entity/Citations";
 import { Events } from "../entity/Events";
 
@@ -122,7 +122,7 @@ async function updateBounds(db: DataSource, context: InvocationContext, event: E
 export async function post(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
-  let dataSource = await initializeDataSource();
+  let dataSource = await getDataSource();
 
   await dataSource.initialize().then(async () => {
     const body = await request.json() as Event[];
