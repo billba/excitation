@@ -1,7 +1,10 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Forms } from "./Forms";
 
-@Entity()
+@Entity({
+    name: 'documents',
+    schema: 'dbo'
+})
 export class Documents {
     @PrimaryGeneratedColumn()
     document_id!: number;
@@ -22,9 +25,9 @@ export class Documents {
     @Column('text')
     creator!: string;
 
-    @CreateDateColumn('datetime')
+    @CreateDateColumn()
     created_at!: Date;
 
-    @UpdateDateColumn('datetime')
+    @UpdateDateColumn()
     modified_at!: Date;
 }

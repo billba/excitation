@@ -1,7 +1,10 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Templates } from "./Templates";
 
-@Entity()
+@Entity({
+    name: 'forms',
+    schema: 'dbo'
+})
 export class Forms {
     @PrimaryGeneratedColumn()
     form_id!: number;
@@ -13,9 +16,9 @@ export class Forms {
     @Column('text')
     form_name!: string;
 
-    @CreateDateColumn('datetime')
+    @CreateDateColumn()
     created_at!: Date;
 
-    @UpdateDateColumn('datetime')
+    @UpdateDateColumn()
     modified_at!: Date;
 }

@@ -1,19 +1,22 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity()
+@Entity({
+    name: 'templates',
+    schema: 'dbo'
+})
 export class Templates {
     @PrimaryGeneratedColumn()
     template_id!: number;
 
-    @Column('template_name')
+    @Column('text')
     template_name!: string;
 
-    @Column('creator')
+    @Column('text')
     creator!: string;
 
-    @CreateDateColumn('created_at')
+    @CreateDateColumn()
     created_at!: Date;
 
-    @UpdateDateColumn('modified_at')
+    @UpdateDateColumn()
     modified_at!: Date;
 }

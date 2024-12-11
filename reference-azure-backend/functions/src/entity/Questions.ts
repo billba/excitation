@@ -1,7 +1,10 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Templates } from "./Templates";
 
-@Entity()
+@Entity({
+    name: 'questions',
+    schema: 'dbo'
+})
 export class Questions {
     @PrimaryGeneratedColumn()
     question_id!: number;
@@ -16,9 +19,12 @@ export class Questions {
     @Column('text')
     text!: string;
 
-    @CreateDateColumn('datetime')
+    @Column('text')
+    creator: string;
+
+    @CreateDateColumn()
     created_at!: Date;
 
-    @UpdateDateColumn('datetime')
+    @UpdateDateColumn()
     modified_at!: Date;
 }

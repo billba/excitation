@@ -2,7 +2,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/fu
 import { citations, events } from '../schema'
 import { Bounds, Review, Event } from '../types'
 import { DataSource } from 'typeorm';
-import { AppDataSource } from "../data-source";
+import { initializeDataSource } from "../data-source";
 import { Citations } from "../entity/Citations";
 import { Events } from "../entity/Events";
 
@@ -122,20 +122,27 @@ async function updateBounds(db: DataSource, context: InvocationContext, event: E
 export async function post(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
-  const body = await request.json() as Event[];
-  for await (const event of body) {
-    switch (event.type) {
-      case 'addCitation':
-        await addCitation(AppDataSource, context, event);
-        break;
-      case 'updateReview':
-        await addReview(AppDataSource, context, event);
-        break;
-      case 'updateBounds':
-        await updateBounds(AppDataSource, context, event);
-        break;
+  let dataSource = await initializeDataSource();
+
+  await dataSource.initialize().then(async () => {
+    const body = await request.json() as Event[];
+    for await (const event of body) {
+      switch (event.type) {
+        case 'addCitation':
+          await addCitation(dataSource, context, event);
+          break;
+        case 'updateReview':
+          await addReview(dataSource, context, event);
+          break;
+        case 'updateBounds':
+          await updateBounds(dataSource, context, event);
+          break;
+      }
     }
-  }
+  }).catch((error) => {
+    console.log(error);
+    return error;
+  });
 
   return { status: 200 };
 };

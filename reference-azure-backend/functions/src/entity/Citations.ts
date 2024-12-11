@@ -1,10 +1,12 @@
 import { Column, CreateDateColumn, Entity, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Forms } from "./Forms";
-import { Many } from "drizzle-orm";
 import { Questions } from "./Questions";
 import { Documents } from "./Documents";
 
-@Entity()
+@Entity({
+    name: 'citations',
+    schema: 'dbo'
+})
 export class Citations {
     @PrimaryGeneratedColumn()
     citation_id!: string;
@@ -24,7 +26,7 @@ export class Citations {
     @Column('text')
     excerpt!: string;
 
-    @Column('json')
+    @Column('simple-json')
     bounds: JSON;
 
     @Column('int', {default: 0})
@@ -33,9 +35,9 @@ export class Citations {
     @Column('text')
     creator!: string;
 
-    @CreateDateColumn('datetime')
+    @CreateDateColumn()
     created_at!: Date;
 
-    @UpdateDateColumn('datetime')
+    @UpdateDateColumn()
     modified_at!: Date;
 }

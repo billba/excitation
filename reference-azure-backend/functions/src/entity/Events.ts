@@ -1,13 +1,16 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
-@Entity()
+@Entity({
+    name: 'events',
+    schema: 'dbo'
+})
 export class Events {
     @PrimaryGeneratedColumn()
     event_id!: number;
 
-    @Column('json')
+    @Column('simple-json')
     body!: JSON;
 
-    @CreateDateColumn('datetime')
+    @CreateDateColumn()
     created_at!: Date;
 }

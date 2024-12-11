@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@azure/functions": "^4.0.0",
+    "@azure/identity": "^4.5.0",
     "drizzle-orm": "^0.34.0",
     "mssql": "^10.0.4",
     "postgres": "^3.4.4",
