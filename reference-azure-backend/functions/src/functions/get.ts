@@ -1,12 +1,12 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
 import 'reflect-metadata';
-import { getDataSource } from '../data-source';
 import { DataSource } from 'typeorm';
 import { Document } from "../entity/Document";
 import { Form } from "../entity/Form";
 import { Question } from "../entity/Question";
 import { Citation } from "../entity/Citation";
 import { Template } from "../entity/Template";
+import { dataSource } from "..";
 
 // ============================================================================
 // db operations
@@ -74,45 +74,31 @@ async function getDocuments(db: DataSource, formId: number) {
 export async function get(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
-  // to initialize the initial connection with the database, register all entities
-  // and "synchronize" database schema, call "initialize()" method of a newly created database
-  // once in your application bootstrap
-  // let dataSource = await getDataSource().initialize();
-  // return new Promise(()=>{});
-  let dataSource = await getDataSource();
+  // here you can start to work with your database
+  let formId = Number(request.params.id);
+  if (isNaN(formId)) { return { status: 400 }; }
 
-  let form = await dataSource.initialize().then(async () => {
-    // here you can start to work with your database
-    let formId = Number(request.params.id);
-    if (isNaN(formId)) { return { status: 400 }; }
+  let { formName, templateName } = await getFormMetadata(dataSource, formId);
+  context.log("formName:", formName);
+  context.log("templateName:", templateName);
 
-    let { formName, templateName } = await getFormMetadata(dataSource, formId);
-    context.log("formName:", formName);
-    context.log("templateName:", templateName);
+  let docArray = await getDocuments(dataSource, formId);
+  context.log("documents:", docArray);
 
-    let docArray = await getDocuments(dataSource, formId);
-    context.log("documents:", docArray);
-
-    let questionsWithCitations = await getQuestionsWithCitations(dataSource, formId);
-    context.log("questions&citations:", questionsWithCitations);
-    
-    return {
-      jsonBody: {
-        metadata: {
-          formId: formId,
-          formName: formName,
-          templateName: templateName
-        },
-        documents: docArray,
-        questions: questionsWithCitations
-      }
-    };
-  }).catch((error) => {
-    console.log(error);
-    return error;
-  });
-
-  return form;
+  let questionsWithCitations = await getQuestionsWithCitations(dataSource, formId);
+  context.log("questions&citations:", questionsWithCitations);
+  
+  return {
+    jsonBody: {
+      metadata: {
+        formId: formId,
+        formName: formName,
+        templateName: templateName
+      },
+      documents: docArray,
+      questions: questionsWithCitations
+    }
+  };
 };
 
 app.http('get', {

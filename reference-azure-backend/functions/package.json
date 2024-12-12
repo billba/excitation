@@ -8,7 +8,7 @@
     "watch": "tsc -w",
     "clean": "rimraf dist",
     "prestart": "npm run clean && npm run build",
-    "start": "func start",
+    "start": "ts-node src/index.ts && func start",
     "test": "echo \"No tests yet...\""
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "@types/node": "^18.19.67",
     "azure-functions-core-tools": "^4.x",
     "rimraf": "^5.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^4.0.0"
   }
 }
