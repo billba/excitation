@@ -1,10 +1,10 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({
-    name: 'events',
+    name: 'event',
     schema: 'dbo'
 })
-export class Events {
+export class Event {
     @PrimaryGeneratedColumn()
     event_id!: number;
 

@@ -1,10 +1,10 @@
 import { DataSource } from 'typeorm';
-import { Templates } from './entity/Templates';
-import { Questions } from './entity/Questions';
-import { Forms } from './entity/Forms';
-import { Documents } from './entity/Documents';
-import { Citations } from './entity/Citations';
-import { Events } from './entity/Events';
+import { Template } from './entity/Template';
+import { Question } from './entity/Question';
+import { Form } from './entity/Form';
+import { Document } from './entity/Document';
+import { Citation } from './entity/Citation';
+import { Event } from './entity/Event';
 import { DefaultAzureCredential } from '@azure/identity';
 
 async function getToken() {
@@ -23,7 +23,7 @@ export async function getDataSource() {
         database: "uwapdnosqldb01d01",
         synchronize: true,
         logging: true,
-        entities: [Templates, Questions, Forms, Documents, Citations, Events],
+        entities: [Template, Question, Form, Document, Citation, Event],
         subscribers: [],
         migrations: [],
         options: {

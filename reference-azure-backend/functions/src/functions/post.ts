@@ -1,10 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { citations, events } from '../schema'
-import { Bounds, Review, Event } from '../types'
+import { Bounds, Review, Event as EventType } from '../types'
 import { DataSource } from 'typeorm';
 import { getDataSource } from "../data-source";
-import { Citations } from "../entity/Citations";
-import { Events } from "../entity/Events";
+import { Citation } from "../entity/Citation";
+import { Event } from "../entity/Event";
 
 export const createCitationId = (formId: number, creator: string) => {
   return formId + '-' + creator + '-' + Date.now();
@@ -16,7 +15,7 @@ export const createCitationId = (formId: number, creator: string) => {
 
 // Inserts into db citations table
 async function insertCitation(db: DataSource, form_id: number, question_id: number, document_id: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
-  const citation = new Citations();
+  const citation = new Citation();
   const citation_id = createCitationId(form_id, creator);
   citation.citation_id = citation_id;
   citation.form_id = form_id;
@@ -32,7 +31,7 @@ async function insertCitation(db: DataSource, form_id: number, question_id: numb
 
 // Updates db citations table
 async function updateCitationBounds(db: DataSource, citation_id: string, bounds: Bounds[]) {
-  const citationsRepository = db.getRepository(Citations);
+  const citationsRepository = db.getRepository(Citation);
   const citationToUpdate = await citationsRepository.findOne({
     where: { citation_id: citation_id },
     select: ['citation_id', 'excerpt', 'bounds']
@@ -42,7 +41,7 @@ async function updateCitationBounds(db: DataSource, citation_id: string, bounds:
 }
 
 async function updateCitationReview(db: DataSource, citation_id: string, review: Review) {
-  const citationsRepository = db.getRepository(Citations);
+  const citationsRepository = db.getRepository(Citation);
   const citationToUpdate = await citationsRepository.findOne({
     where: { citation_id: citation_id },
     select: ['citation_id', 'excerpt', 'review']
@@ -52,24 +51,24 @@ async function updateCitationReview(db: DataSource, citation_id: string, review:
 }
 
 // Inserts into db events table
-async function insertAddEvent(db: DataSource, event: Event) {
-  const newEvent = new Events();
+async function insertAddEvent(db: DataSource, event: EventType) {
+  const newEvent = new Event();
   newEvent.body = JSON.parse(JSON.stringify(event));
   
   return await db.manager.save(newEvent);
 }
 
 // Inserts into db events table
-async function insertUpdateReviewEvent(db: DataSource, event: Event) {
-  const newEvent = new Events();
+async function insertUpdateReviewEvent(db: DataSource, event: EventType) {
+  const newEvent = new Event();
   newEvent.body = JSON.parse(JSON.stringify(event));
   
   return await db.manager.save(newEvent);
 }
 
 // Inserts into db events table
-async function insertUpdateBoundsEvent(db: DataSource, event: Event) {
-  const newEvent = new Events();
+async function insertUpdateBoundsEvent(db: DataSource, event: EventType) {
+  const newEvent = new Event();
   newEvent.body = JSON.parse(JSON.stringify(event));
   
   return await db.manager.save(newEvent);
@@ -82,7 +81,7 @@ async function insertUpdateBoundsEvent(db: DataSource, event: Event) {
 // Adding a citation involves:
 //  - creating a new citation
 //  - creating a new event
-async function addCitation(db: DataSource, context: InvocationContext, event: Event) {
+async function addCitation(db: DataSource, context: InvocationContext, event: EventType) {
   if (event.type === "addCitation") {
     let citation = await insertCitation(db, event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
     context.log("Created citation:", citation);
@@ -95,7 +94,7 @@ async function addCitation(db: DataSource, context: InvocationContext, event: Ev
 // Adding a review involves:
 //  - updating an existing citation
 //  - creating a new event
-async function addReview(db: DataSource, context: InvocationContext, event: Event) {
+async function addReview(db: DataSource, context: InvocationContext, event: EventType) {
   if (event.type === 'updateReview') {
     const citation = await updateCitationReview(db, event.citationId, event.review);
     context.log("Updated citation:", citation);
@@ -107,7 +106,7 @@ async function addReview(db: DataSource, context: InvocationContext, event: Even
 // Updating bounds data involves:
 //  - updating an existing citation
 //  - creating a new event
-async function updateBounds(db: DataSource, context: InvocationContext, event: Event) {
+async function updateBounds(db: DataSource, context: InvocationContext, event: EventType) {
   if (event.type === "updateBounds") {
     let citation = await updateCitationBounds(db, event.citationId, event.bounds);
     context.log("Updated citation:", citation);
@@ -125,7 +124,7 @@ export async function post(request: HttpRequest, context: InvocationContext): Pr
   let dataSource = await getDataSource();
 
   await dataSource.initialize().then(async () => {
-    const body = await request.json() as Event[];
+    const body = await request.json() as EventType[];
     for await (const event of body) {
       switch (event.type) {
         case 'addCitation':
