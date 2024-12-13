@@ -87,22 +87,28 @@ export function useLoadForm(formId: number, questionIndex = 0) {
       console.log("raw form", form);
       
       for await (const doc of form.documents) {
-        const diParams = new URLSearchParams()
-        diParams.append("url", doc.diUrl)
-        const diGenerateSasUrl = `${apiUrl}/sas/?${diParams.toString()}`
-        const diSasUrl = await (await fetch(diGenerateSasUrl)).json();
- 
-        const blobClient = new BlobClient(diSasUrl)
-        const blob = await blobClient.download()
-        const di = await (await blob.blobBody)?.text()
-
-        const pdfParams = new URLSearchParams()
-        pdfParams.append("url", doc.pdfUrl)
-        const pdfGenerateSasUrl = `${apiUrl}/sas/?${pdfParams.toString()}`
-        doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
+        let analyzeResult
+        if (import.meta.env.STORAGE_TYPE == "LOCAL") {
+          analyzeResult = await (await fetch(doc.diUrl)).json()
+        } else {
+          const diParams = new URLSearchParams()
+          diParams.append("url", doc.diUrl)
+          const diGenerateSasUrl = `${apiUrl}/sas/?${diParams.toString()}`
+          const diSasUrl = await (await fetch(diGenerateSasUrl)).json();
+   
+          const blobClient = new BlobClient(diSasUrl)
+          const blob = await blobClient.download()
+          const blobText = await (await blob.blobBody)?.text()
+          analyzeResult = JSON.parse(blobText!)
+  
+          const pdfParams = new URLSearchParams()
+          pdfParams.append("url", doc.pdfUrl)
+          const pdfGenerateSasUrl = `${apiUrl}/sas/?${pdfParams.toString()}`
+          doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
+        }
 
         doc.di = {
-          analyzeResult: JSON.parse(di!),
+          analyzeResult: analyzeResult,
           createdDateTime: "unknown",
           lastUpdatedDateTime: "unknown",
           status: "unknown",
