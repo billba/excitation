@@ -10,16 +10,16 @@ import { citations, documents, forms, questions, templates } from '../schema';
 async function getFormMetadata(db: PostgresJsDatabase, formId: number) {
   // get template id
   const form = await db.select({
-    formName: forms.form_name,
-    templateId: forms.template_id
-  }).from(forms).where(eq(forms.form_id, formId));
+    formName: forms.formName,
+    templateId: forms.templateId
+  }).from(forms).where(eq(forms.formId, formId));
   let formName = form[0].formName;
   const templateId = form[0].templateId;
 
   // get template info
   const template = await db.select({
-    templateName: templates.template_name
-  }).from(templates).where(eq(templates.template_id, templateId));
+    templateName: templates.templateName
+  }).from(templates).where(eq(templates.templateId, templateId));
 
   let templateName = template[0].templateName;
   return { formName, templateName };
@@ -27,41 +27,41 @@ async function getFormMetadata(db: PostgresJsDatabase, formId: number) {
 
 async function getQuestionsWithCitations(db: PostgresJsDatabase, formId: number) {
   const form = await db.select({
-    templateId: forms.template_id
-  }).from(forms).where(eq(forms.form_id, formId));
+    templateId: forms.templateId
+  }).from(forms).where(eq(forms.formId, formId));
   const templateId = form[0].templateId;
 
   const qs = await db.select({
-    id: questions.question_id,
+    id: questions.questionId,
     prefix: questions.prefix,
     text: questions.text
   }).from(questions)
-    .where(eq(questions.template_id, templateId))
-    .orderBy(questions.prefix, questions.question_id);
+    .where(eq(questions.templateId, templateId))
+    .orderBy(questions.prefix, questions.questionId);
 
   return await Promise.all(qs.map(async ({id, prefix, text}) => ({
     prefix,
     text,
     citations: await db.select({
-      citationId: citations.citation_id,
-      documentId: citations.document_id,
+      citationId: citations.citationId,
+      documentId: citations.documentId,
       excerpt: citations.excerpt,
       review: citations.review,
       bounds: citations.bounds
     }).from(citations)
-      .where(and(eq(citations.form_id, formId), eq(citations.question_id, id)))
-      .orderBy(citations.document_id, citations.citation_id)
+      .where(and(eq(citations.formId, formId), eq(citations.questionId, id)))
+      .orderBy(citations.documentId, citations.citationId)
     })
   ));
 }
 
 async function getDocuments(db: PostgresJsDatabase, formId: number, context: InvocationContext) {
   return await db.select({
-    documentId: documents.document_id,
+    documentId: documents.documentId,
     name: documents.name,
-    pdfUrl: documents.pdf_url,
-    diUrl: documents.di_url
-  }).from(documents).where(eq(documents.form_id, formId));
+    pdfUrl: documents.pdfUrl,
+    diUrl: documents.diUrl
+  }).from(documents).where(eq(documents.formId, formId));
 }
 
 // ============================================================================

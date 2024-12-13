@@ -17,18 +17,18 @@ async function getFormMetadata(db: DataSource, formId: number) {
 
   // get template id
   const form = await formsRepository.findOne({
-    where: { form_id: formId },
-    select: ['form_name', 'template_id']
+    where: { formId: formId },
+    select: ['formName', 'templateId']
   });
-  let formName = form.form_name;
-  const templateId = form.template_id;
+  let formName = form.formName;
+  const templateId = form.templateId;
 
   // get template info
   const template = await templatesRepository.findOne({
-    where: { template_id: templateId },
-    select: ['template_name']
+    where: { templateId: templateId },
+    select: ['templateName']
   });
-  let templateName = template.template_name;
+  let templateName = template.templateName;
   return { formName, templateName };
 }
 
@@ -38,24 +38,24 @@ async function getQuestionsWithCitations(db: DataSource, formId: number) {
   const citationsRepository = db.getRepository(Citation);
 
   const form = await formsRepository.findOne({
-    where: { form_id: formId },
-    select: ['template_id']
+    where: { formId: formId },
+    select: ['templateId']
   });
-  const templateId = form.template_id;
+  const templateId = form.templateId;
 
   const qs = await questionsRepository.find({
-    where: { template_id: templateId },
-    order: { prefix: 'ASC', question_id: 'ASC' },
-    select: ['question_id', 'prefix', 'text']
+    where: { templateId: templateId },
+    order: { prefix: 'ASC', questionId: 'ASC' },
+    select: ['questionId', 'prefix', 'text']
   });
 
-  return await Promise.all(qs.map(async ({question_id, prefix, text}) => ({
+  return await Promise.all(qs.map(async ({questionId, prefix, text}) => ({
     prefix,
     text,
     citations: await citationsRepository.find({
-      where: { form_id: formId, question_id: question_id },
-      order: { document_id: 'ASC', citation_id: 'ASC' },
-      select: ['citation_id', 'document_id', 'excerpt', 'review', 'bounds']
+      where: { formId: formId, questionId: questionId },
+      order: { documentId: 'ASC', citationId: 'ASC' },
+      select: ['citationId', 'documentId', 'excerpt', 'review', 'bounds']
     })
   })));
 }
@@ -63,8 +63,8 @@ async function getQuestionsWithCitations(db: DataSource, formId: number) {
 async function getDocuments(db: DataSource, formId: number) {
   const documentRepository = db.getRepository(Document);
   return await documentRepository.find({ 
-    where: {form_id: formId}, 
-    select: ['document_id', 'name', 'pdf_url', 'di_url']
+    where: {formId: formId}, 
+    select: ['documentId', 'name', 'pdfUrl', 'diUrl']
   });
 }
 

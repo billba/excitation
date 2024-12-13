@@ -14,14 +14,14 @@ export const createCitationId = (formId: number, creator: string) => {
 // ============================================================================
 
 // Inserts into db citations table
-async function insertCitation(db: PostgresJsDatabase, form_id: number, question_id: number, document_id: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
-  const citation_id = createCitationId(form_id, creator);
+async function insertCitation(db: PostgresJsDatabase, formId: number, questionId: number, documentId: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
+  const citationId = createCitationId(formId, creator);
   /* @ts-ignore */
   return await db.insert(citations).values({
-    citation_id,
-    form_id,
-    question_id,
-    document_id,
+    citationId,
+    formId,
+    questionId,
+    documentId,
     excerpt,
     bounds,
     review,
@@ -30,23 +30,23 @@ async function insertCitation(db: PostgresJsDatabase, form_id: number, question_
 }
 
 // Updates db citations table
-async function updateCitationBounds(db: PostgresJsDatabase, citation_id: string, bounds: Bounds[]) {
+async function updateCitationBounds(db: PostgresJsDatabase, citationId: string, bounds: Bounds[]) {
   return db.update(citations).set({
     /* @ts-ignore */
     bounds,
-  }).where(eq(citations.citation_id, citation_id)).returning({
-    citation_id: citations.citation_id,
+  }).where(eq(citations.citationId, citationId)).returning({
+    citationId: citations.citationId,
     excerpt: citations.excerpt,
     bounds: citations.bounds
   });
 }
 
-async function updateCitationReview(db: PostgresJsDatabase, citation_id: string, review: Review) {
+async function updateCitationReview(db: PostgresJsDatabase, citationId: string, review: Review) {
   return db.update(citations).set({
     /* @ts-ignore */
     review
-  }).where(eq(citations.citation_id, citation_id)).returning({
-    citation_id: citations.citation_id,
+  }).where(eq(citations.citationId, citationId)).returning({
+    citationId: citations.citationId,
     excerpt: citations.excerpt,
     review: citations.review
   });
@@ -59,7 +59,7 @@ async function insertAddEvent(db: PostgresJsDatabase, event: Event) {
     body: event
   }).returning({
     body: events.body,
-    created_at: events.created_at
+    createdAt: events.createdAt
   });
 }
 
@@ -70,7 +70,7 @@ async function insertUpdateReviewEvent(db: PostgresJsDatabase, event: Event) {
     body: event
   }).returning({
     body: events.body,
-    created_at: events.created_at
+    createdAt: events.createdAt
   });
 }
 
@@ -81,7 +81,7 @@ async function insertUpdateBoundsEvent(db: PostgresJsDatabase, event: Event) {
     body: event
   }).returning({
     body: events.body,
-    created_at: events.created_at
+    createdAt: events.createdAt
   });
 }
 
@@ -96,7 +96,7 @@ async function addCitation(db: PostgresJsDatabase, context: InvocationContext, e
   if (event.type === "addCitation") {
     let citation = await insertCitation(db, event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
     context.log("Created citation:", citation);
-    event.citationId = citation[0].citation_id;
+    event.citationId = citation[0].citationId;
     let addEvent = await insertAddEvent(db, event);
     context.log("Created event:", addEvent);
   }

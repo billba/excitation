@@ -9,27 +9,27 @@ import { Citation } from "./Citation";
 })
 export class Form {
     @PrimaryGeneratedColumn()
-    form_id!: number;
+    formId!: number;
 
     @ManyToOne((type) => Template)
-    @JoinColumn({ name: 'template_id' })
+    @JoinColumn({ name: 'templateId' })
     template: Template;
 
     @RelationId((form: Form) => form.template)
     @Column({ type: 'int', nullable: true })
-    template_id: number;
+    templateId: number;
 
     @Column('text')
-    form_name!: string;
+    formName!: string;
 
     @Column('text')
     creator!: string;
 
     @CreateDateColumn()
-    created_at!: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn()
-    modified_at!: Date;
+    modifiedAt!: Date;
 
     @OneToMany(() => Document, document => document.form)
     documents!: Document[];

@@ -25,6 +25,7 @@ import {
   returnTextPolygonsFromDI,
 } from "./Utility";
 import { calculateRange } from "./Range";
+import { BlobClient } from "@azure/storage-blob";
 
 export function togglePseudoBoolean(pb: PseudoBoolean): PseudoBoolean {
   return pb ? undefined : true;
@@ -86,14 +87,22 @@ export function useLoadForm(formId: number, questionIndex = 0) {
       console.log("raw form", form);
       
       for await (const doc of form.documents) {
-        const params = new URLSearchParams()
-        params.append("url", doc.di_url)
-        console.log(params)
-        const generateSasUrl = `${apiUrl}/di-results/?${params.toString()}`
-        console.log(generateSasUrl)
-        const di = await (await fetch(generateSasUrl)).json();
+        const diParams = new URLSearchParams()
+        diParams.append("url", doc.diUrl)
+        const diGenerateSasUrl = `${apiUrl}/sas/?${diParams.toString()}`
+        const diSasUrl = await (await fetch(diGenerateSasUrl)).json();
+ 
+        const blobClient = new BlobClient(diSasUrl)
+        const blob = await blobClient.download()
+        const di = await (await blob.blobBody)?.text()
+
+        const pdfParams = new URLSearchParams()
+        pdfParams.append("url", doc.pdfUrl)
+        const pdfGenerateSasUrl = `${apiUrl}/sas/?${pdfParams.toString()}`
+        doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
+
         doc.di = {
-          analyzeResult: di,
+          analyzeResult: JSON.parse(di!),
           createdDateTime: "unknown",
           lastUpdatedDateTime: "unknown",
           status: "unknown",
@@ -749,7 +758,3 @@ async function dispatchEvents(events: Event[]): Promise<string | void> {
     throw new Error(await response.text());
   }
 }
-function streamToBuffer(): import("./Utility").DocumentIntelligenceResponse | PromiseLike<import("./Utility").DocumentIntelligenceResponse> {
-  throw new Error("Function not implemented.");
-}
-

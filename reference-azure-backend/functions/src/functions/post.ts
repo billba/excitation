@@ -14,13 +14,13 @@ export const createCitationId = (formId: number, creator: string) => {
 // ============================================================================
 
 // Inserts into db citations table
-async function insertCitation(db: DataSource, form_id: number, question_id: number, document_id: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
+async function insertCitation(db: DataSource, formId: number, questionId: number, documentId: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
   const citation = new Citation();
-  const citation_id = createCitationId(form_id, creator);
-  citation.citation_id = citation_id;
-  citation.form_id = form_id;
-  citation.question_id = question_id;
-  citation.document_id = document_id;
+  const citationId = createCitationId(formId, creator);
+  citation.citationId = citationId;
+  citation.formId = formId;
+  citation.questionId = questionId;
+  citation.documentId = documentId;
   citation.excerpt = excerpt;
   citation.bounds = JSON.parse(JSON.stringify(bounds));
   citation.review = review;
@@ -30,21 +30,21 @@ async function insertCitation(db: DataSource, form_id: number, question_id: numb
 }
 
 // Updates db citations table
-async function updateCitationBounds(db: DataSource, citation_id: string, bounds: Bounds[]) {
+async function updateCitationBounds(db: DataSource, citationId: string, bounds: Bounds[]) {
   const citationsRepository = db.getRepository(Citation);
   const citationToUpdate = await citationsRepository.findOne({
-    where: { citation_id: citation_id },
-    select: ['citation_id', 'excerpt', 'bounds']
+    where: { citationId: citationId },
+    select: ['citationId', 'excerpt', 'bounds']
   });
   citationToUpdate.bounds = JSON.parse(JSON.stringify(bounds));
   return await citationsRepository.save(citationToUpdate);
 }
 
-async function updateCitationReview(db: DataSource, citation_id: string, review: Review) {
+async function updateCitationReview(db: DataSource, citationId: string, review: Review) {
   const citationsRepository = db.getRepository(Citation);
   const citationToUpdate = await citationsRepository.findOne({
-    where: { citation_id: citation_id },
-    select: ['citation_id', 'excerpt', 'review']
+    where: { citationId: citationId },
+    select: ['citationId', 'excerpt', 'review']
   });
   citationToUpdate.review = review;
   return await citationsRepository.save(citationToUpdate);
@@ -85,7 +85,7 @@ async function addCitation(db: DataSource, context: InvocationContext, event: Ev
   if (event.type === "addCitation") {
     let citation = await insertCitation(db, event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
     context.log("Created citation:", citation);
-    event.citationId = citation[0].citation_id;
+    event.citationId = citation[0].citationId;
     let addEvent = await insertAddEvent(db, event);
     context.log("Created event:", addEvent);
   }

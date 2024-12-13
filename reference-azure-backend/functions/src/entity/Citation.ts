@@ -9,31 +9,31 @@ import { Document } from "./Document";
 })
 export class Citation {
     @PrimaryColumn()
-    citation_id!: string;
+    citationId!: string;
 
     @ManyToOne((type) => Form)
-    @JoinColumn({ name: 'form_id' })
+    @JoinColumn({ name: 'formId' })
     form: Form;
 
     @Column({ type: 'int', nullable: true })
     @RelationId((citations: Citation) => citations.form)
-    form_id: number;
+    formId: number;
 
     @ManyToOne((type) => Question)
-    @JoinColumn({ name: 'question_id'})
+    @JoinColumn({ name: 'questionId'})
     question: Question;
 
     @Column({ type: 'int', nullable: true })
     @RelationId((citations: Citation) => citations.question)
-    question_id: number;
+    questionId: number;
 
     @ManyToOne((type) => Document)
-    @JoinColumn({ name: 'document_id' })
+    @JoinColumn({ name: 'documentId' })
     document: Document;
 
     @Column({ type: 'int', nullable: true })
     @RelationId((citations: Citation) => citations.document)
-    document_id: number;
+    documentId: number;
 
     @Column('text')
     excerpt!: string;
@@ -48,8 +48,8 @@ export class Citation {
     creator!: string;
 
     @CreateDateColumn()
-    created_at!: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn()
-    modified_at!: Date;
+    modifiedAt!: Date;
 }

@@ -8,33 +8,33 @@ import { Citation } from "./Citation";
 })
 export class Document {
     @PrimaryGeneratedColumn()
-    document_id!: number;
+    documentId!: number;
 
     @ManyToOne((type) => Form)
-    @JoinColumn({ name: 'form_id' })
+    @JoinColumn({ name: 'formId' })
     form: Form;
 
     @RelationId((document: Document) => document.form)
     @Column({ type: 'int', nullable: true})
-    form_id: number;
+    formId: number;
 
     @Column({ type: 'text', nullable: true })
     name: string;
 
     @Column('text')
-    pdf_url!: string;
+    pdfUrl!: string;
 
     @Column({ type: 'text', nullable: true })
-    di_url: string;
+    diUrl: string;
 
     @Column('text')
     creator!: string;
 
     @CreateDateColumn()
-    created_at!: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn()
-    modified_at!: Date;
+    modifiedAt!: Date;
 
     @OneToMany(() => Citation, citation => citation.document)
     citations!: Citation[];

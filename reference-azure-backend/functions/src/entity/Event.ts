@@ -12,5 +12,5 @@ export class Event {
     body!: JSON;
 
     @CreateDateColumn()
-    created_at!: Date;
+    createdAt!: Date;
 }

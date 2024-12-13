@@ -8,19 +8,19 @@ import { Form } from "./Form";
 })
 export class Template {
     @PrimaryGeneratedColumn()
-    template_id!: number;
+    templateId!: number;
 
     @Column('text')
-    template_name!: string;
+    templateName!: string;
 
     @Column('text')
     creator!: string;
 
     @CreateDateColumn()
-    created_at!: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn()
-    modified_at!: Date;
+    modifiedAt!: Date;
 
     @OneToMany(() => Question, question => question.template)
     questions!: Question[]

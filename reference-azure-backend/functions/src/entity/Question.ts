@@ -8,15 +8,15 @@ import { Citation } from "./Citation";
 })
 export class Question {
     @PrimaryGeneratedColumn()
-    question_id!: number;
+    questionId!: number;
 
     @ManyToOne((type) => Template)
-    @JoinColumn({ name: 'template_id' })
+    @JoinColumn({ name: 'templateId' })
     template: Template;
 
     @RelationId((question: Question) => question.template)
     @Column({ type: 'int', nullable: true })
-    template_id: number;
+    templateId: number;
 
     @Column({ type: 'varchar', nullable: true })
     prefix: string;
@@ -28,10 +28,10 @@ export class Question {
     creator: string;
 
     @CreateDateColumn()
-    created_at!: Date;
+    createdAt!: Date;
 
     @UpdateDateColumn()
-    modified_at!: Date;
+    modifiedAt!: Date;
 
     @OneToMany(() => Citation, citation => citation.question)
     citations!: Citation[];
