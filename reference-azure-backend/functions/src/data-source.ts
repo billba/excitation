@@ -16,7 +16,6 @@ async function getToken() {
 export async function getDataSource() {
     const token = await getToken();
     const accountName = process.env.BLOB_STORAGE_ACCOUNT_NAME
-    const accountKey = process.env.BLOB_STORAGE_ACCOUNT_KEY
 
     return new DataSource({
         type: "mssql",
