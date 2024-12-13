@@ -33,15 +33,22 @@ Create a file in this directory called `local.settings.json` with the following 
 
 ```json
 {
-    "IsEncrypted": false,
-    "Values": {
-        // If you have dev storage set up, you can use that. Alternately, provide
-        // a storage account connection string
-        "AzureWebJobsStorage": "connection string || UseDevelopmentStorage=true",
-        "FUNCTIONS_WORKER_RUNTIME": "node",
-        // Postgres connection with format as described above
-        "POSTGRES": "connection string"
-    }
+  "IsEncrypted": false,
+  "Values": {
+    // If you have dev storage set up, you can use that. Alternately, provide
+    // a storage account connection string
+    "AzureWebJobsStorage": "connection string || UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    // Postgres connection with format as described above
+    "POSTGRES": "connection string", // for postgres only - SQL db uses managed identity
+    // Storage account for the PDFs and Document Intelligence results
+    "BLOB_STORAGE_ACCOUNT_NAME": "Azure Storage account name",
+    "BLOB_STORAGE_ACCOUNT_KEY": "Aure Storage account key"
+  },
+  "Host": {
+    "CORS": "*",
+    "LocalHttpPort": 8000
+  }
 }
 ```
 
