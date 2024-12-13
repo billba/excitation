@@ -52,7 +52,7 @@ async function getQuestionsWithCitations(db: DataSource, formId: number) {
   return await Promise.all(qs.map(async ({question_id, prefix, text}) => ({
     prefix,
     text,
-    citations: citationsRepository.find({
+    citations: await citationsRepository.find({
       where: { form_id: formId, question_id: question_id },
       order: { document_id: 'ASC', citation_id: 'ASC' },
       select: ['citation_id', 'document_id', 'excerpt', 'review', 'bounds']
