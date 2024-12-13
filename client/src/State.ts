@@ -149,8 +149,7 @@ export function useLoadForm(formId: number, questionIndex = 0) {
         questionIndex,
         docs,
       });
-    } catch (error) {
-      console.log(error)
+    } catch {
       dispatch({
         type: "loadFormError",
         error: "Failed to load form",
