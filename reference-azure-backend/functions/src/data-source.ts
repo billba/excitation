@@ -15,12 +15,14 @@ async function getToken() {
 
 export async function getDataSource() {
     const token = await getToken();
+    const accountName = process.env.BLOB_STORAGE_ACCOUNT_NAME
+    const accountKey = process.env.BLOB_STORAGE_ACCOUNT_KEY
 
     return new DataSource({
         type: "mssql",
-        host: "uwapdnosqlsv01d01.database.windows.net",
+        host: `${accountName}.database.windows.net`,
         port: 1433,
-        database: "uwapdnosqldb01d01",
+        database: accountName,
         synchronize: true,
         logging: true,
         entities: [Template, Question, Form, Document, Citation, Event],
