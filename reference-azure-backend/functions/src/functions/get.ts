@@ -1,5 +1,4 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Document } from "../entity/Document";
 import { Form } from "../entity/Form";
