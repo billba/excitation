@@ -142,6 +142,6 @@ export async function post(request: HttpRequest, context: InvocationContext): Pr
 app.http('post', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  route: '',
+  route: 'event',
   handler: post
 });

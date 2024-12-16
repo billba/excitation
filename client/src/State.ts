@@ -88,10 +88,10 @@ export function useLoadForm(formId: number, questionIndex = 0) {
 
       for await (const doc of form.documents) {
         let analyzeResult;
-        if (import.meta.env.GENERATE_BLOB_SAS_URL.toUpperCase() == "TRUE") {
+        if (import.meta.env.VITE_DOCUMENT_BLOB_STORAGE_GENERATE_SAS_URL == "TRUE") {
           const diParams = new URLSearchParams();
           diParams.append("url", doc.diUrl);
-          const diGenerateSasUrl = `${apiUrl}/sas/?${diParams.toString()}`;
+          const diGenerateSasUrl = `${apiUrl}/blob-sas-url/?${diParams.toString()}`;
           const diSasUrl = await (await fetch(diGenerateSasUrl)).json();
           
           const blobClient = new BlobClient(diSasUrl);
@@ -101,7 +101,7 @@ export function useLoadForm(formId: number, questionIndex = 0) {
           
           const pdfParams = new URLSearchParams();
           pdfParams.append("url", doc.pdfUrl);
-          const pdfGenerateSasUrl = `${apiUrl}/sas/?${pdfParams.toString()}`;
+          const pdfGenerateSasUrl = `${apiUrl}/blob-sas-url/?${pdfParams.toString()}`;
           doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
         } else {
           analyzeResult = await (await fetch(doc.diUrl)).json();

@@ -31,6 +31,9 @@ To run locally in VSCode, you will want to open the folder `functions-sample` as
 
 Create a file in this directory called `local.settings.json` with the following content:
 
+
+**Important**: This currently has an issue accessing the environment variables at startup. This is needed for the `SQL_DATABASE_NAME` and `SQL_SERVER_NAME` to connect with the database. The work around for now is to export these environment variables in the terminal prior to running `npm start`. Example: `export SQL_SERVER_NAME=<sql-server-name>`
+
 ```json
 {
   "IsEncrypted": false,

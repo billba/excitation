@@ -53,6 +53,6 @@ export async function generateBlobSasUrl(
 app.http("generateBlobSasUrl", {
   methods: ["GET"],
   authLevel: "anonymous",
-  route: "sas",
+  route: "blob-sas-url",
   handler: generateBlobSasUrl,
 });
