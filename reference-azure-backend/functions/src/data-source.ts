@@ -15,11 +15,12 @@ async function getToken() {
 
 export async function getDataSource() {
     const token = await getToken();
+    const serverName = process.env.SQL_SERVER_NAME
     const dbName = process.env.SQL_DATABASE_NAME
 
     return new DataSource({
         type: "mssql",
-        host: `${dbName}.database.windows.net`,
+        host: `${serverName}.database.windows.net`,
         port: 1433,
         database: dbName,
         synchronize: true,

@@ -41,7 +41,8 @@ Create a file in this directory called `local.settings.json` with the following 
     "FUNCTIONS_WORKER_RUNTIME": "node",
     // Postgres connection with format as described above
     "POSTGRES": "connection string", // for postgres only
-    "SQL_DATABASE_NAME": "the name of the Azure SQL database" // for SQL only
+    "SQL_DATABASE_NAME": "the name of the Azure SQL database", // for SQL only
+    "SQL_SERVER_NAME": "the name of the Azure SQL server", // for SQL only
     // Storage account for the PDFs and Document Intelligence results
     "BLOB_STORAGE_ACCOUNT_NAME": "Azure Storage account name",
     "BLOB_STORAGE_ACCOUNT_KEY": "Aure Storage account key"
