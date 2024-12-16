@@ -15,8 +15,8 @@ async function getToken() {
 
 export async function getDataSource() {
     const token = await getToken();
-    const serverName = process.env["SQL_SERVER_NAME"]
-    const dbName = process.env["SQL_DATABASE_NAME"]
+    const serverName = process.env.SQL_SERVER_NAME
+    const dbName = process.env.SQL_DATABASE_NAME
 
     return new DataSource({
         type: "mssql",
