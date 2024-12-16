@@ -40,7 +40,8 @@ Create a file in this directory called `local.settings.json` with the following 
     "AzureWebJobsStorage": "connection string || UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "node",
     // Postgres connection with format as described above
-    "POSTGRES": "connection string", // for postgres only - SQL db uses managed identity
+    "POSTGRES": "connection string", // for postgres only
+    "SQL_DATABASE_NAME": "the name of the Azure SQL database" // for SQL only
     // Storage account for the PDFs and Document Intelligence results
     "BLOB_STORAGE_ACCOUNT_NAME": "Azure Storage account name",
     "BLOB_STORAGE_ACCOUNT_KEY": "Aure Storage account key"
