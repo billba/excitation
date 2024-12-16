@@ -88,25 +88,29 @@ export function useLoadForm(formId: number, questionIndex = 0) {
 
       for await (const doc of form.documents) {
         let analyzeResult;
-        if (import.meta.env.VITE_DOCUMENT_BLOB_STORAGE_GENERATE_SAS_URL == "TRUE") {
+        if (
+          import.meta.env.VITE_DOCUMENT_BLOB_STORAGE_GENERATE_SAS_URL == "TRUE"
+        ) {
           const diParams = new URLSearchParams();
           diParams.append("url", doc.diUrl);
-          const diGenerateSasUrl = `${apiUrl}/blob-sas-url/?${diParams.toString()}`;
+          const diGenerateSasUrl =
+            `${apiUrl}/blob-sas-url/?${diParams.toString()}`;
           const diSasUrl = await (await fetch(diGenerateSasUrl)).json();
-          
+
           const blobClient = new BlobClient(diSasUrl);
           const blob = await blobClient.download();
           const blobText = await (await blob.blobBody)?.text();
           analyzeResult = JSON.parse(blobText!);
-          
+
           const pdfParams = new URLSearchParams();
           pdfParams.append("url", doc.pdfUrl);
-          const pdfGenerateSasUrl = `${apiUrl}/blob-sas-url/?${pdfParams.toString()}`;
+          const pdfGenerateSasUrl =
+            `${apiUrl}/blob-sas-url/?${pdfParams.toString()}`;
           doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
         } else {
           analyzeResult = await (await fetch(doc.diUrl)).json();
         }
-        
+
         doc.di = {
           analyzeResult,
           createdDateTime: "unknown",
