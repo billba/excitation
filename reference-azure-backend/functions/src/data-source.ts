@@ -23,7 +23,6 @@ export async function getDataSource() {
         host: `${serverName}.database.windows.net`,
         port: 1433,
         database: dbName,
-        synchronize: true,
         logging: true,
         entities: [Template, Question, Form, Document, Citation, Event],
         subscribers: [],

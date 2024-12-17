@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import { getDataSource } from "./data-source";
 import { DataSource } from "typeorm";
+import { app, AppStartContext, AppTerminateContext } from '@azure/functions';
 
 let dataSource: DataSource;
 
@@ -15,14 +16,14 @@ async function initializeDataSource() {
     }
 }
 
-async function main() {
+app.hook.appStart(async (context: AppStartContext) => {
     await initializeDataSource();
-}
-
-main().then(() => {
-    console.log("Application has started.");
-}).catch((err) => {
-    console.error("Application failed to start:", err);
 });
+
+app.hook.appTerminate(async (context: AppTerminateContext) => {
+    console.log("Terminating");
+    await dataSource.destroy();
+});
+
 
 export { dataSource };
