@@ -112,10 +112,8 @@ export function Sidebar() {
       <h3 id="citations-label">Review Citations</h3>
       <div className="sidebar-divider" />
       <div id="disclaimer-section">
-        <i>
           Citation Tool is for demo purposes only. AI generated highlights 
           may be incomplete or factually incorrect and should be reviewed.
-        </i>
       </div>
       <div className="sidebar-divider" />
         <div id="docs">

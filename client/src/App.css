@@ -127,6 +127,7 @@ h1 {
 
 #disclaimer-section {
   grid-column: 2 / 6;
+  font-style: italic;
 }
 
 #question-nav {
