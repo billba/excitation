@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.26.0",
     "@fluentui/react-components": "^9.54.17",
     "jotai": "^2.9.3",
     "mutative": "^1.0.11",

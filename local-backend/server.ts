@@ -42,7 +42,7 @@ router
       response.status = 400;
     }
   })
-  .get("/form/:formId", ({ response, params: { formId } }) => {
+  .get("/api/form/:formId", ({ response, params: { formId } }) => {
     try {
       console.log("serving form", formId);
       response.body = JSON.stringify(getClientForm(Number(formId)));
@@ -68,7 +68,7 @@ router
       }
     }
   )
-  .post("/event", async ({ request, response }) => {
+  .post("/api/event", async ({ request, response }) => {
     try {
       for (const event of await request.body.json() as Event[]) {
         console.log("dispatching", event);

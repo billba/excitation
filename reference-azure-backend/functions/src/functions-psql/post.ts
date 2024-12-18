@@ -1,9 +1,9 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { Bounds, Review, Event as EventType } from '../types'
-import { DataSource } from 'typeorm';
-import { Citation } from "../entity/Citation";
-import { Event } from "../entity/Event";
-import { dataSource } from "..";
+import { drizzle, PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { eq } from 'drizzle-orm';
+import postgres from 'postgres';
+import { citations, events } from '../schema'
+import { Bounds, Review, Event } from '../types'
 
 export const createCitationId = (formId: number, creator: string) => {
   return formId + '-' + creator + '-' + Date.now();
@@ -14,64 +14,75 @@ export const createCitationId = (formId: number, creator: string) => {
 // ============================================================================
 
 // Inserts into db citations table
-async function insertCitation(db: DataSource, formId: number, questionId: number, documentId: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
-  const citation = new Citation();
+async function insertCitation(db: PostgresJsDatabase, formId: number, questionId: number, documentId: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
   const citationId = createCitationId(formId, creator);
-  citation.citationId = citationId;
-  citation.formId = formId;
-  citation.questionId = questionId;
-  citation.documentId = documentId;
-  citation.excerpt = excerpt;
-  citation.bounds = JSON.parse(JSON.stringify(bounds));
-  citation.review = review;
-  citation.creator = creator;
-
-  return await db.manager.save(citation);
+  /* @ts-ignore */
+  return await db.insert(citations).values({
+    citationId,
+    formId,
+    questionId,
+    documentId,
+    excerpt,
+    bounds,
+    review,
+    creator
+  }).returning();
 }
 
 // Updates db citations table
-async function updateCitationBounds(db: DataSource, citationId: string, bounds: Bounds[]) {
-  const citationsRepository = db.getRepository(Citation);
-  const citationToUpdate = await citationsRepository.findOne({
-    where: { citationId: citationId },
-    select: ['citationId', 'excerpt', 'bounds']
+async function updateCitationBounds(db: PostgresJsDatabase, citationId: string, bounds: Bounds[]) {
+  return db.update(citations).set({
+    /* @ts-ignore */
+    bounds,
+  }).where(eq(citations.citationId, citationId)).returning({
+    citationId: citations.citationId,
+    excerpt: citations.excerpt,
+    bounds: citations.bounds
   });
-  citationToUpdate.bounds = JSON.parse(JSON.stringify(bounds));
-  return await citationsRepository.save(citationToUpdate);
 }
 
-async function updateCitationReview(db: DataSource, citationId: string, review: Review) {
-  const citationsRepository = db.getRepository(Citation);
-  const citationToUpdate = await citationsRepository.findOne({
-    where: { citationId: citationId },
-    select: ['citationId', 'excerpt', 'review']
+async function updateCitationReview(db: PostgresJsDatabase, citationId: string, review: Review) {
+  return db.update(citations).set({
+    /* @ts-ignore */
+    review
+  }).where(eq(citations.citationId, citationId)).returning({
+    citationId: citations.citationId,
+    excerpt: citations.excerpt,
+    review: citations.review
   });
-  citationToUpdate.review = review;
-  return await citationsRepository.save(citationToUpdate);
 }
 
 // Inserts into db events table
-async function insertAddEvent(db: DataSource, event: EventType) {
-  const newEvent = new Event();
-  newEvent.body = JSON.parse(JSON.stringify(event));
-  
-  return await db.manager.save(newEvent);
+async function insertAddEvent(db: PostgresJsDatabase, event: Event) {
+  /* @ts-ignore */
+  return db.insert(events).values({
+    body: event
+  }).returning({
+    body: events.body,
+    createdAt: events.createdAt
+  });
 }
 
 // Inserts into db events table
-async function insertUpdateReviewEvent(db: DataSource, event: EventType) {
-  const newEvent = new Event();
-  newEvent.body = JSON.parse(JSON.stringify(event));
-  
-  return await db.manager.save(newEvent);
+async function insertUpdateReviewEvent(db: PostgresJsDatabase, event: Event) {
+  /* @ts-ignore */
+  return db.insert(events).values({
+    body: event
+  }).returning({
+    body: events.body,
+    createdAt: events.createdAt
+  });
 }
 
 // Inserts into db events table
-async function insertUpdateBoundsEvent(db: DataSource, event: EventType) {
-  const newEvent = new Event();
-  newEvent.body = JSON.parse(JSON.stringify(event));
-  
-  return await db.manager.save(newEvent);
+async function insertUpdateBoundsEvent(db: PostgresJsDatabase, event: Event) {
+  /* @ts-ignore */
+  return db.insert(events).values({
+    body: event
+  }).returning({
+    body: events.body,
+    createdAt: events.createdAt
+  });
 }
 
 // ============================================================================
@@ -81,7 +92,7 @@ async function insertUpdateBoundsEvent(db: DataSource, event: EventType) {
 // Adding a citation involves:
 //  - creating a new citation
 //  - creating a new event
-async function addCitation(db: DataSource, context: InvocationContext, event: EventType) {
+async function addCitation(db: PostgresJsDatabase, context: InvocationContext, event: Event) {
   if (event.type === "addCitation") {
     let citation = await insertCitation(db, event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
     context.log("Created citation:", citation);
@@ -94,7 +105,7 @@ async function addCitation(db: DataSource, context: InvocationContext, event: Ev
 // Adding a review involves:
 //  - updating an existing citation
 //  - creating a new event
-async function addReview(db: DataSource, context: InvocationContext, event: EventType) {
+async function addReview(db: PostgresJsDatabase, context: InvocationContext, event: Event) {
   if (event.type === 'updateReview') {
     const citation = await updateCitationReview(db, event.citationId, event.review);
     context.log("Updated citation:", citation);
@@ -106,7 +117,7 @@ async function addReview(db: DataSource, context: InvocationContext, event: Even
 // Updating bounds data involves:
 //  - updating an existing citation
 //  - creating a new event
-async function updateBounds(db: DataSource, context: InvocationContext, event: EventType) {
+async function updateBounds(db: PostgresJsDatabase, context: InvocationContext, event: Event) {
   if (event.type === "updateBounds") {
     let citation = await updateCitationBounds(db, event.citationId, event.bounds);
     context.log("Updated citation:", citation);
@@ -121,17 +132,21 @@ async function updateBounds(db: DataSource, context: InvocationContext, event: E
 export async function post(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   context.log(`Http function processed request for url "${request.url}"`);
 
-  const body = await request.json() as EventType[];
+  /* @ts-ignore */
+  const queryClient = postgres(process.env["POSTGRES"]);
+  const db = drizzle(queryClient);
+
+  const body = await request.json() as Event[];
   for await (const event of body) {
     switch (event.type) {
       case 'addCitation':
-        await addCitation(dataSource, context, event);
+        await addCitation(db, context, event);
         break;
       case 'updateReview':
-        await addReview(dataSource, context, event);
+        await addReview(db, context, event);
         break;
       case 'updateBounds':
-        await updateBounds(dataSource, context, event);
+        await updateBounds(db, context, event);
         break;
     }
   }
@@ -142,6 +157,6 @@ export async function post(request: HttpRequest, context: InvocationContext): Pr
 app.http('post', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  route: 'event',
+  route: '',
   handler: post
 });

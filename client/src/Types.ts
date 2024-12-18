@@ -233,6 +233,8 @@ export interface Question {
 export interface ViewerState {
   width: number;
   height: number;
+  top?: number;
+  left?: number;
 }
 
 export interface FormMetadata {

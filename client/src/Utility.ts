@@ -550,8 +550,8 @@ export function findUserSelection(
   let { top, left, bottom, right } = range.getBoundingClientRect();
   const multiplier = 72;
 
-  const dx = viewer.left - window.scrollX;
-  const dy = viewer.top - window.scrollY;
+  const dx = viewer.left! - window.scrollX;
+  const dy = viewer.top! - window.scrollY;
 
   top = round((top - dy) / multiplier, 4);
   bottom = round((bottom - dy) / multiplier, 4);
