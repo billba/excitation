@@ -106,17 +106,16 @@ export function useLoadForm(formId: number, questionIndex = 0) {
           pdfParams.append("url", doc.pdfUrl);
           const pdfGenerateSasUrl =
             `${apiUrl}/blob-sas-url/?${pdfParams.toString()}`;
-          doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
+            doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
+          doc.di = {
+            analyzeResult,
+            createdDateTime: "unknown",
+            lastUpdatedDateTime: "unknown",
+            status: "unknown",
+          };
         } else {
-          analyzeResult = await (await fetch(doc.diUrl)).json();
+          doc.di = await (await fetch(doc.diUrl)).json();
         }
-
-        doc.di = {
-          analyzeResult,
-          createdDateTime: "unknown",
-          lastUpdatedDateTime: "unknown",
-          status: "unknown",
-        };
         doc.pages = doc.di.analyzeResult.pages.length;
         docs.push(doc);
         docFromId[doc.documentId] = doc;
