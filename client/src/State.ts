@@ -262,6 +262,7 @@ export const asyncHelpers = (asyncState: AsyncState) => {
 
 const stateAtom = atom<State, [Action], void>(
   (get) => get(_stateAtom),
+
   (get, set, action: Action) => {
     const prevState = get(_stateAtom);
     const docFromId = get(docFromIdAtom);
