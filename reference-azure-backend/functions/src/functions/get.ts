@@ -6,6 +6,7 @@ import { Question } from "../entity/Question";
 import { Citation } from "../entity/Citation";
 import { Template } from "../entity/Template";
 import { dataSource } from "..";
+import { Answer } from "../entity/Answer";
 
 // ============================================================================
 // db operations
@@ -29,6 +30,14 @@ async function getFormMetadata(db: DataSource, formId: number) {
   });
   let templateName = template.templateName;
   return { formName, templateName };
+}
+
+export async function getAnswer(db: DataSource, formId: number, questionId: number) {
+  const answersRepository = db.getRepository(Answer);
+  return await answersRepository.findOne({
+    where: { formId: formId, questionId: questionId },
+    select: ['answer']
+  });
 }
 
 async function getQuestionsWithCitations(db: DataSource, formId: number) {
@@ -55,6 +64,11 @@ async function getQuestionsWithCitations(db: DataSource, formId: number) {
       where: { formId: formId, questionId: questionId },
       order: { documentId: 'ASC', citationId: 'ASC' },
       select: ['citationId', 'documentId', 'excerpt', 'review', 'bounds']
+    }),
+    answer: await getAnswer(db, formId, questionId).then(a => {
+      if (a){
+        return a.answer
+      }
     })
   })));
 }

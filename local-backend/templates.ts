@@ -23,26 +23,32 @@ export const templates: Template[] = [
     name: "Microsoft Fiscal Quarterly",
     questions: [
       {
+        questionId: 0,
         prefix: "1",
         text: "What was the company’s revenue for the third quarter of Fiscal Year 2024?",
       },
       {
+        questionId: 1,
         prefix: "2a",
         text: "What are the earnings per share (EPS) for this quarter?",
       },
       {
+        questionId: 2,
         prefix: "3",
         text: "How much money did Microsoft return to shareholders in the form of share repurchases?",
       },
       {
+        questionId: 3,
         prefix: "4",
         text: "What are the total assets reported?",
       },
       {
+        questionId: 4,
         prefix: "5",
         text: "Are there any ongoing legal proceedings?",
       },
       {
+        questionId: 5,
         prefix: "6",
         text: "What is a quote that spans two pages",
       },
@@ -124,6 +130,7 @@ export const templates: Template[] = [
     questions: [
       {
         text: "question",
+        questionId: 0,
       },
     ],
     formBootstraps: [

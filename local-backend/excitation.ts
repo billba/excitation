@@ -52,6 +52,7 @@ interface Citation {
 }
 
 interface Question {
+  questionId: number;
   prefix?: string;
   text: string;
 }

@@ -6,6 +6,7 @@ import { Document } from './entity/Document';
 import { Citation } from './entity/Citation';
 import { Event } from './entity/Event';
 import { DefaultAzureCredential } from '@azure/identity';
+import { Answer } from './entity/Answer';
 
 async function getToken() {
     const credential = new DefaultAzureCredential();
@@ -24,7 +25,8 @@ export async function getDataSource() {
         port: 1433,
         database: dbName,
         logging: true,
-        entities: [Template, Question, Form, Document, Citation, Event],
+        // synchronize: true,
+        entities: [Template, Question, Form, Document, Citation, Event, Answer],
         subscribers: [],
         migrations: [],
         options: {

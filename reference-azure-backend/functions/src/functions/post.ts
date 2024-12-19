@@ -1,9 +1,11 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from "@azure/functions";
-import { Bounds, Review, Event as EventType } from '../types'
+import { Bounds, Review, Event as EventType, Answer as AnswerType } from '../types'
 import { DataSource } from 'typeorm';
 import { Citation } from "../entity/Citation";
 import { Event } from "../entity/Event";
 import { dataSource } from "..";
+import { Answer } from "../entity/Answer";
+import { getAnswer } from "./get";
 
 export const createCitationId = (formId: number, creator: string) => {
   return formId + '-' + creator + '-' + Date.now();
@@ -103,6 +105,21 @@ async function addReview(db: DataSource, context: InvocationContext, event: Even
   }
 }
 
+async function updateAnswer(db: DataSource, answer: AnswerType) {
+    const answersRepository = db.getRepository(Answer);
+    answersRepository.save(answer);
+}
+
+async function createAnswer(db: DataSource, formId: number, questionId: number, creator: string, answerText: string) {
+  const answer = new Answer();
+  answer.formId = formId;
+  answer.questionId = questionId;
+  answer.answer = answerText;
+  answer.creator = creator;
+
+  return await db.manager.save(answer);
+}
+
 // Updating bounds data involves:
 //  - updating an existing citation
 //  - creating a new event
@@ -112,6 +129,23 @@ async function updateBounds(db: DataSource, context: InvocationContext, event: E
     context.log("Updated citation:", citation);
     let updateEvent = await insertUpdateBoundsEvent(db, event);
     context.log("Created event:", updateEvent);
+  }
+}
+
+async function createOrUpdateAnswer(db: DataSource, context: InvocationContext, event: EventType) {
+  if (event.type === "updateAnswer") {
+    // get answer id by question and form id
+    // if answer doesn't exist, create it. Else update the answer field
+    let answer = await getAnswer(db, event.formId, event.questionId)
+    if (answer) {
+      answer.answer = event.answer
+      answer.creator = event.creator
+      context.log("Updating answer:", answer);
+      return await updateAnswer(db, answer)
+    } else {
+      context.log("Creating answer:", event.formId, event.questionId, event.creator, event.answer);
+      return await createAnswer(db, event.formId, event.questionId, event.creator, event.answer)
+    }
   }
 }
 
@@ -132,6 +166,9 @@ export async function post(request: HttpRequest, context: InvocationContext): Pr
         break;
       case 'updateBounds':
         await updateBounds(dataSource, context, event);
+        break;
+      case 'updateAnswer':
+        await createOrUpdateAnswer(dataSource, context, event);
         break;
     }
   }

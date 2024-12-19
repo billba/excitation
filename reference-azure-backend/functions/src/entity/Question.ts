@@ -1,6 +1,7 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, RelationId, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, RelationId, UpdateDateColumn } from "typeorm";
 import { Template } from "./Template";
 import { Citation } from "./Citation";
+import { Answer } from "./Answer";
 
 @Entity({
     name: 'question',
@@ -14,6 +15,7 @@ export class Question {
     @JoinColumn({ name: 'templateId' })
     template: Template;
 
+    // TODO: make these non nullable?
     @RelationId((question: Question) => question.template)
     @Column({ type: 'int', nullable: true })
     templateId: number;
@@ -38,4 +40,10 @@ export class Question {
 
     @RelationId((question: Question) => question.citations)
     citationIds!: string[];
+
+    @OneToMany(() => Answer, answer => answer.question)
+    answers!: Answer[];
+
+    @RelationId((question: Question) => question.answers)
+    answerIds!: string[];
 }
