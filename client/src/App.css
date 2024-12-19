@@ -125,6 +125,11 @@ h1 {
   margin: 0 10px 0 10px;
 }
 
+#disclaimer-section {
+  grid-column: 2 / 6;
+  font-style: italic;
+}
+
 #question-nav {
   display: grid;
   grid-template-columns: var(--icon-size) 1fr var(--icon-size) var(--icon-size);
