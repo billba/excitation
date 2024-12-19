@@ -1,67 +1,67 @@
 DROP TABLE IF EXISTS templates, questions, forms, documents, citations, events;
 
 CREATE TABLE dbo.templates (
-  template_id INT IDENTITY(1,1) PRIMARY KEY,
-  template_name TEXT NOT NULL,
+  templateId INT IDENTITY(1,1) PRIMARY KEY,
+  templateName TEXT NOT NULL,
   creator TEXT NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT GETDATE(),
-  modified_at DATETIME NOT NULL DEFAULT GETDATE()
+  createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+  modifiedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
 CREATE TABLE dbo.questions (
-  question_id INT IDENTITY(1,1) PRIMARY KEY,
-  template_id INTEGER REFERENCES templates(template_id),
+  questionId INT IDENTITY(1,1) PRIMARY KEY,
+  templateId INTEGER REFERENCES templates(templateId),
   prefix TEXT,
   text TEXT NOT NULL,
   creator TEXT NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT GETDATE(),
-  modified_at DATETIME NOT NULL DEFAULT GETDATE()
+  createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+  modifiedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
 CREATE TABLE dbo.forms (
-  form_id INT IDENTITY(1,1) PRIMARY KEY,
-  template_id INTEGER REFERENCES templates(template_id),
-  form_name TEXT NOT NULL,
+  formId INT IDENTITY(1,1) PRIMARY KEY,
+  templateId INTEGER REFERENCES templates(templateId),
+  formName TEXT NOT NULL,
   creator TEXT NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT GETDATE(),
-  modified_at DATETIME NOT NULL DEFAULT GETDATE()
+  createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+  modifiedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
 CREATE TABLE dbo.documents (
-  document_id INT IDENTITY(1,1) PRIMARY KEY,
-  form_id INTEGER REFERENCES forms(form_id),
+  documentId INT IDENTITY(1,1) PRIMARY KEY,
+  formId INTEGER REFERENCES forms(formId),
   name TEXT,
-  pdf_url TEXT NOT NULL,
-  di_url TEXT,
+  pdfUrl TEXT NOT NULL,
+  diUrl TEXT,
   creator TEXT NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT GETDATE(),
-  modified_at DATETIME NOT NULL DEFAULT GETDATE()
+  createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+  modifiedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
 CREATE TABLE dbo.citations (
-  citation_id VARCHAR(256) PRIMARY KEY,
-  form_id INTEGER REFERENCES forms(form_id),
-  question_id INTEGER REFERENCES questions(question_id),
-  document_id INTEGER REFERENCES documents(document_id),
+  citationId VARCHAR(256) PRIMARY KEY,
+  formId INTEGER REFERENCES forms(formId),
+  questionId INTEGER REFERENCES questions(questionId),
+  documentId INTEGER REFERENCES documents(documentId),
   excerpt TEXT NOT NULL,
   bounds JSON,
   review INTEGER NOT NULL DEFAULT 0,
   creator TEXT NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT GETDATE(),
-  modified_at DATETIME NOT NULL DEFAULT GETDATE()
+  createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+  modifiedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
 CREATE TABLE dbo.events (
   event_id INT IDENTITY(1,1) PRIMARY KEY,
   body JSON NOT NULL,
-  created_at DATETIME NOT NULL DEFAULT GETDATE()
+  createdAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
-INSERT INTO dbo.templates (template_name, creator)
+INSERT INTO dbo.templates (templateName, creator)
 VALUES
   ('Microsoft Fiscal', 'system');
 
-INSERT INTO dbo.questions (template_id, prefix, text, creator)
+INSERT INTO dbo.questions (templateId, prefix, text, creator)
 VALUES
   (1, '1', 'What was the company''s revenue for the third quarter of Fiscal Year 2024?', 'system'),
   (1, '2', 'What are the earnings per share (EPS) for this quarter?', 'system'),
@@ -70,16 +70,16 @@ VALUES
   (1, '5', 'Are there any ongoing legal proceedings?', 'system'),
   (1, '6', 'What is an excerpt that spans two pages?', 'system');
 
-INSERT INTO dbo.forms (template_id, form_name, creator)
+INSERT INTO dbo.forms (templateId, formName, creator)
 VALUES
   (1, 'FY24Q3', 'system');
 
-INSERT INTO dbo.documents (form_id, name, pdf_url, di_url, creator) 
+INSERT INTO dbo.documents (formId, name, pdfUrl, diUrl, creator) 
 VALUES 
   (1, 'PressReleaseFY24Q3', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf.json', 'system'),
   (1, 'Microsoft 10Q FY24Q3 1', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf.json', 'system');
 
-INSERT INTO dbo.citations (citation_id, form_id, question_id, document_id, excerpt, creator)
+INSERT INTO dbo.citations (citationId, formId, questionId, documentId, excerpt, creator)
 VALUES
   ('1-system-1732038032110', 1, 1, 1, 'Revenue was $61.9 billion and increased 17%', 'system'),
   ('1-system-1732038042614', 1, 1, 2, '61,858', 'system'),

@@ -25,6 +25,7 @@ import {
   returnTextPolygonsFromDI,
 } from "./Utility";
 import { calculateRange } from "./Range";
+import { BlobClient } from "@azure/storage-blob";
 
 export function togglePseudoBoolean(pb: PseudoBoolean): PseudoBoolean {
   return pb ? undefined : true;
@@ -86,7 +87,35 @@ export function useLoadForm(formId: number, questionIndex = 0) {
       console.log("raw form", form);
       
       for await (const doc of form.documents) {
-        doc.di = await (await fetch(doc.diUrl)).json();
+        let analyzeResult;
+        if (
+          import.meta.env.VITE_DOCUMENT_BLOB_STORAGE_GENERATE_SAS_URL == "TRUE"
+        ) {
+          const diParams = new URLSearchParams();
+          diParams.append("url", doc.diUrl);
+          const diGenerateSasUrl =
+            `${apiUrl}/blob-sas-url/?${diParams.toString()}`;
+          const diSasUrl = await (await fetch(diGenerateSasUrl)).json();
+
+          const blobClient = new BlobClient(diSasUrl);
+          const blob = await blobClient.download();
+          const blobText = await (await blob.blobBody)?.text();
+          analyzeResult = JSON.parse(blobText!);
+
+          const pdfParams = new URLSearchParams();
+          pdfParams.append("url", doc.pdfUrl);
+          const pdfGenerateSasUrl =
+            `${apiUrl}/blob-sas-url/?${pdfParams.toString()}`;
+            doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
+          doc.di = {
+            analyzeResult,
+            createdDateTime: "unknown",
+            lastUpdatedDateTime: "unknown",
+            status: "unknown",
+          };
+        } else {
+          doc.di = await (await fetch(doc.diUrl)).json();
+        }
         doc.pages = doc.di.analyzeResult.pages.length;
         docs.push(doc);
         docFromId[doc.documentId] = doc;
