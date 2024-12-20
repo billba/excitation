@@ -15,7 +15,6 @@ export class Question {
     @JoinColumn({ name: 'templateId' })
     template: Template;
 
-    // TODO: make these non nullable?
     @RelationId((question: Question) => question.template)
     @Column({ type: 'int', nullable: true })
     templateId: number;

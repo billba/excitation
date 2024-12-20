@@ -22,7 +22,6 @@ export async function getDataSource() {
     if (synchronize) {
         console.log("Synchronizing the database. Synchronizing the database in production is not recommended. This can lead to unintended consequences like dropping a table which can lead to data loss.")
     }
-    console.log(synchronize)
 
     return new DataSource({
         type: "mssql",

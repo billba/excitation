@@ -134,8 +134,6 @@ async function updateBounds(db: DataSource, context: InvocationContext, event: E
 
 async function createOrUpdateAnswer(db: DataSource, context: InvocationContext, event: EventType) {
   if (event.type === "updateAnswer") {
-    // get answer id by question and form id
-    // if answer doesn't exist, create it. Else update the answer field
     let answer = await getAnswer(db, event.formId, event.questionId)
     if (answer) {
       answer.answer = event.answer
