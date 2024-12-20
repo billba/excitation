@@ -18,6 +18,11 @@ export async function getDataSource() {
     const token = await getToken();
     const serverName = process.env.SQL_SERVER_NAME
     const dbName = process.env.SQL_DATABASE_NAME
+    const synchronize = (process.env.SQL_DATABASE_SYNC || "false").toLowerCase() == "true"
+    if (synchronize) {
+        console.log("Synchronizing the database. Synchronizing the database in production is not recommended. This can lead to unintended consequences like dropping a table which can lead to data loss.")
+    }
+    console.log(synchronize)
 
     return new DataSource({
         type: "mssql",
@@ -25,7 +30,7 @@ export async function getDataSource() {
         port: 1433,
         database: dbName,
         logging: true,
-        // synchronize: true,
+        synchronize: synchronize,
         entities: [Template, Question, Form, Document, Citation, Event, Answer],
         subscribers: [],
         migrations: [],

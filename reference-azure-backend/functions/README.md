@@ -46,6 +46,7 @@ Create a file in this directory called `local.settings.json` with the following 
     "POSTGRES": "connection string", // for postgres only
     "SQL_DATABASE_NAME": "the name of the Azure SQL database", // for SQL only
     "SQL_SERVER_NAME": "the name of the Azure SQL server", // for SQL only
+    "SQL_DATABASE_SYNC": "Controls whether the entities will be synced with the database. Setting to 'true' is not recommended in production", // for SQL only
     // Storage account for the PDFs and Document Intelligence results
     "BLOB_STORAGE_ACCOUNT_NAME": "Azure Storage account name",
     "BLOB_STORAGE_ACCOUNT_KEY": "Aure Storage account key"
