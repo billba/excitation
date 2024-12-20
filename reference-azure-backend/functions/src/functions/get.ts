@@ -36,7 +36,6 @@ export async function getAnswer(db: DataSource, formId: number, questionId: numb
   const answersRepository = db.getRepository(Answer);
   return await answersRepository.findOne({
     where: { formId: formId, questionId: questionId },
-    select: ['answer']
   });
 }
 
@@ -60,6 +59,7 @@ async function getQuestionsWithCitations(db: DataSource, formId: number) {
   return await Promise.all(qs.map(async ({questionId, prefix, text}) => ({
     prefix,
     text,
+    questionId,
     citations: await citationsRepository.find({
       where: { formId: formId, questionId: questionId },
       order: { documentId: 'ASC', citationId: 'ASC' },

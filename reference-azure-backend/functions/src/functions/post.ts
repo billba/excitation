@@ -87,7 +87,7 @@ async function addCitation(db: DataSource, context: InvocationContext, event: Ev
   if (event.type === "addCitation") {
     let citation = await insertCitation(db, event.formId, event.questionId, event.documentId, event.excerpt, event.bounds, event.review, event.creator);
     context.log("Created citation:", citation);
-    event.citationId = citation[0].citationId;
+    event.citationId = citation.citationId;
     let addEvent = await insertAddEvent(db, event);
     context.log("Created event:", addEvent);
   }
