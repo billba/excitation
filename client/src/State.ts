@@ -85,7 +85,7 @@ export function useLoadForm(formId: number, questionIndex = 0) {
       const docs: FormDocument[] = [];
 
       console.log("raw form", form);
-      
+
       for await (const doc of form.documents) {
         let analyzeResult;
         if (
@@ -504,7 +504,7 @@ const stateAtom = atom<State, [Action], void>(
                       event: {
                         type: "addCitation",
                         formId: metadata.formId,
-                        questionId: ux.questionIndex,
+                        questionId: questions[ux.questionIndex].questionId,
                         documentId: ux.documentId!,
                         citationId: createCitationId(metadata.formId, "client"),
                         excerpt,
@@ -637,7 +637,7 @@ const stateAtom = atom<State, [Action], void>(
                       event: {
                         type: "updateAnswer",
                         formId: metadata.formId,
-                        questionId: ux.questionIndex,
+                        questionId: question.questionId,
                         answer,
                         creator: "client",
                       },

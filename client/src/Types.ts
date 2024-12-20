@@ -224,6 +224,7 @@ export interface Citation {
 }
 
 export interface Question {
+  questionId: number;
   prefix?: string;
   text: string;
   citations: Citation[];

@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, Pri
 import { Template } from "./Template";
 import { Document } from "./Document";
 import { Citation } from "./Citation";
+import { Answer } from "./Answer";
 
 @Entity({
     name: 'form',
@@ -42,4 +43,10 @@ export class Form {
 
     @RelationId((form: Form) => form.citations)
     citationIds!: string[];
+
+    @OneToMany(() => Answer, answer => answer.form)
+    answers!: Answer[];
+
+    @RelationId((form: Form) => form.answers)
+    answerIds!: string[];
 }

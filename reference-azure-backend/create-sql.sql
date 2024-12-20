@@ -38,6 +38,16 @@ CREATE TABLE dbo.documents (
   modifiedAt DATETIME NOT NULL DEFAULT GETDATE()
 );
 
+CREATE TABLE dbo.answers (
+  answerId VARCHAR(256) PRIMARY KEY,
+  formId INTEGER REFERENCES forms(formId),
+  questionId INTEGER REFERENCES questions(questionId),
+  answer TEXT NOT NULL,
+  creator TEXT NOT NULL,
+  createdAt DATETIME NOT NULL DEFAULT GETDATE(),
+  modifiedAt DATETIME NOT NULL DEFAULT GETDATE()
+);
+
 CREATE TABLE dbo.citations (
   citationId VARCHAR(256) PRIMARY KEY,
   formId INTEGER REFERENCES forms(formId),
