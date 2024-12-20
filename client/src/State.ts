@@ -87,7 +87,6 @@ export function useLoadForm(formId: number, questionIndex = 0) {
       console.log("raw form", form);
 
       for await (const doc of form.documents) {
-        let analyzeResult;
         if (
           import.meta.env.VITE_DOCUMENT_BLOB_STORAGE_GENERATE_SAS_URL == "TRUE"
         ) {
@@ -100,7 +99,7 @@ export function useLoadForm(formId: number, questionIndex = 0) {
           const blobClient = new BlobClient(diSasUrl);
           const blob = await blobClient.download();
           const blobText = await (await blob.blobBody)?.text();
-          analyzeResult = JSON.parse(blobText!);
+          const analyzeResult = JSON.parse(blobText!);
 
           const pdfParams = new URLSearchParams();
           pdfParams.append("url", doc.pdfUrl);
@@ -704,6 +703,7 @@ const stateAtom = atom<State, [Action], void>(
     if (prevState === newState) {
       console.log("no state change");
     } else {
+      // debugger
       console.log("new state", newState);
       set(_stateAtom, newState);
     }
