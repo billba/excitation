@@ -8,6 +8,7 @@ import { Event } from './entity/Event';
 import { DefaultAzureCredential } from '@azure/identity';
 import { Answer } from './entity/Answer';
 
+/* TODO: Handle token caching and refreshing, as the Function App currently needs to be restarted upon token expiry. */
 async function getToken() {
     const credential = new DefaultAzureCredential();
     const tokenResponse = await credential.getToken('https://database.windows.net/.default');

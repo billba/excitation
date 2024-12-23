@@ -27,10 +27,10 @@ export class Answer {
     @RelationId((answer: Answer) => answer.question)
     questionId: number;
 
-    @Column('text')
+    @Column({ type: 'nvarchar', length: 255 })
     answer: string;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     creator!: string;
 
     @CreateDateColumn()
