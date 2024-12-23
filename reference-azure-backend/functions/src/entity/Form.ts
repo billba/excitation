@@ -20,10 +20,10 @@ export class Form {
     @Column({ type: 'int', nullable: true })
     templateId: number;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     formName!: string;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     creator!: string;
 
     @CreateDateColumn()

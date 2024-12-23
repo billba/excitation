@@ -18,16 +18,16 @@ export class Document {
     @Column({ type: 'int', nullable: true})
     formId: number;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     name: string;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     pdfUrl!: string;
 
-    @Column({ type: 'text', nullable: true })
+    @Column({ type: 'varchar', length: 255, nullable: true })
     diUrl: string;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     creator!: string;
 
     @CreateDateColumn()

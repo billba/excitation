@@ -22,10 +22,10 @@ export class Question {
     @Column({ type: 'varchar', nullable: true })
     prefix: string;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     text!: string;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     creator: string;
 
     @CreateDateColumn()

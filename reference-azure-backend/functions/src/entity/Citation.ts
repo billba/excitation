@@ -35,7 +35,7 @@ export class Citation {
     @RelationId((citations: Citation) => citations.document)
     documentId: number;
 
-    @Column('text')
+    @Column({ type: 'nvarchar', length: 255 })
     excerpt!: string;
 
     @Column({ type: 'simple-json', nullable: true })
@@ -44,7 +44,7 @@ export class Citation {
     @Column('int', {default: 0})
     review: number = 0;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     creator!: string;
 
     @CreateDateColumn()

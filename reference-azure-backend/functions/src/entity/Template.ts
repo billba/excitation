@@ -10,10 +10,10 @@ export class Template {
     @PrimaryGeneratedColumn()
     templateId!: number;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     templateName!: string;
 
-    @Column('text')
+    @Column({ type: 'varchar', length: 255 })
     creator!: string;
 
     @CreateDateColumn()
