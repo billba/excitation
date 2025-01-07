@@ -32,6 +32,13 @@ export type Event =
     citationId: string;
     bounds: Bounds[];
     creator: string;
+  }
+  | {
+    type: "updateAnswer";
+    questionId: number;
+    formId: number;
+    answer: string;
+    creator: string;
   };
 
 interface Document {
@@ -52,4 +59,11 @@ export interface Form {
   questions: string[];
   documents: Document[];
   citations: Citation[];
+}
+
+export interface Answer {
+  questionId: number;
+  formId: number;
+  answer: string;
+  creator: string;
 }

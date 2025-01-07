@@ -31,17 +31,30 @@ To run locally in VSCode, you will want to open the folder `functions-sample` as
 
 Create a file in this directory called `local.settings.json` with the following content:
 
+
+**Important**: This currently has an issue accessing the environment variables at startup. This is needed for the `SQL_DATABASE_NAME` and `SQL_SERVER_NAME` to connect with the database. The work around for now is to export these environment variables in the terminal prior to running `npm start`. Example: `export SQL_SERVER_NAME=<sql-server-name>`
+
 ```json
 {
-    "IsEncrypted": false,
-    "Values": {
-        // If you have dev storage set up, you can use that. Alternately, provide
-        // a storage account connection string
-        "AzureWebJobsStorage": "connection string || UseDevelopmentStorage=true",
-        "FUNCTIONS_WORKER_RUNTIME": "node",
-        // Postgres connection with format as described above
-        "POSTGRES": "connection string"
-    }
+  "IsEncrypted": false,
+  "Values": {
+    // If you have dev storage set up, you can use that. Alternately, provide
+    // a storage account connection string
+    "AzureWebJobsStorage": "connection string || UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    // Postgres connection with format as described above
+    "POSTGRES": "connection string", // for postgres only
+    "SQL_DATABASE_NAME": "the name of the Azure SQL database", // for SQL only
+    "SQL_SERVER_NAME": "the name of the Azure SQL server", // for SQL only
+    "SQL_DATABASE_SYNC": "Controls whether the entities will be synced with the database. Setting to 'true' is not recommended in production", // for SQL only
+    // Storage account for the PDFs and Document Intelligence results
+    "BLOB_STORAGE_ACCOUNT_NAME": "Azure Storage account name",
+    "BLOB_STORAGE_ACCOUNT_KEY": "Aure Storage account key"
+  },
+  "Host": {
+    "CORS": "*",
+    "LocalHttpPort": 8000
+  }
 }
 ```
 
