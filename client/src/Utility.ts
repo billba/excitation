@@ -276,7 +276,17 @@ const findBoundingRegions = (
       //   });
       //   if (textIndex == text.length) return boundingRegions;
       // }
-      if (match(word.content, text[textIndex])) {
+
+      // Selection marks do not come back in the page.words and therefore do not have the bounds. 
+      // selction marks are available in the paragraphs and lines but we don't currently use those fields.
+      // When we encounter a selection mark from the `text` array, we skip it and continue to the next word from the `text` array.
+      let currWord = text[textIndex];
+      while (currWord == ":unselected:" || currWord == ":selected:"){
+        textIndex++;
+        currWord = text[textIndex];
+        if (textIndex == text.length) return boundingRegions;
+      }  
+      if (match(word.content, currWord)) {
         textIndex++;
         boundingRegions.push({
           pageNumber: pageIndex + 1,
