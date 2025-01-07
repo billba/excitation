@@ -35,7 +35,7 @@ export class Citation {
     @RelationId((citations: Citation) => citations.document)
     documentId: number;
 
-    @Column({ type: 'nvarchar', length: 255 })
+    @Column({ type: 'nvarchar', length: 'MAX' })
     excerpt!: string;
 
     @Column({ type: 'simple-json', nullable: true })
