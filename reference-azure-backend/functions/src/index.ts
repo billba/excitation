@@ -1,7 +1,7 @@
 import "reflect-metadata";
-import { getDataSource } from "./data-source";
+import { cachedToken, getDataSource, getToken, tokenExpiration } from "./data-source";
 import { DataSource } from "typeorm";
-import { app, AppStartContext, AppTerminateContext } from '@azure/functions';
+import { app, AppStartContext, AppTerminateContext, PreInvocationContext } from '@azure/functions';
 
 let dataSource: DataSource;
 
@@ -18,6 +18,12 @@ async function initializeDataSource() {
 
 app.hook.appStart(async (context: AppStartContext) => {
     await initializeDataSource();
+});
+
+app.hook.preInvocation(async (context: PreInvocationContext) => {
+    if (!cachedToken || !tokenExpiration || tokenExpiration <= Date.now()) {
+        await initializeDataSource();
+    }
 });
 
 app.hook.appTerminate(async (context: AppTerminateContext) => {

@@ -8,11 +8,22 @@ import { Event } from './entity/Event';
 import { DefaultAzureCredential } from '@azure/identity';
 import { Answer } from './entity/Answer';
 
-/* TODO: Handle token caching and refreshing, as the Function App currently needs to be restarted upon token expiry. */
-async function getToken() {
+export let cachedToken: string | null = null;
+export let tokenExpiration: number | null = null;
+
+export async function getToken() {
     const credential = new DefaultAzureCredential();
+
+    // Check if the token is cached and still valid
+    if (cachedToken && tokenExpiration && tokenExpiration > Date.now()) {
+        return cachedToken;
+    }
+
     const tokenResponse = await credential.getToken('https://database.windows.net/.default');
-    return tokenResponse.token;
+    cachedToken = tokenResponse.token;
+    tokenExpiration = tokenResponse.expiresOnTimestamp;
+
+    return cachedToken;
 }
 
 export async function getDataSource() {
