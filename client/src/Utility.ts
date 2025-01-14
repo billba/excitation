@@ -213,9 +213,21 @@ export const condenseRegions = (boundingRegions: Bounds[]) => {
           boundingRegions[index].polygon
         );
       } else {
-        // New column or similar
-        condensedRegions.push(boundingRegions[index]);
-        last++;
+        // create new polygon to bridge non-adjacent polygons
+        const intermediaryPolygon = polygonize(
+          [condensedRegions[last].polygon[2], boundingRegions[index].polygon[0]],
+          [
+            Math.min(condensedRegions[last].polygon[3], boundingRegions[index].polygon[1]), 
+            Math.max(condensedRegions[last].polygon[5], boundingRegions[index].polygon[7])
+          ]
+        );
+
+        // combine polygons
+        condensedRegions[last].polygon = combinePolygons([
+          condensedRegions[last].polygon, 
+          intermediaryPolygon, 
+          boundingRegions[index].polygon
+        ]);
       }
     } else {
       // new page
