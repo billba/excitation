@@ -4,14 +4,17 @@
 
 ## Tables
 
-- **documents**: links to PDFs and DocIntelligence responses in blob storage
-- **templates**: logical sets for...
-- **questions**
-- **forms**: combination of a template with a set of documents
-- **citations**: excerpts of text and reference docs, potentially with bounds
-- **events**: log of user and system events
+- **document**: links to PDFs and DocIntelligence responses in blob storage
+- **template**: sets of questions
+- **question**
+- **answer**
+- **form**: combination of a template with a set of documents
+- **citation**: excerpts of text and reference docs, potentially with bounds
+- **event**: log of user and system events
 
 > Be aware that `create.sql` will drop existing tables before re-creating to ensure that schema and values are appropriately up-to-date. Do not run `create.sql` against data you need to keep without further editing the file.
+
+`create-psql.sql` will do the same for a postgres database.
 
 ## Insertions
 

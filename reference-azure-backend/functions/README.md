@@ -7,11 +7,12 @@ This project was build using the Azure Functions Typescript HTTP Trigger templat
 ```sh
 |- src
 | |- functions
-| | |- get.ts : GET endpoint, serves /api/form/{id}
-| | |- post.ts: POST endpoint, serves /api
-| |- schema.ts: Defines the postgres schema
-| |- send.json: Sample payload for the POST function
-| |- types.ts : Defines types used by get and post
+| | |- generateBlobSasUrl.ts : GET endpoint, serves /blob-sas-url (Azure SQL only)
+| | |- get.ts                : GET endpoint, serves /api/form/{id}
+| | |- post.ts               : POST endpoint, serves /api
+| |- schema.ts               : Defines the postgres schema
+| |- send.json               : Sample payload for the POST function
+| |- types.ts                : Defines types used by get and post
 ```
 
 ## Prerequisites
@@ -22,12 +23,17 @@ This project was build using the Azure Functions Typescript HTTP Trigger templat
 + To use Visual Studio Code to run and debug locally:
   + [Visual Studio Code](https://code.visualstudio.com/)
   + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions)
-+ These functions communicate with a postgres database, which can be spun up in various ways including using [Cosmos DB](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/quickstart-create-portal). When running `azd up`, you'll be prompted to enter your postgres connection string, which should be of a format such as `postgres://{username}:{password}@{server}:5432/{database}?sslmode=require`
-  + The schema of the postgres database should match the [postgres-sample](../postgres-sample/) [`create`](../postgres-sample/create.sql) script.
++ These functions communicate with either a **postgres** or **Azure SQL** database.
+  + **postgres**
+    + A postgres database can be spun up in various ways including using [Cosmos DB](https://learn.microsoft.com/en-us/azure/cosmos-db/postgresql/quickstart-create-portal). When running `azd up`, you'll be prompted to enter your postgres connection string, which should be of a format such as `postgres://{username}:{password}@{server}:5432/{database}?sslmode=require`
+    + The schema of a postgres database should match the [reference-azure-backend](../) [`create-psql`](../create-psql.sql) script.
+  + **Azure SQL**
+    + An Azure SQL database can be created directly within the Azure portal or via a bicep/arm template.
+    + The schema of an Azure SQL database should match the [reference-azure-backend](../) [`create-sql`](../create-sql.sql) script.
 
 ## Running locally
 
-To run locally in VSCode, you will want to open the folder `functions-sample` as the top-level folder of a workspace.
+To run locally in VSCode, you will want to open the folder `functions` as the top-level folder of a workspace.
 
 Create a file in this directory called `local.settings.json` with the following content:
 
@@ -62,6 +68,10 @@ You should be able to *either*:
 
 - Press `F5` to start the functions host task, or
 - Run `npm install` and `npm start` from your terminal
+
+### Connecting to the client
+
+To connect to a local instance of the client, uncomment the line `# VITE_DOCUMENT_BLOB_STORAGE_GENERATE_SAS_URL=TRUE` within the [client](../../client/) [`.env`](../../client/.env) file.
 
 ## Deploy to Azure
 
