@@ -329,7 +329,7 @@ const stateAtom = atom<State, [Action], void>(
           action.type === "asyncRevert"
             ? (prevState.asyncState as AsyncErrorState).prevState
             : create(prevState, (state) => {
-              const { metadata, questions, ux, asyncState, viewer } = state;
+              const { metadata, questions, ux, asyncState } = state;
               const { isAsyncing } = asyncHelpers(asyncState);
 
               function goto(pageNumber?: number, documentId?: number) {
