@@ -12,11 +12,11 @@ import { Answer } from "../entity/Answer";
 // db operations
 // ============================================================================
 async function getFormMetadata(db: DataSource, formId: number) {
-  const formsRepository = db.getRepository(Form);
-  const templatesRepository = db.getRepository(Template);
+  const formRepository = db.getRepository(Form);
+  const templateRepository = db.getRepository(Template);
 
   // get template id
-  const form = await formsRepository.findOne({
+  const form = await formRepository.findOne({
     where: { formId: formId },
     select: ['formName', 'templateId']
   });
@@ -24,7 +24,7 @@ async function getFormMetadata(db: DataSource, formId: number) {
   const templateId = form.templateId;
 
   // get template info
-  const template = await templatesRepository.findOne({
+  const template = await templateRepository.findOne({
     where: { templateId: templateId },
     select: ['templateName']
   });
@@ -33,24 +33,24 @@ async function getFormMetadata(db: DataSource, formId: number) {
 }
 
 export async function getAnswer(db: DataSource, formId: number, questionId: number) {
-  const answersRepository = db.getRepository(Answer);
-  return await answersRepository.findOne({
+  const answerRepository = db.getRepository(Answer);
+  return await answerRepository.findOne({
     where: { formId: formId, questionId: questionId },
   });
 }
 
 async function getQuestionsWithCitations(db: DataSource, formId: number) {
-  const formsRepository = db.getRepository(Form);
-  const questionsRepository = db.getRepository(Question);
-  const citationsRepository = db.getRepository(Citation);
+  const formRepository = db.getRepository(Form);
+  const questionRepository = db.getRepository(Question);
+  const citationRepository = db.getRepository(Citation);
 
-  const form = await formsRepository.findOne({
+  const form = await formRepository.findOne({
     where: { formId: formId },
     select: ['templateId']
   });
   const templateId = form.templateId;
 
-  const qs = await questionsRepository.find({
+  const qs = await questionRepository.find({
     where: { templateId: templateId },
     order: { prefix: 'ASC', questionId: 'ASC' },
     select: ['questionId', 'prefix', 'text']
@@ -60,7 +60,7 @@ async function getQuestionsWithCitations(db: DataSource, formId: number) {
     prefix,
     text,
     questionId,
-    citations: await citationsRepository.find({
+    citations: await citationRepository.find({
       where: { formId: formId, questionId: questionId },
       order: { documentId: 'ASC', citationId: 'ASC' },
       select: ['citationId', 'documentId', 'excerpt', 'review', 'bounds']

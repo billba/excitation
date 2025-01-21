@@ -15,7 +15,7 @@ export const createCitationId = (formId: number, creator: string) => {
 // db operations
 // ============================================================================
 
-// Inserts into db citations table
+// Inserts into db citation table
 async function insertCitation(db: DataSource, formId: number, questionId: number, documentId: number, excerpt: string, bounds: Bounds[], review: Review, creator: string) {
   const citation = new Citation();
   const citationId = createCitationId(formId, creator);
@@ -31,28 +31,28 @@ async function insertCitation(db: DataSource, formId: number, questionId: number
   return await db.manager.save(citation);
 }
 
-// Updates db citations table
+// Updates db citation table
 async function updateCitationBounds(db: DataSource, citationId: string, bounds: Bounds[]) {
-  const citationsRepository = db.getRepository(Citation);
-  const citationToUpdate = await citationsRepository.findOne({
+  const citationRepository = db.getRepository(Citation);
+  const citationToUpdate = await citationRepository.findOne({
     where: { citationId: citationId },
     select: ['citationId', 'excerpt', 'bounds']
   });
   citationToUpdate.bounds = JSON.parse(JSON.stringify(bounds));
-  return await citationsRepository.save(citationToUpdate);
+  return await citationRepository.save(citationToUpdate);
 }
 
 async function updateCitationReview(db: DataSource, citationId: string, review: Review) {
-  const citationsRepository = db.getRepository(Citation);
-  const citationToUpdate = await citationsRepository.findOne({
+  const citationRepository = db.getRepository(Citation);
+  const citationToUpdate = await citationRepository.findOne({
     where: { citationId: citationId },
     select: ['citationId', 'excerpt', 'review']
   });
   citationToUpdate.review = review;
-  return await citationsRepository.save(citationToUpdate);
+  return await citationRepository.save(citationToUpdate);
 }
 
-// Inserts into db events table
+// Inserts into db event table
 async function insertAddEvent(db: DataSource, event: EventType) {
   const newEvent = new Event();
   newEvent.body = JSON.parse(JSON.stringify(event));
@@ -60,7 +60,7 @@ async function insertAddEvent(db: DataSource, event: EventType) {
   return await db.manager.save(newEvent);
 }
 
-// Inserts into db events table
+// Inserts into db event table
 async function insertUpdateReviewEvent(db: DataSource, event: EventType) {
   const newEvent = new Event();
   newEvent.body = JSON.parse(JSON.stringify(event));
@@ -68,7 +68,7 @@ async function insertUpdateReviewEvent(db: DataSource, event: EventType) {
   return await db.manager.save(newEvent);
 }
 
-// Inserts into db events table
+// Inserts into db event table
 async function insertUpdateBoundsEvent(db: DataSource, event: EventType) {
   const newEvent = new Event();
   newEvent.body = JSON.parse(JSON.stringify(event));
@@ -106,8 +106,8 @@ async function addReview(db: DataSource, context: InvocationContext, event: Even
 }
 
 async function updateAnswer(db: DataSource, answer: AnswerType) {
-    const answersRepository = db.getRepository(Answer);
-    answersRepository.save(answer);
+    const answerRepository = db.getRepository(Answer);
+    answerRepository.save(answer);
 }
 
 async function createAnswer(db: DataSource, formId: number, questionId: number, creator: string, answerText: string) {
