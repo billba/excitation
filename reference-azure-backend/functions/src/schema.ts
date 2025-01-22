@@ -1,6 +1,6 @@
 import { integer, jsonb, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
-export const templates = pgTable('templates', {
+export const templateSchema = pgTable('template', {
   templateId: serial('templateId').primaryKey().notNull(),
   templateName: text('templateName').notNull(),
   creator: text('creator').notNull(),
@@ -8,9 +8,9 @@ export const templates = pgTable('templates', {
   modifiedAt: timestamp('modifiedAt').notNull().defaultNow()
 });
 
-export const questions = pgTable('questions', {
+export const questionSchema = pgTable('question', {
   questionId: serial('questionId').primaryKey().notNull(),
-  templateId: integer('templateId').references(() => templates.templateId),
+  templateId: integer('templateId').references(() => templateSchema.templateId),
   text: text('text').notNull(),
   prefix: text('prefix'),
   creator: text('creator').notNull(),
@@ -18,18 +18,18 @@ export const questions = pgTable('questions', {
   modifiedAt: timestamp('modifiedAt').notNull().defaultNow()
 });
 
-export const forms = pgTable('forms', {
+export const formSchema = pgTable('form', {
   formId: serial('formId').primaryKey().notNull(),
-  templateId: integer('templateId').references(() => templates.templateId),
+  templateId: integer('templateId').references(() => templateSchema.templateId),
   formName: text('formName').notNull(),
   creator: text('creator').notNull(),
   createdAt: timestamp('createdAt').notNull().defaultNow(),
   modifiedAt: timestamp('modifiedAt').notNull().defaultNow()
 });
 
-export const documents = pgTable('documents', {
+export const documentSchema = pgTable('document', {
   documentId: serial('documentId').primaryKey().notNull(),
-  formId: integer('formId').references(() => forms.formId),
+  formId: integer('formId').references(() => formSchema.formId),
   name: text('name'),
   pdfUrl: text('pdfUrl').notNull(),
   diUrl: text('diUrl'),
@@ -38,11 +38,11 @@ export const documents = pgTable('documents', {
   modifiedAt: timestamp('modifiedAt').notNull().defaultNow()
 });
 
-export const citations = pgTable('citations', {
+export const citationSchema = pgTable('citation', {
   citationId: text('citationId').primaryKey(),
-  formId: integer('formId').references(() => forms.formId),
-  questionId: integer('questionId').references(() => questions.questionId),
-  documentId: integer('documentId').references(() => documents.documentId),
+  formId: integer('formId').references(() => formSchema.formId),
+  questionId: integer('questionId').references(() => questionSchema.questionId),
+  documentId: integer('documentId').references(() => documentSchema.documentId),
   excerpt: text('excerpt').notNull(),
   bounds: jsonb('bounds'),
   review: integer('review').notNull().default(0),
@@ -51,7 +51,7 @@ export const citations = pgTable('citations', {
   modifiedAt: timestamp('modifiedAt').notNull().defaultNow()
 });
 
-export const events = pgTable('events', {
+export const eventSchema = pgTable('event', {
   event_id: serial('event_id').primaryKey().notNull(),
   body: jsonb('body').notNull(),
   createdAt: timestamp('createdAt').notNull().defaultNow()

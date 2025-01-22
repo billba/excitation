@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS templates, questions, forms, documents, citations, events;
+DROP TABLE IF EXISTS template, question, form, document, citation, event;
 
-CREATE TABLE templates (
+CREATE TABLE template (
   templateId SERIAL PRIMARY KEY,
   templateName TEXT NOT NULL,
   creator TEXT NOT NULL,
@@ -8,9 +8,9 @@ CREATE TABLE templates (
   modifiedAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE questions (
+CREATE TABLE question (
   questionId SERIAL PRIMARY KEY,
-  templateId INTEGER REFERENCES templates(templateId),
+  templateId INTEGER REFERENCES template(templateId),
   prefix TEXT,
   text TEXT NOT NULL,
   creator TEXT NOT NULL,
@@ -18,18 +18,18 @@ CREATE TABLE questions (
   modifiedAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE forms (
+CREATE TABLE form (
   formId SERIAL PRIMARY KEY,
-  templateId INTEGER REFERENCES templates(templateId),
+  templateId INTEGER REFERENCES template(templateId),
   formName TEXT NOT NULL,
   creator TEXT NOT NULL,
   createdAt TIMESTAMP NOT NULL DEFAULT NOW(),
   modifiedAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE documents (
+CREATE TABLE document (
   documentId SERIAL PRIMARY KEY,
-  formId INTEGER REFERENCES forms(formId),
+  formId INTEGER REFERENCES form(formId),
   name TEXT,
   pdfUrl TEXT NOT NULL,
   diUrl TEXT,
@@ -38,11 +38,11 @@ CREATE TABLE documents (
   modifiedAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE citations (
+CREATE TABLE citation (
   citationId TEXT PRIMARY KEY,
-  formId INTEGER REFERENCES forms(formId),
-  questionId INTEGER REFERENCES questions(questionId),
-  documentId INTEGER REFERENCES documents(documentId),
+  formId INTEGER REFERENCES form(formId),
+  questionId INTEGER REFERENCES question(questionId),
+  documentId INTEGER REFERENCES document(documentId),
   excerpt TEXT NOT NULL,
   bounds JSONB,
   review INTEGER NOT NULL DEFAULT 0,
@@ -51,17 +51,17 @@ CREATE TABLE citations (
   modifiedAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE events (
+CREATE TABLE event (
   event_id SERIAL PRIMARY KEY,
   body JSONB NOT NULL,
   createdAt TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-INSERT INTO templates (templateName, creator)
+INSERT INTO template (templateName, creator)
 VALUES
   ('Microsoft Fiscal', 'system');
 
-INSERT INTO questions (templateId, prefix, text, creator)
+INSERT INTO question (templateId, prefix, text, creator)
 VALUES
   (1, '1', 'What was the company''s revenue for the third quarter of Fiscal Year 2024?', 'system'),
   (1, '2', 'What are the earnings per share (EPS) for this quarter?', 'system'),
@@ -70,16 +70,16 @@ VALUES
   (1, '5', 'Are there any ongoing legal proceedings?', 'system'),
   (1, '6', 'What is an excerpt that spans two pages?', 'system');
 
-INSERT INTO forms (templateId, formName, creator)
+INSERT INTO form (templateId, formName, creator)
 VALUES
   (1, 'FY24Q3', 'system');
 
-INSERT INTO documents (formId, name, pdfUrl, diUrl, creator) 
+INSERT INTO document (formId, name, pdfUrl, diUrl, creator) 
 VALUES 
   (1, 'PressReleaseFY24Q3', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf', 'https://excitation.blob.core.windows.net/documents/PressReleaseFY24Q3.pdf.json', 'system'),
   (1, 'Microsoft 10Q FY24Q3 1', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf', 'https://excitation.blob.core.windows.net/documents/Microsoft 10Q FY24Q3 1.pdf.json', 'system');
 
-INSERT INTO citations (citationId, formId, questionId, documentId, excerpt, creator)
+INSERT INTO citation (citationId, formId, questionId, documentId, excerpt, creator)
 VALUES
   ('1-system-1732038032110', 1, 1, 1, 'Revenue was $61.9 billion and increased 17%', 'system'),
   ('1-system-1732038042614', 1, 1, 2, '61,858', 'system'),
