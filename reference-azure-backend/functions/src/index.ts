@@ -22,8 +22,7 @@ app.hook.appStart(async (context: AppStartContext) => {
 
 app.hook.preInvocation(async (context: PreInvocationContext) => {
     if (!cachedToken || !tokenExpiration || tokenExpiration <= Date.now()) {
-        const token = await getToken();
-        dataSource.options.extra.authentication.options.token = token;
+       await initializeDataSource();
     }
 });
 
