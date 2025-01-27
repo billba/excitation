@@ -29,7 +29,7 @@ const sortIndex = sortBy(
 
 export function Sidebar() {
   const [state, dispatch] = useAppState();
-  const { questions, ux, docs } = state as LoadedState;
+  const { questions, ux, docs, isTextLayerEmpty } = state as LoadedState;
   const { questionIndex, selectedCitation, documentId } = ux;
   const question = questions[questionIndex];
   const { citations } = question;
@@ -214,16 +214,17 @@ export function Sidebar() {
           )}
           <div id="answer">
             <div className="answer-section">
-              You can manually add additional citations by navigating the
-              documents, selecting relevant text, and
-              {isAsyncing || ux.range == undefined ? (
-                " clicking here"
+              To manually add a citation, highlight the relevant text and click
+              the button that pops up below. Some documents may contain text that 
+              is not selectable.
+              {isAsyncing || ux.range == undefined || isTextLayerEmpty ? (
+                " "
               ) : (
                 <>
                   &nbsp;
-                  <span className="action" onClick={addSelection}>
-                    clicking here
-                  </span>
+                  <button className="action" onClick={addSelection}>
+                    add new citation
+                  </button>
                 </>
               )}
             </div>

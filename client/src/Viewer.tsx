@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Document, Page } from "react-pdf";
+import { TextContent } from "pdfjs-dist/types/src/display/api";
+
 import {
   CheckmarkCircleFilled,
   CheckmarkCircleRegular,
@@ -70,6 +72,14 @@ export function Viewer() {
 
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
+  const onTextLayerRender = useCallback((text: TextContent) => {
+    dispatch({  
+      type: "emptyTextLayer",
+      isTextLayerEmpty: (text.items.length == 0), 
+    });
+  }, [dispatch]
+);
+
   const updateViewerSize = useCallback(
     ({ height, width }: PageCallback) => {
       dispatch({
@@ -127,6 +137,7 @@ export function Viewer() {
                   onRenderSuccess={updateViewerSize}
                   className="viewer-page"
                   renderAnnotationLayer={false}
+                  onGetTextSuccess={onTextLayerRender}
             />
           </Document>
           <ViewerCitations />

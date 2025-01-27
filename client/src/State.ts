@@ -475,6 +475,12 @@ const stateAtom = atom<State, [Action], void>(
                     break;
                   }
 
+                  case "emptyTextLayer": { 
+                    const {isTextLayerEmpty} = action;
+                    state.isTextLayerEmpty = isTextLayerEmpty;
+                    break;
+                  }
+
                   case "addSelection": {
                     console.assert(!isAsyncing);
                     console.assert(ux.range !== undefined);
