@@ -491,7 +491,6 @@ const stateAtom = atom<State, [Action], void>(
                   const { excerpt, bounds } = findUserSelection(
                     ux.pageNumber!,
                     realRange!,
-                    viewer,
                     docFromId[ux.documentId!].di
                   );
 
