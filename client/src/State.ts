@@ -489,10 +489,12 @@ const stateAtom = atom<State, [Action], void>(
                       docFromId[ux.documentId!].di
                     );
 
+                    const citationId = createCitationId(metadata.formId, "client");
+
                     selectCitation(
                       questions[ux.questionIndex].citations.push({
                         documentId: ux.documentId!,
-                        citationId: createCitationId(metadata.formId, "client"),
+                        citationId: citationId,
                         bounds,
                         excerpt,
                         review: Review.Unreviewed,
@@ -505,7 +507,7 @@ const stateAtom = atom<State, [Action], void>(
                         formId: metadata.formId,
                         questionId: questions[ux.questionIndex].questionId,
                         documentId: ux.documentId!,
-                        citationId: createCitationId(metadata.formId, "client"),
+                        citationId: citationId,
                         excerpt,
                         bounds,
                         review: Review.Approved,

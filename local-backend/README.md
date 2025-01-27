@@ -27,3 +27,5 @@ deno task dev
 ```
 
 If you use VS Code, you'll probably want to install and enable the [Deno plugin](https://marketplace.visualstudio.com/items?itemName=denoland.vscode-deno).
+
+For instructions on debugging, see [here](https://docs.deno.com/runtime/fundamentals/debugging/#example-with-chrome-devtools).
