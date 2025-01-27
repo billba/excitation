@@ -76,6 +76,7 @@ h1 {
 
 .navbar-column {
   margin: 0 auto;
+
   .visible {
     background-color: var(--color-page-active);
     color: var(--color-text-page-active);
@@ -83,6 +84,7 @@ h1 {
     border: var(--color-highlight) 2px solid;
     cursor: pointer;
   }
+
   .hidden {
     display: none;
   }
@@ -91,11 +93,13 @@ h1 {
 .navbar-icon {
   &.enabled {
     color: var(--color-button-enabled);
+
     :hover {
       color: var(--color-button-hover);
       cursor: pointer;
     }
   }
+
   &.disabled {
     color: var(--color-button-disabled);
   }
@@ -134,6 +138,7 @@ h1 {
   display: grid;
   grid-template-columns: var(--icon-size) 1fr var(--icon-size) var(--icon-size);
   grid-template-rows: var(--icon-size);
+
   .chevron {
     grid-column: 5;
   }
@@ -151,13 +156,16 @@ h1 {
 .question-nav {
   height: 100%;
   width: 100%;
+
   &.enabled {
     color: var(--color-button-enabled);
+
     :hover {
       color: var(--color-button-hover);
       cursor: pointer;
     }
   }
+
   &.disabled {
     color: var(--color-button-disabled);
   }
@@ -184,9 +192,11 @@ h1 {
   div {
     height: var(--rounding-height);
     background-color: var(--color-base);
+
     &.prefix {
       border-radius: 0 0 var(--rounding-height) 0px;
     }
+
     &.suffix {
       border-radius: 0 var(--rounding-height) 0 0;
     }
@@ -198,14 +208,17 @@ h1 {
   display: grid;
   grid-template-columns: subgrid;
   border-radius: var(--rounding-height) 0 0px var(--rounding-height);
+
   &.selected {
     grid-column-end: 7;
     background-color: var(--color-doc-active);
   }
+
   &.unselected {
     border-radius: var(--rounding-height) 0 0 var(--rounding-height);
     grid-column-end: 6;
   }
+
   &.unselected:hover {
     background-color: var(--color-doc-hover);
     cursor: pointer;
@@ -240,18 +253,22 @@ h1 {
   border-radius: var(--rounding-height) 0 0 var(--rounding-height);
   display: grid;
   grid-template-columns: subgrid;
+
   &.selected {
     background-color: var(--color-page-active);
     color: var(--color-text-page-active);
   }
+
   &.unselected:hover {
     cursor: pointer;
     background-color: var(--color-page-hover);
+
     .top-right {
       div {
         background-color: var(--color-page-hover);
       }
     }
+
     .bottom-right {
       div {
         background-color: var(--color-page-hover);
@@ -265,9 +282,11 @@ h1 {
   grid-column-start: 1;
   display: grid;
   grid-template-columns: 5% 95%;
+
   &.selected {
     grid-column-end: 5;
   }
+
   &.unselected {
     grid-column-end: 4;
   }
@@ -290,6 +309,7 @@ h1 {
   grid-column-end: 4;
   grid-template-columns: 5% 95%;
   grid-template-rows: 1.5em;
+
   .citation-excerpt {
     margin-top: -1px;
     overflow: clip;
@@ -299,6 +319,7 @@ h1 {
 
 .icon-container {
   position: relative;
+
   :hover {
     cursor: pointer;
   }
@@ -311,12 +332,15 @@ h1 {
 .approved {
   &.on {
     color: var(--color-approve);
+
     :hover {
       color: var(--color-approve);
     }
   }
+
   &.off {
     color: var(--color-highlight);
+
     :hover {
       color: var(--color-approve);
     }
@@ -326,17 +350,21 @@ h1 {
 .rejected {
   &.on {
     color: var(--color-reject);
+
     :hover {
       color: var(--color-reject);
     }
   }
+
   &.off {
     color: var(--color-highlight);
+
     :hover {
       color: var(--color-reject);
     }
   }
 }
+
 /* 
 .edit-start {
   color: var(--color-icon);
@@ -364,13 +392,16 @@ h1 {
   .hover {
     display: none;
   }
+
   .default {
     display: block;
   }
+
   &:hover {
     .hover {
       display: block;
     }
+
     .default {
       display: none;
     }
@@ -384,9 +415,11 @@ h1 {
   div {
     height: 5px;
     background-color: var(--color-doc-active);
+
     &.last-page-group-selected {
       border-radius: 0 var(--rounding-height) 0 0px;
     }
+
     &.unselected {
       background-color: var(--color-base);
     }
@@ -407,6 +440,7 @@ h1 {
 .action {
   color: blue;
   cursor: pointer;
+
   &:hover {
     text-decoration: underline;
   }
@@ -429,6 +463,7 @@ h1 {
   left: 0;
   position: absolute;
   background-color: transparent;
+  pointer-events: none;
 }
 
 #viewer-citation-highlight {
@@ -438,11 +473,14 @@ h1 {
   border-radius: var(--rounding-height);
   border-width: 2px;
   border-style: solid;
+  pointer-events: auto;
 
   &:hover {
     opacity: 0.4;
-    ~ #floater {
+
+    ~#floater {
       opacity: 0.4;
+
       .background {
         color: transparent;
       }
@@ -456,15 +494,14 @@ h1 {
   position: relative;
   display: grid;
   grid-template-rows: var(--icon-size);
+  pointer-events: auto;
+
   &.review {
-    grid-template-columns: auto var(--icon-size) var(--icon-size) var(
-        --icon-size
-      ) var(--icon-size) auto;
+    grid-template-columns: auto var(--icon-size) var(--icon-size) var(--icon-size) var(--icon-size) auto;
   }
+
   &.reviewed {
-    grid-template-columns: auto var(--icon-size) var(--icon-size) var(
-        --icon-size
-      ) auto;
+    grid-template-columns: auto var(--icon-size) var(--icon-size) var(--icon-size) auto;
   }
 }
 
@@ -582,9 +619,11 @@ h1 {
 
   a {
     text-decoration: none;
+
     &:link {
       color: var(--color-text);
     }
+
     &:visited {
       color: var(--color-text);
     }
