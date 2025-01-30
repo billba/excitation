@@ -213,15 +213,15 @@ export const condenseRegions = (boundingRegions: Bounds[]) => {
         const intermediaryPolygon = polygonize(
           [condensedRegions[last].polygon[2], boundingRegions[index].polygon[0]],
           [
-            Math.min(condensedRegions[last].polygon[3], boundingRegions[index].polygon[1]), 
+            Math.min(condensedRegions[last].polygon[3], boundingRegions[index].polygon[1]),
             Math.max(condensedRegions[last].polygon[5], boundingRegions[index].polygon[7])
           ]
         );
 
         // combine polygons
         condensedRegions[last].polygon = combinePolygons([
-          condensedRegions[last].polygon, 
-          intermediaryPolygon, 
+          condensedRegions[last].polygon,
+          intermediaryPolygon,
           boundingRegions[index].polygon
         ]);
       }
@@ -567,10 +567,14 @@ export function findUserSelection(
   const topDiv = document.getElementById("answer-container")?.offsetHeight
   const midDiv = document.getElementById("navbar")?.offsetHeight
   const lowerDiv = document.getElementById("breadcrumbs")?.offsetHeight
-  const dy = window.scrollY + (topDiv! + midDiv! + lowerDiv!);
+  const viewScrollTop = document.getElementById("viewer")?.scrollTop || 0;
+
+  const dy = Math.round(window.scrollY) + (topDiv! + midDiv! + lowerDiv!) - viewScrollTop;
 
   const sideDiv = document.getElementById("sidebar")?.offsetWidth
-  const dx = window.scrollX + sideDiv!; // should be static.
+  const scrollLeft = document.getElementById("review-panel")?.scrollLeft || 0;
+
+  const dx = Math.round(window.scrollY) + sideDiv! - scrollLeft;
 
   top = round((top - dy) / multiplier, 4);
   bottom = round((bottom - dy) / multiplier, 4);
