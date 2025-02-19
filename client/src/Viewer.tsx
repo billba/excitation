@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Document, Page } from "react-pdf";
 import { TextContent } from "pdfjs-dist/types/src/display/api";
+import polygonClipping from "polygon-clipping";
 
 import {
   CheckmarkCircleFilled,
@@ -24,7 +25,6 @@ import { LoadedState, Review } from "./Types";
 
 const colors = ["#00acdc", "#00ac00", "#f07070"];
 const multiple = 72;
-const padding = 3;
 
 // this type is defined deep in react-pdf and I can't figure out how to import it
 // so here I just define the parts I need
@@ -72,13 +72,15 @@ export function Viewer() {
 
   const onDocumentLoadSuccess = useCallback(() => {}, []);
 
-  const onTextLayerRender = useCallback((text: TextContent) => {
-    dispatch({  
-      type: "emptyTextLayer",
-      isTextLayerEmpty: (text.items.length == 0), 
-    });
-  }, [dispatch]
-);
+  const onTextLayerRender = useCallback(
+    (text: TextContent) => {
+      dispatch({
+        type: "emptyTextLayer",
+        isTextLayerEmpty: text.items.length == 0,
+      });
+    },
+    [dispatch]
+  );
 
   const updateViewerSize = useCallback(
     ({ height, width }: PageCallback) => {
@@ -111,7 +113,8 @@ export function Viewer() {
     selection.addRange(realRange);
   }, [range]);
 
-  if (documentId !== undefined) console.log("pdf", docFromId[documentId].pdfUrl);
+  if (documentId !== undefined)
+    console.log("pdf", docFromId[documentId].pdfUrl);
 
   return (
     <div ref={viewerRef} id="viewer-viewport">
@@ -134,10 +137,10 @@ export function Viewer() {
           >
             <Page
               pageNumber={ux.pageNumber}
-                  onRenderSuccess={updateViewerSize}
-                  className="viewer-page"
-                  renderAnnotationLayer={false}
-                  onGetTextSuccess={onTextLayerRender}
+              onRenderSuccess={updateViewerSize}
+              className="viewer-page"
+              renderAnnotationLayer={false}
+              onGetTextSuccess={onTextLayerRender}
             />
           </Document>
           <ViewerCitations />
@@ -165,6 +168,53 @@ const ViewerCitations = () => {
   )[0]?.polygons;
 
   if (!polygons) return null;
+  const rectsForUnion: [number, number][][][] = polygons.map((poly) => {
+    const x1 = poly[0];
+    const y1 = poly[1];
+    const x2 = poly[4];
+    const y2 = poly[5];
+    return [
+      [
+        [x1, y1],
+        [x2, y1],
+        [x2, y2],
+        [x1, y2],
+      ],
+    ];
+  });
+  const unioned = polygonClipping.union(rectsForUnion);
+  const ringToPath = (ring: number[][]) => {
+    return (
+      ring
+        .map(
+          (coords, i) =>
+            `${i === 0 ? "M" : "L"} ${coords[0] * multiple},${
+              coords[1] * multiple
+            }`
+        )
+        .join(" ") + " Z"
+    );
+  };
+  const allPaths: string[] = [];
+  unioned.forEach((polygon) => {
+    polygon.forEach((ring) => {
+      allPaths.push(ringToPath(ring));
+    });
+  });
+
+  const highlightSvg = (
+    <svg
+      className="highlight-svg"
+      style={{
+        width: viewer.width,
+        height: viewer.height,
+      }}
+    >
+      {allPaths.map((d, i) => (
+        <path key={i} d={d} fill="none" stroke={color} strokeWidth={2} />
+      ))}
+    </svg>
+  );
 
   const polygon = polygons[0];
 
@@ -261,17 +311,7 @@ const ViewerCitations = () => {
         zIndex: 1000, //isError ? 1000 : 1,
       }}
     >
-      <div
-        key="viewer-citation-highlight"
-        id="viewer-citation-highlight"
-        style={{
-          color,
-          top: polygon[1] * multiple - padding,
-          left: polygon[0] * multiple - padding,
-          width: (polygon[4] - polygon[0]) * multiple + padding,
-          minHeight: (polygon[5] - polygon[1]) * multiple + padding,
-        }}
-      />
+      {highlightSvg}
       <div
         id="floater"
         className={review === Review.Unreviewed ? "review" : "reviewed"}

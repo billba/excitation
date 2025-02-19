@@ -1,3 +1,12 @@
+import {
+  CitationRegions,
+  CitationRegionsPerPage,
+  Polygon4,
+  flattenPolygon4,
+  toPolygon4,
+  combinePolygons,
+} from "./di";
+
 export interface DocumentIntelligenceResponse {
   status: string;
   createdDateTime: string;
@@ -115,13 +124,13 @@ interface Span {
 }
 
 interface Column {
-  polygon: number[],
-  lines: Line[]
+  polygon: number[];
+  lines: Line[];
 }
 
 export const createCitationId = (formId: number, creator: string) => {
-  return formId + '-' + creator + '-' + Date.now();
-}
+  return formId + "-" + creator + "-" + Date.now();
+};
 
 // Rounds a number to the given precision
 const round = (value: number, precision = 0) => {
@@ -154,85 +163,57 @@ const polygonize = (x: number[], y: number[]) => {
   return [x[0], y[0], x[1], y[0], x[1], y[1], x[0], y[1]];
 };
 
-// Combine two squared up polygons and return the combination
-// if the two polygons are NOT adjacent you will get weird results!!!
-const combineTwoPolygons = (poly0: number[], poly1: number[]) => {
-  const x = [Math.min(poly0[0], poly1[0]), Math.max(poly0[2], poly1[2])];
-  const y = [Math.min(poly0[1], poly1[1]), Math.max(poly0[5], poly1[5])];
-  return polygonize(x, y);
-};
-
-// Combine an array of polygons using combineTwoPolygons
-const combinePolygons = (polygons: number[][]) => {
-  if (polygons.length == 0) return [];
-
-  while (polygons.length > 1) {
-    let lastPoly = polygons.pop();
-    if (lastPoly) polygons[polygons.length - 1] = combineTwoPolygons(polygons[polygons.length - 1], lastPoly);
-  }
-
-  return polygons[0];
-}
-
-// Return a polygon with sides that are parallel to the major axes
-const squareUp = (poly: number[]) => {
-  const x = [Math.min(poly[0], poly[6]), Math.max(poly[2], poly[4])];
-  const y = [Math.min(poly[1], poly[3]), Math.max(poly[5], poly[7])];
-  return polygonize(x, y);
-};
-
 // return the given boundingRegions combined into the minimum possible
 // number of boundingRegions
-export const condenseRegions = (boundingRegions: Bounds[]) => {
-  if (boundingRegions.length === 0) return boundingRegions;
+export function condenseRegions(boundingRegions: Bounds[]): Bounds[] {
+  if (boundingRegions.length === 0) return [];
 
-  const condensedRegions: Bounds[] = [
-    {
-      pageNumber: boundingRegions[0].pageNumber,
-      polygon: squareUp(boundingRegions[0].polygon),
-    },
-  ];
-
-  let last = condensedRegions.length - 1;
-  for (let index = 1; index < boundingRegions.length; index++) {
-    boundingRegions[index].polygon = squareUp(boundingRegions[index].polygon);
-
-    if (
-      condensedRegions[last].pageNumber === boundingRegions[index].pageNumber
-    ) {
-      if (
-        adjacent(condensedRegions[last].polygon, boundingRegions[index].polygon)
-      ) {
-        // adding to existing polygon
-        condensedRegions[last].polygon = combineTwoPolygons(
-          condensedRegions[last].polygon,
-          boundingRegions[index].polygon
-        );
-      } else {
-        // create new polygon to bridge non-adjacent polygons
-        const intermediaryPolygon = polygonize(
-          [condensedRegions[last].polygon[2], boundingRegions[index].polygon[0]],
-          [
-            Math.min(condensedRegions[last].polygon[3], boundingRegions[index].polygon[1]),
-            Math.max(condensedRegions[last].polygon[5], boundingRegions[index].polygon[7])
-          ]
-        );
-
-        // combine polygons
-        condensedRegions[last].polygon = combinePolygons([
-          condensedRegions[last].polygon,
-          intermediaryPolygon,
-          boundingRegions[index].polygon
-        ]);
-      }
-    } else {
-      // new page
-      condensedRegions.push(boundingRegions[index]);
-      last++;
+  // Group bounding regions by page
+  const pageMap = new Map<number, Polygon4[]>();
+  for (const br of boundingRegions) {
+    if (!pageMap.has(br.pageNumber)) {
+      pageMap.set(br.pageNumber, []);
     }
+    pageMap.get(br.pageNumber)!.push(toPolygon4(br.polygon));
   }
-  return condensedRegions;
-};
+
+  const result: CitationRegionsPerPage[] = [];
+
+  // Process each page individually
+  for (const [pageNumber, polygons] of pageMap.entries()) {
+    if (polygons.length === 0) continue;
+
+    const citationRegions: CitationRegions = [];
+    citationRegions.push(combinePolygons(polygons));
+    result.push({ page: pageNumber, citationRegions });
+  }
+
+  return convertCitationRegionsToBounds(result);
+}
+
+// Helper method to convert an array of CitationRegionsPerPage into an array of Bounds.
+export function convertCitationRegionsToBounds(
+  citationRegionsPerPage: CitationRegionsPerPage[]
+): Bounds[] {
+  const bounds: Bounds[] = [];
+
+  citationRegionsPerPage.forEach(({ page, citationRegions }) => {
+    citationRegions.forEach(({ head, body, tail }) => {
+      // Convert each segment into a Bounds object if it exists
+      if (head) {
+        bounds.push({ pageNumber: page, polygon: flattenPolygon4(head) });
+      }
+      if (body) {
+        bounds.push({ pageNumber: page, polygon: flattenPolygon4(body) });
+      }
+      if (tail) {
+        bounds.push({ pageNumber: page, polygon: flattenPolygon4(tail) });
+      }
+    });
+  });
+
+  return bounds;
+}
 
 // Simple matching
 // special cases:
@@ -242,18 +223,8 @@ const match = (str0: string, str1: string) => {
   str0 = str0.toLocaleLowerCase();
   str1 = str1.toLocaleLowerCase();
 
-  return (str0 === str1);
+  return str0 === str1;
 };
-
-// const matchArray = (strArr0: string[], strArr1: string[]) => {
-//   if (strArr0.length != strArr1.length) return false;
-
-//   for (let index = 0; index < strArr0.length; index++) {
-//     if (!match(strArr0[index], strArr1[index])) return false;
-//   }
-
-//   return true;
-// }
 
 // Given a docint response and reference text (array of words), find
 // the relevant BoundingRegions (per-word)
@@ -282,7 +253,7 @@ const findBoundingRegions = (
       //   if (textIndex == text.length) return boundingRegions;
       // }
 
-      // Selection marks do not come back in the page.words and therefore do not have the bounds. 
+      // Selection marks do not come back in the page.words and therefore do not have the bounds.
       // selction marks are available in the paragraphs and lines but we don't currently use those fields.
       // When we encounter a selection mark from the `text` array, we skip it and continue to the next word from the `text` array.
       let currWord = text[textIndex];
@@ -356,25 +327,43 @@ const comparePolygons = (poly: number[], refPoly: number[]) => {
 
   // if we're still here, poly overlaps refPoly
   return 0;
-}
+};
 
 // starting from lines[axis] and working backward, find the first entry
 // in lines that intersects with poly
-const getFirstPolyIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
-  do axis--; while (axis >= 0 && comparePolygons(poly, lines[axis].polygon) == 0);
+const getFirstPolyIntersectionIndex = (
+  lines: Line[],
+  poly: number[],
+  axis: number
+) => {
+  do axis--;
+  while (axis >= 0 && comparePolygons(poly, lines[axis].polygon) == 0);
   return ++axis;
-}
+};
 
 // starting from lines[axis] and working forward, find the last entry in
 // lines that intersects with poly
-const getLastPolyIntersectionIndex = (lines: Line[], poly: number[], axis: number) => {
-  do axis++; while (axis < lines.length && comparePolygons(poly, lines[axis].polygon) == 0);
+const getLastPolyIntersectionIndex = (
+  lines: Line[],
+  poly: number[],
+  axis: number
+) => {
+  do axis++;
+  while (
+    axis < lines.length &&
+    comparePolygons(poly, lines[axis].polygon) == 0
+  );
   return --axis;
-}
+};
 
 // searches lines[start, end) (that is, inclusive of start and exclusive of end)
 // for poly, in a binary search - compare against midpoint and move from there
-const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: number[]) => {
+const polygonBinarySearch = (
+  lines: Line[],
+  start: number,
+  end: number,
+  poly: number[]
+) => {
   // no data whatsoever
   if (end == 0) {
     console.log("polygon search | no lines to search");
@@ -399,13 +388,14 @@ const polygonBinarySearch = (lines: Line[], start: number, end: number, poly: nu
     case 0:
       return lines.slice(
         getFirstPolyIntersectionIndex(lines, poly, axis),
-        getLastPolyIntersectionIndex(lines, poly, axis) + 1);
+        getLastPolyIntersectionIndex(lines, poly, axis) + 1
+      );
 
     case 1:
     case 2:
       return polygonBinarySearch(lines, axis + 1, end, poly);
   }
-}
+};
 
 // compares offsetRange against refOffset. returns:
 // - if offsetRange is earlier in the page than refOffset
@@ -415,25 +405,46 @@ const compareOffsets = (offsetRange: number[], refOffset: number) => {
   if (offsetRange[1] < refOffset) return -1;
   if (offsetRange[0] > refOffset) return 1;
   return 0;
-}
+};
 
 // starting from words[axis] and working backward, find the first entry
 // in words that overlaps with offsetRange
-const getFirstOffsetIntersectionIndex = (words: Word[], axis: number, offsetRange: number[]) => {
-  do axis--; while (axis >= 0 && compareOffsets(offsetRange, words[axis].span.offset) == 0);
+const getFirstOffsetIntersectionIndex = (
+  words: Word[],
+  axis: number,
+  offsetRange: number[]
+) => {
+  do axis--;
+  while (
+    axis >= 0 &&
+    compareOffsets(offsetRange, words[axis].span.offset) == 0
+  );
   return ++axis;
-}
+};
 
 // starting from words[axis] and working forward, find the last entry
 // in words that overlaps with offsetRange
-const getLastOffsetIntersectionIndex = (words: Word[], axis: number, offsetRange: number[]) => {
-  do axis++; while (axis < words.length && compareOffsets(offsetRange, words[axis].span.offset) == 0);
+const getLastOffsetIntersectionIndex = (
+  words: Word[],
+  axis: number,
+  offsetRange: number[]
+) => {
+  do axis++;
+  while (
+    axis < words.length &&
+    compareOffsets(offsetRange, words[axis].span.offset) == 0
+  );
   return --axis;
-}
+};
 
 // searches words[start, end) (that is, inclusive of start and exclusive of end)
 // for the words contained within the offset range
-const offsetBinarySearch = (words: Word[], start: number, end: number, offsetRange: number[]) => {
+const offsetBinarySearch = (
+  words: Word[],
+  start: number,
+  end: number,
+  offsetRange: number[]
+) => {
   if (end == 0) {
     console.log("offset search | no words to search");
     return [];
@@ -445,7 +456,9 @@ const offsetBinarySearch = (words: Word[], start: number, end: number, offsetRan
   }
 
   const axis = Math.floor((end - start) / 2) + start;
-  console.log(`offset search | axis [${axis}]: offset ${words[axis].span.offset}`);
+  console.log(
+    `offset search | axis [${axis}]: offset ${words[axis].span.offset}`
+  );
 
   switch (compareOffsets(offsetRange, words[axis].span.offset)) {
     case -1:
@@ -454,44 +467,55 @@ const offsetBinarySearch = (words: Word[], start: number, end: number, offsetRan
     case 0:
       return words.slice(
         getFirstOffsetIntersectionIndex(words, axis, offsetRange),
-        getLastOffsetIntersectionIndex(words, axis, offsetRange) + 1);
+        getLastOffsetIntersectionIndex(words, axis, offsetRange) + 1
+      );
 
     case 1:
       return offsetBinarySearch(words, axis + 1, end, offsetRange);
   }
-}
+};
 
 // Takes an array of lines and returns an array of Column items
 // each of which is a polygon and an array of lines
 const splitIntoColumns = (lines: Line[]) => {
   // no lines
-  if (lines.length == 0) return [{
-    polygon: [],
-    lines: []
-  }];
+  if (lines.length == 0)
+    return [
+      {
+        polygon: [],
+        lines: [],
+      },
+    ];
   // single line
-  if (lines.length == 1) return [{
-    polygon: lines[0].polygon,
-    lines: lines
-  }];
+  if (lines.length == 1)
+    return [
+      {
+        polygon: lines[0].polygon,
+        lines: lines,
+      },
+    ];
 
-  let cols = [];
+  const cols = [];
   let firstLineOfCol = 0;
 
   for (let currentLine = 0; currentLine < lines.length; currentLine++) {
     // is this the last line and therefore the end of the last column?
     // OR, is lines[currentLine + 1] a new column/section?
-    if (currentLine == lines.length - 1 ||
-      !adjacent(lines[currentLine + 1].polygon, lines[currentLine].polygon)) {
+    if (
+      currentLine == lines.length - 1 ||
+      !adjacent(lines[currentLine + 1].polygon, lines[currentLine].polygon)
+    ) {
       // let's wrap up the current column.
       const colLines = lines.slice(firstLineOfCol, currentLine + 1);
       // we combine all polys to make sure we capture the full width of the column
       // and don't accidentally just grab, say, a header (short) and a last line of
       // a paragraph (also short)
-      const polygon = combinePolygons(colLines.map((line) => line.polygon));
+      const polygon = combinePolygons(
+        colLines.map((line) => line.polygon as Polygon4)
+      );
       cols.push({
         polygon: polygon,
-        lines: colLines
+        lines: colLines,
       });
       firstLineOfCol = currentLine + 1;
     }
@@ -499,41 +523,50 @@ const splitIntoColumns = (lines: Line[]) => {
 
   console.log(`split ${lines.length} lines into ${cols.length} columns`);
   for (let index = 0; index < cols.length; index++) {
-    let col = cols[index];
-    console.log(`col [${index}]: "${col.lines[0].content}" ... ${col.lines.length - 2} more lines ... "${col.lines[col.lines.length - 1].content}"`);
+    const col = cols[index];
+    console.log(
+      `col [${index}]: "${col.lines[0].content}" ... ${
+        col.lines.length - 2
+      } more lines ... "${col.lines[col.lines.length - 1].content}"`
+    );
   }
 
   return cols;
-}
+};
 
 // from an array of Columns, find any where col.polygon intersects with poly
 const getRelevantColumns = (columns: Column[], poly: number[]) => {
-  return columns.filter((col) => comparePolygons(col.polygon, poly) == 0)
-}
+  return columns.filter((col) => comparePolygons(col.polygon, poly) == 0);
+};
 
 // Given bounds and a doc int response, find the most likely excerpt text
 const findTextFromBoundingRegions = (
   response: DocumentIntelligenceResponse,
   bounds: Bounds[]
 ) => {
-  let excerptWords = [];
+  const excerptWords = [];
   for (const bound of bounds) {
-    console.log(`searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`)
+    console.log(
+      `searching for bounds x(${bound.polygon[0]},${bound.polygon[2]}) y(${bound.polygon[1]},${bound.polygon[5]})`
+    );
     // page numbers are 1-indexed, thus the subtraction
     const page = response.analyzeResult.pages[bound.pageNumber - 1];
     const lines = page.lines;
     const words = page.words;
 
-    const columns = splitIntoColumns(lines);
+    const columns = splitIntoColumns(lines) as Column[];
     const relevantColumns = getRelevantColumns(columns, bound.polygon);
-    if (relevantColumns.length == 0) console.log("no relevant columns to search");
+    if (relevantColumns.length == 0)
+      console.log("no relevant columns to search");
 
     const intersectingLines = [];
     for (const col of relevantColumns) {
-      let index = columns.indexOf(col);
+      const index = columns.indexOf(col);
       console.log(`SEARCHING col [${index}]`);
 
-      intersectingLines.push(...polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon));
+      intersectingLines.push(
+        ...polygonBinarySearch(col.lines, 0, col.lines.length, bound.polygon)
+      );
     }
 
     if (intersectingLines.length == 0) continue;
@@ -543,15 +576,22 @@ const findTextFromBoundingRegions = (
     const offsetEnd = lastLine.spans[0].offset + lastLine.spans[0].length;
     console.log("offset range for search:", offsetStart, offsetEnd);
 
-    const intersectingWords = offsetBinarySearch(words, 0, words.length, [offsetStart, offsetEnd]);
-    excerptWords.push(...intersectingWords.filter((word) => comparePolygons(word.polygon, bound.polygon) == 0));
+    const intersectingWords = offsetBinarySearch(words, 0, words.length, [
+      offsetStart,
+      offsetEnd,
+    ]);
+    excerptWords.push(
+      ...intersectingWords.filter(
+        (word) => comparePolygons(word.polygon, bound.polygon) == 0
+      )
+    );
   }
 
   const excerpts = excerptWords.map((word) => word.content);
-  let excerpt = excerpts.join(' ');
-  if (excerpt === '') excerpt = 'could not find matching line(s)';
+  let excerpt = excerpts.join(" ");
+  if (excerpt === "") excerpt = "could not find matching line(s)";
   return excerpt;
-}
+};
 
 // Takes in user selection information and a doc int response
 // creates bounds from selection info
@@ -564,14 +604,17 @@ export function findUserSelection(
   let { top, left, bottom, right } = range.getBoundingClientRect();
   const multiplier = 72;
 
-  const topDiv = document.getElementById("answer-container")?.offsetHeight
-  const midDiv = document.getElementById("navbar")?.offsetHeight
-  const lowerDiv = document.getElementById("breadcrumbs")?.offsetHeight
+  const topDiv = document.getElementById("answer-container")?.offsetHeight;
+  const midDiv = document.getElementById("navbar")?.offsetHeight;
+  const lowerDiv = document.getElementById("breadcrumbs")?.offsetHeight;
   const viewScrollTop = document.getElementById("viewer")?.scrollTop || 0;
 
-  const dy = Math.round(window.scrollY) + (topDiv! + midDiv! + lowerDiv!) - viewScrollTop;
+  const dy =
+    Math.round(window.scrollY) +
+    (topDiv! + midDiv! + lowerDiv!) -
+    viewScrollTop;
 
-  const sideDiv = document.getElementById("sidebar")?.offsetWidth
+  const sideDiv = document.getElementById("sidebar")?.offsetWidth;
   const scrollLeft = document.getElementById("review-panel")?.scrollLeft || 0;
 
   const dx = Math.round(window.scrollY) + sideDiv! - scrollLeft;
@@ -582,10 +625,22 @@ export function findUserSelection(
   left = round((left - dx) / multiplier, 4);
   right = round((right - dx) / multiplier, 4);
 
-  if (top < 1) console.log(`bounds:top [${top}] is curiously small for a standard document`);
-  if (bottom > 10) console.log(`bounds:bottom [${bottom}] is curiously large for a standard document`);
-  if (left < 1) console.log(`bounds:left [${left}] is curiously small for a standard document`);
-  if (right > 7.5) console.log(`bounds:right [${right}] is curiously large for a standard document`);
+  if (top < 1)
+    console.log(
+      `bounds:top [${top}] is curiously small for a standard document`
+    );
+  if (bottom > 10)
+    console.log(
+      `bounds:bottom [${bottom}] is curiously large for a standard document`
+    );
+  if (left < 1)
+    console.log(
+      `bounds:left [${left}] is curiously small for a standard document`
+    );
+  if (right > 7.5)
+    console.log(
+      `bounds:right [${right}] is curiously large for a standard document`
+    );
 
   const bounds = [
     {
