@@ -1,127 +1,15 @@
 import {
-  CitationRegions,
+  Bounds,
   CitationRegionsPerPage,
+  DocIntResponse,
+  Line,
   Polygon4,
+  PolygonC,
+  Word,
+  excerptToSummary,
   flattenPolygon4,
-  toPolygon4,
   combinePolygons,
 } from "./di";
-
-export interface DocumentIntelligenceResponse {
-  status: string;
-  createdDateTime: string;
-  lastUpdatedDateTime: string;
-  analyzeResult: AnalyzeResult;
-}
-
-interface AnalyzeResult {
-  apiVersion: string;
-  modelId: string;
-  stringIndexType: string;
-  content: string;
-  pages: Page[];
-  tables: Table[];
-  paragraphs: Paragraph[];
-  styles: Style[];
-  contentFormat: string;
-  sections: Section[];
-  figures: Figure[];
-}
-
-interface Figure {
-  id: string;
-  boundingRegions: Bounds[];
-  spans: Span[];
-  elements: string[];
-  caption: Caption;
-}
-
-interface Section {
-  spans: Span[];
-  elements: string[];
-}
-
-interface Style {
-  confidence: number;
-  spans: Span[];
-  isHandwritten: boolean;
-}
-
-interface Paragraph {
-  spans: Span[];
-  boundingRegions: Bounds[];
-  role?: string;
-  content: string;
-}
-
-interface Table {
-  rowCount: number;
-  columnCount: number;
-  cells: Cell[];
-  boundingRegions: Bounds[];
-  spans: Span[];
-  caption: Caption;
-}
-
-interface Caption {
-  content: string;
-  boundingRegions: Bounds[];
-  spans: Span[];
-  elements: string[];
-}
-
-interface Cell {
-  rowIndex: number;
-  columnIndex: number;
-  content: string;
-  boundingRegions: Bounds[];
-  spans: (Span | Span)[];
-  elements?: string[];
-  columnSpan?: number;
-  kind?: string;
-}
-
-export interface Bounds {
-  pageNumber: number;
-  polygon: number[];
-}
-
-interface Page {
-  pageNumber: number;
-  angle: number;
-  width: number;
-  height: number;
-  unit: string;
-  words: Word[];
-  lines: Line[];
-  spans: Span[];
-  selectionMarks?: SelectionMark[];
-}
-
-interface SelectionMark {
-  state: string;
-  polygon: number[];
-  confidence: number;
-  span: Span;
-}
-
-interface Line {
-  content: string;
-  polygon: number[];
-  spans: Span[];
-}
-
-interface Word {
-  content: string;
-  polygon: number[];
-  confidence: number;
-  span: Span;
-}
-
-interface Span {
-  offset: number;
-  length: number;
-}
 
 interface Column {
   polygon: number[];
@@ -163,49 +51,85 @@ const polygonize = (x: number[], y: number[]) => {
   return [x[0], y[0], x[1], y[0], x[1], y[1], x[0], y[1]];
 };
 
-// return the given boundingRegions combined into the minimum possible
-// number of boundingRegions
-export function condenseRegions(boundingRegions: Bounds[]): Bounds[] {
-  if (boundingRegions.length === 0) return [];
-
-  // Group bounding regions by page
-  const pageMap = new Map<number, Polygon4[]>();
-  for (const br of boundingRegions) {
-    if (!pageMap.has(br.pageNumber)) {
-      pageMap.set(br.pageNumber, []);
-    }
-    pageMap.get(br.pageNumber)!.push(toPolygon4(br.polygon));
-  }
-
-  const result: CitationRegionsPerPage[] = [];
-
-  // Process each page individually
-  for (const [pageNumber, polygons] of pageMap.entries()) {
-    if (polygons.length === 0) continue;
-
-    const citationRegions: CitationRegions = [];
-    citationRegions.push(combinePolygons(polygons));
-    result.push({ page: pageNumber, citationRegions });
-  }
-
-  return convertCitationRegionsToBounds(result);
-}
-
-// Helper method to convert an array of CitationRegionsPerPage into an array of Bounds.
-export function convertCitationRegionsToBounds(
-  citationRegionsPerPage: CitationRegionsPerPage[]
-): Bounds[] {
+/**
+ * Converts an array of `CitationRegionsPerPage` objects into an array of `Bounds`,
+ * representing citation bounding polygons on document pages.
+ *
+ * Each `CitationRegionsPerPage` contains citation regions (`head`, `body`, `tail`),
+ * which are processed as follows:
+ *  - The `head`, `body`, and `tail` polygons are copied and potentially adjusted.
+ *  - If `forceOverlap` is `true`, overlapping adjustments ensure continuity:
+ *    - If `head` exists but `body` is missing, and `tail` exists, the `head` is extended downward.
+ *    - If `body` exists, it is adjusted to align with `head` (above) and `tail` (below).
+ *    - `tail` remains unchanged except for being flattened.
+ *
+ * @param citationRegionsPerPage - An array of `CitationRegionsPerPage` objects,
+ *   each containing a `page` number and associated `citationRegions` (polygon structures).
+ * @param forceOverlap - (Optional, default: `false`) If `true`, modifies polygons to ensure
+ *   vertical alignment between `head`, `body`, and `tail` regions.
+ * @returns An array of `Bounds`, where each entry contains a `pageNumber` and a modified `polygon`.
+ */
+const convertCitationRegionsToBounds = (
+  citationRegionsPerPage: CitationRegionsPerPage[],
+  forceOverlap: boolean = false
+): Bounds[] => {
   const bounds: Bounds[] = [];
 
   citationRegionsPerPage.forEach(({ page, citationRegions }) => {
     citationRegions.forEach(({ head, body, tail }) => {
-      // Convert each segment into a Bounds object if it exists
+      // Process head.
       if (head) {
-        bounds.push({ pageNumber: page, polygon: flattenPolygon4(head) });
+        // Create a copy of the head polygon.
+        const modifiedHead = [...head];
+        // If body is missing, tail exists, and forceOverlap is true,
+        // extend the bottom edge of head to meet the tail.
+        if (forceOverlap && !body && tail) {
+          // For a Polygon4, the bottom edge y–values are at indices 5 and 7.
+          const headBottom = Math.max(modifiedHead[5], modifiedHead[7]);
+          // The tail's top edge y–values are at indices 1 and 3.
+          const tailTop = Math.min(tail[1], tail[3]);
+          // If the head's bottom is above the tail's top, extend it downward.
+          if (headBottom < tailTop) {
+            modifiedHead[5] = tailTop;
+            modifiedHead[7] = tailTop;
+          }
+        }
+        bounds.push({ pageNumber: page, polygon: modifiedHead });
       }
+
+      // Process body.
       if (body) {
-        bounds.push({ pageNumber: page, polygon: flattenPolygon4(body) });
+        // Create a copy of the body polygon.
+        const modifiedBody = [...body];
+
+        if (forceOverlap) {
+          // Adjust the top of the body relative to head.
+          if (head) {
+            // For a Polygon4, the head's bottom edge is at indices 5 and 7.
+            const headBottom = Math.max(head[5], head[7]);
+            // The top edge of the body is at indices 1 and 3.
+            const bodyTop = Math.min(modifiedBody[1], modifiedBody[3]);
+            if (headBottom < bodyTop) {
+              modifiedBody[1] = headBottom;
+              modifiedBody[3] = headBottom;
+            }
+          }
+          // Adjust the bottom of the body relative to tail.
+          if (tail) {
+            // The tail's top edge is at indices 1 and 3.
+            const tailTop = Math.min(tail[1], tail[3]);
+            // The bottom edge of the body is at indices 5 and 7.
+            const bodyBottom = Math.max(modifiedBody[5], modifiedBody[7]);
+            if (bodyBottom < tailTop) {
+              modifiedBody[5] = tailTop;
+              modifiedBody[7] = tailTop;
+            }
+          }
+        }
+        bounds.push({ pageNumber: page, polygon: modifiedBody });
       }
+
+      // Process tail.
       if (tail) {
         bounds.push({ pageNumber: page, polygon: flattenPolygon4(tail) });
       }
@@ -213,98 +137,66 @@ export function convertCitationRegionsToBounds(
   });
 
   return bounds;
-}
-
-// Simple matching
-// special cases:
-//  - case is irrelevant
-const match = (str0: string, str1: string) => {
-  // lower case
-  str0 = str0.toLocaleLowerCase();
-  str1 = str1.toLocaleLowerCase();
-
-  return str0 === str1;
 };
 
-// Given a docint response and reference text (array of words), find
-// the relevant BoundingRegions (per-word)
-const findBoundingRegions = (
-  text: string[],
-  response: DocumentIntelligenceResponse
-) => {
-  const pages = response.analyzeResult.pages;
-  let boundingRegions: Bounds[] = [];
-  let textIndex = 0;
-
-  for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-    const page = pages[pageIndex];
-    // let lineIndex = 0;
-    // const line = page.lines[lineIndex];
-    // let wordsInLine = line.content.split(' ');
-    for (let wordIndex = 0; wordIndex < page.words.length; wordIndex++) {
-      const word = page.words[wordIndex];
-      // if (matchArray(wordsInLine, text.slice(textIndex, textIndex + wordsInLine.length))) {
-      //   console.log("array equals succeeded for line", wordsInLine);
-      //   textIndex += wordsInLine.length;
-      //   boundingRegions.push({
-      //     pageNumber: pageIndex + 1,
-      //     polygon: line.polygon
-      //   });
-      //   if (textIndex == text.length) return boundingRegions;
-      // }
-
-      // Selection marks do not come back in the page.words and therefore do not have the bounds.
-      // selction marks are available in the paragraphs and lines but we don't currently use those fields.
-      // When we encounter a selection mark from the `text` array, we skip it and continue to the next word from the `text` array.
-      let currWord = text[textIndex];
-      while (currWord == ":unselected:" || currWord == ":selected:") {
-        textIndex++;
-        currWord = text[textIndex];
-        if (textIndex == text.length) return boundingRegions;
-      }
-      if (match(word.content, currWord)) {
-        textIndex++;
-        boundingRegions.push({
-          pageNumber: pageIndex + 1,
-          polygon: word.polygon,
-        });
-        if (textIndex == text.length) return boundingRegions;
-      } else {
-        if (textIndex != 0) {
-          // If the word doesn't match, and we thought we had found
-          // some part of the sentence, reset to the beginning and
-          // clear stored region data
-          textIndex = 0;
-          boundingRegions = [] as Bounds[];
-        }
-      }
-    }
-  }
-  return boundingRegions;
-};
-
+/**
+ * Extracts citation text polygons from a `DocIntResponse` (DI output),
+ * returning structured citation regions per page.
+ *
+ * This function:
+ *  - Finds the excerpt text within the document.
+ *  - Groups detected polygons by page.
+ *  - Constructs `CitationRegionsPerPage` objects with citation region polygons.
+ *  - Converts them into `Bounds`, applying `forceOverlap = true` for better highlighting experience.
+ *
+ * @param text - The citation text to locate within the document.
+ * @param di - The `DocumentIntelligenceResponse`, containing recognized text and polygon data.
+ * @returns An array of `Bounds`, each representing a citation region's bounding polygon
+ *   with an associated `pageNumber`. Returns an empty array if the text is not found.
+ */
 export const returnTextPolygonsFromDI = (
   text: string,
-  response: DocumentIntelligenceResponse
-) => {
-  const words = text.split(/\s+/); // split on all space characters
-  const foundBoundingRegions = findBoundingRegions(words, response);
-  const bounds = condenseRegions(foundBoundingRegions);
-  if (bounds.length === 0) {
-    console.log("NO MATCH:", words);
-    // what happens if we don't find any bounding regions?
-    // The question exists, the reference exists, the document exists, Document Intelligence just didn't do its job
-    return;
+  di: DocIntResponse
+): Bounds[] => {
+  // Attempt to find the excerpt in the document
+  const summary = excerptToSummary(text, di);
+
+  // If no excerpt or empty excerpt was found, return an empty array
+  if (!summary.excerpt || summary.excerpt.trim().length === 0) {
+    console.log("NO MATCH:", text);
+    return [];
   }
-  console.log("MATCH:", words);
-  return bounds;
+
+  console.log("MATCH:", text);
+
+  // Group polygons by page
+  // summary.polygons already splits the text by region (paragraph), so each
+  // `PolygonOnPage` is effectively a separate paragraph if the excerpt spans multiple paragraphs.
+  const map = new Map<number, PolygonC[]>();
+
+  for (const { polygon, page } of summary.polygons) {
+    if (!map.has(page)) {
+      map.set(page, []);
+    }
+    map.get(page)!.push(polygon);
+  }
+
+  // Transform into the CitationRegionsPerPage structure
+  const results: CitationRegionsPerPage[] = [];
+  for (const [page, citationRegions] of map.entries()) {
+    results.push({ page, citationRegions });
+  }
+
+  // Sort by page ascending
+  results.sort((a, b) => a.page - b.page);
+  return convertCitationRegionsToBounds(results, true);
 };
 
 // compares a bounding regions polygon to a reference polygon
 // both polys are assumed to be in the same column
 // returns:
 // - if poly is situated earlier in the page than refPoly
-// 0 if poly is sitatued within/about refPoly
+// 0 if poly is situated within/about refPoly
 // + if poly is situated later in the page than refPoly
 const comparePolygons = (poly: number[], refPoly: number[]) => {
   const x = [poly[0], poly[2]];
@@ -541,7 +433,7 @@ const getRelevantColumns = (columns: Column[], poly: number[]) => {
 
 // Given bounds and a doc int response, find the most likely excerpt text
 const findTextFromBoundingRegions = (
-  response: DocumentIntelligenceResponse,
+  response: DocIntResponse,
   bounds: Bounds[]
 ) => {
   const excerptWords = [];
@@ -599,7 +491,7 @@ const findTextFromBoundingRegions = (
 export function findUserSelection(
   pageNumber: number,
   range: Range,
-  response: DocumentIntelligenceResponse
+  response: DocIntResponse
 ) {
   let { top, left, bottom, right } = range.getBoundingClientRect();
   const multiplier = 72;

@@ -1,5 +1,5 @@
+import { Bounds, DocIntResponse } from "./di";
 import { SerializedRange } from "./Range";
-import { Bounds, DocumentIntelligenceResponse } from "./Utility";
 
 export type PseudoBoolean = undefined | true;
 
@@ -216,7 +216,7 @@ export interface FormDocument {
   pdfUrl: string;
   documentId: number;
   pages: number;
-  di: DocumentIntelligenceResponse;
+  di: DocIntResponse;
 }
 
 export interface Citation {

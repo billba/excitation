@@ -115,6 +115,7 @@ export interface Region {
   polygon: Polygon4;
   lineIndices: Range;
   wordIndices: Range;
+  paragraphIndex: number;
 }
 
 /**
@@ -147,12 +148,11 @@ export interface DocIntResponse {
 /**
  * Represents the results of DI.
  */
-interface AnalyzeResult {
+export interface AnalyzeResult {
   apiVersion: string;
   modelId: string;
   stringIndexType: string;
   content?: string;
-  delta?: number; // <- added by Preprocess.ts
   pages: Page[];
   tables: Table[];
   paragraphs: Paragraph[];
@@ -160,6 +160,16 @@ interface AnalyzeResult {
   contentFormat?: string;
   sections?: Section[];
   figures?: Figure[];
+}
+
+/**
+ * Represents a paragraph of text extracted from the document.
+ */
+export interface Paragraph {
+  spans: Span[];
+  boundingRegions: Bounds[];
+  role?: string;
+  content: string;
 }
 
 /**
@@ -188,16 +198,6 @@ interface Style {
   confidence: number;
   spans: Span[];
   isHandwritten: boolean;
-}
-
-/**
- * Represents a paragraph of text extracted from the document.
- */
-interface Paragraph {
-  spans: Span[];
-  boundingRegions: Bounds[];
-  role?: string;
-  content: string;
 }
 
 /**

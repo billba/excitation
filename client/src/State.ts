@@ -25,6 +25,7 @@ import {
   returnTextPolygonsFromDI,
 } from "./Utility";
 import { calculateRange } from "./Range";
+import { createPerPageRegions } from "./di/Preprocess";
 import { BlobClient } from "@azure/storage-blob";
 
 export function togglePseudoBoolean(pb: PseudoBoolean): PseudoBoolean {
@@ -116,6 +117,7 @@ export function useLoadForm(formId: number, questionIndex = 0) {
           doc.di = await (await fetch(doc.diUrl)).json();
         }
         doc.pages = doc.di.analyzeResult.pages.length;
+        createPerPageRegions(doc.di);
         docs.push(doc);
         docFromId[doc.documentId] = doc;
       }

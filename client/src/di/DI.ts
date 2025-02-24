@@ -189,20 +189,86 @@ export function rangeToSummary(
 }
 
 /**
- * Finds the first occurrence of an excerpt within the document and creates a `Summary` object.
+ * Searches the document's full content (`di.analyzeResult.content`) for a given `excerpt`.
  *
- * @param excerpt - The target text snippet to search for.
- * @param di - The document interpretation response containing the text analysis.
- * @returns A `Summary` object containing the first occurrence of the excerpt.
+ * - If found, maps the character offsets to `[pageIndex, wordIndex]` and returns a summarized excerpt.
+ * - If not found or if offsets cannot be mapped, returns an empty `Summary`.
  *
- * - If the excerpt is not found, an empty `Summary` is returned.
- * - The search considers whitespace-separated words.
+ * @param excerpt - The text snippet to search for.
+ * @param di - The document interpretation response containing analyzed text.
+ * @returns A `Summary` object containing the located excerpt, or an empty `Summary` if not found.
  */
-export function excerptToSummary(excerpt: string, di: DocIntResponse): Summary {
-  if (!excerpt || excerpt == "" || excerpt.length <= 1) return {} as Summary;
-  console.log(`excerptToSummary | seeking '${excerpt}'`);
+function offsetBasedExcerpt(excerpt: string, di: DocIntResponse): Summary {
+  const fullText = di.analyzeResult?.content;
+  if (!fullText) return {} as Summary;
 
-  const excerpts = excerpt.split(/\s+/); // all whitespace characters
+  // Locate the excerpt in the full text
+  const offset = fullText.indexOf(excerpt);
+  if (offset === -1) {
+    console.log("offsetBasedExcerpt | excerpt not found in content");
+    return {} as Summary;
+  }
+
+  // Map start and end positions to word indices
+  const startOffset = offset;
+  const endOffset = offset + excerpt.length - 1;
+
+  const startLoc = findWordByOffset(startOffset, di);
+  if (!startLoc) {
+    console.log("offsetBasedExcerpt | could not map start offset to word");
+    return {} as Summary;
+  }
+  const endLoc = findWordByOffset(endOffset, di);
+  if (!endLoc) {
+    console.log("offsetBasedExcerpt | could not map end offset to word");
+    return {} as Summary;
+  }
+
+  const [startPage, startWord] = startLoc;
+  const [endPage, endWord] = endLoc;
+  return createSummary([startPage, endPage], [startWord, endWord], di);
+}
+
+/**
+ * Maps a character offset within the document's text to a `[pageIndex, wordIndex]` location.
+ *
+ * - Iterates through document pages and searches for a word containing the given offset.
+ * - Returns the first matching `[pageIndex, wordIndex]`, or `null` if no match is found.
+ *
+ * @param offset - The character offset to map.
+ * @param di - The document interpretation response containing analyzed text.
+ * @returns A tuple `[pageIndex, wordIndex]` if found, otherwise `null`.
+ */
+function findWordByOffset(
+  offset: number,
+  di: DocIntResponse
+): [number, number] | null {
+  const pages = di.analyzeResult.pages ?? [];
+  for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+    const page = pages[pageIndex];
+    if (!page.words || page.words.length === 0) continue;
+
+    const match = offsetSearch(page.words, [offset, offset]);
+    if (match) {
+      return [pageIndex, match[0]];
+    }
+  }
+  return null;
+}
+
+/**
+ * Searches for an excerpt by splitting it into individual words and scanning the document.
+ *
+ * - Matches the excerpt sequentially across pages and words.
+ * - If found, maps its position to `[pageIndex, wordIndex]` and returns a `Summary`.
+ * - If the excerpt is not found, returns an empty `Summary`.
+ *
+ * @param excerpt - The text snippet to search for.
+ * @param di - The document interpretation response containing analyzed text.
+ * @returns A `Summary` object containing the located excerpt, or an empty `Summary` if not found.
+ */
+function wordSplitExcerpt(excerpt: string, di: DocIntResponse): Summary {
+  const excerpts = excerpt.split(/\s+/); // whitespace
   let currentWord = 0;
 
   for (
@@ -211,32 +277,37 @@ export function excerptToSummary(excerpt: string, di: DocIntResponse): Summary {
     pageIndex++
   ) {
     const page = di.analyzeResult.pages[pageIndex];
+    if (!page.words) continue;
 
-    for (let index = 0; index < page.words.length; index++) {
-      // if this matches our current word, we can start looking for the next one
-      if (page.words[index].content == excerpts[currentWord]) currentWord++;
-      // if it doesn't match, and we thought we had some of our excerpt, reset
-      else if (currentWord > 0) currentWord = 0;
+    for (let wordIndex = 0; wordIndex < page.words.length; wordIndex++) {
+      if (page.words[wordIndex].content === excerpts[currentWord]) {
+        currentWord++;
+      } else if (currentWord > 0) {
+        // Reset progress on mismatch
+        currentWord = 0;
+      }
 
-      // if we've got the whole excerpt, it's time to make the summary
-      if (currentWord == excerpts.length) {
-        // if the excerpt uses less words than the current index, it's all on the
-        // same page. otherwise, it started on last page (please be true)
-        if (index >= excerpts.length - 1)
+      // If the entire excerpt has been matched
+      if (currentWord === excerpts.length) {
+        const offsetCount = excerpts.length - 1;
+        if (wordIndex >= offsetCount) {
+          // Entire excerpt found within a single page
           return createSummary(
             [pageIndex, pageIndex],
-            [index - (excerpts.length - 1), index],
+            [wordIndex - offsetCount, wordIndex],
             di
           );
-        else {
-          const wordsOnPrevPage = excerpts.length - (index + 1);
-          const startIndex =
-            di.analyzeResult.pages[pageIndex - 1].words.length -
-            wordsOnPrevPage;
+        } else {
+          // Excerpt might have started on the previous page
+          const prevPage = pageIndex - 1;
+          if (prevPage < 0) return {} as Summary; // Invalid case
 
+          const wordsOnPrevPage = excerpts.length - (wordIndex + 1);
+          const startIndex =
+            di.analyzeResult.pages[prevPage].words.length - wordsOnPrevPage;
           return createSummary(
-            [pageIndex - 1, pageIndex],
-            [startIndex, index],
+            [prevPage, pageIndex],
+            [startIndex, wordIndex],
             di
           );
         }
@@ -244,4 +315,39 @@ export function excerptToSummary(excerpt: string, di: DocIntResponse): Summary {
     }
   }
   return {} as Summary;
+}
+
+/**
+ * Finds the first occurrence of an excerpt within the document and creates a `Summary` object.
+ *
+ * - First attempts an offset-based search (`offsetBasedExcerpt`).
+ * - If unsuccessful, falls back to a word-based search (`wordSplitExcerpt`).
+ * - The search considers whitespace-separated words.
+ *
+ * @param excerpt - The text snippet to search for.
+ * @param di - The document interpretation response containing analyzed text.
+ * @returns A `Summary` object containing the first occurrence of the excerpt, or an empty `Summary` if not found.
+ */
+export function excerptToSummary(excerpt: string, di: DocIntResponse): Summary {
+  if (!excerpt || excerpt.trim().length < 2) return {} as Summary;
+
+  console.log(`excerptToSummary | seeking '${excerpt}'`);
+
+  // Attempt offset-based search
+  if (di.analyzeResult?.content) {
+    const offsetSummary = offsetBasedExcerpt(excerpt, di);
+    if (offsetSummary.excerpt) {
+      return offsetSummary;
+    }
+    console.log(
+      "excerptToSummary | offset-based approach did not find excerpt. Falling back..."
+    );
+  } else {
+    console.log(
+      "excerptToSummary | no overall content. Using word-splitting approach."
+    );
+  }
+
+  // Fallback to word-based search
+  return wordSplitExcerpt(excerpt, di);
 }
