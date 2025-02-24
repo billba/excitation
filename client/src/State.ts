@@ -93,7 +93,8 @@ export function useLoadForm(formId: number, questionIndex = 0) {
         ) {
           const diParams = new URLSearchParams();
           diParams.append("url", doc.diUrl);
-          const diGenerateSasUrl = `${apiUrl}/blob-sas-url/?${diParams.toString()}`;
+          const diGenerateSasUrl =
+            `${apiUrl}/blob-sas-url/?${diParams.toString()}`;
           const diSasUrl = await (await fetch(diGenerateSasUrl)).json();
 
           const blobClient = new BlobClient(diSasUrl);
@@ -103,7 +104,8 @@ export function useLoadForm(formId: number, questionIndex = 0) {
 
           const pdfParams = new URLSearchParams();
           pdfParams.append("url", doc.pdfUrl);
-          const pdfGenerateSasUrl = `${apiUrl}/blob-sas-url/?${pdfParams.toString()}`;
+          const pdfGenerateSasUrl =
+            `${apiUrl}/blob-sas-url/?${pdfParams.toString()}`;
           doc.pdfUrl = await (await fetch(pdfGenerateSasUrl)).json();
           doc.di = {
             analyzeResult,
@@ -329,384 +331,381 @@ const stateAtom = atom<State, [Action], void>(
           action.type === "asyncRevert"
             ? (prevState.asyncState as AsyncErrorState).prevState
             : create(prevState, (state) => {
-                const { metadata, questions, ux, asyncState } = state;
-                const { isAsyncing } = asyncHelpers(asyncState);
+              const { metadata, questions, ux, asyncState } = state;
+              const { isAsyncing } = asyncHelpers(asyncState);
 
-                function goto(pageNumber?: number, documentId?: number) {
-                  console.assert(ux.documentId !== undefined);
-                  ux.range = undefined;
-                  ux.pageNumber =
-                    pageNumber ?? firstCitedPage(documentId!) ?? 1;
+              function goto(pageNumber?: number, documentId?: number) {
+                console.assert(ux.documentId !== undefined);
+                ux.range = undefined;
+                ux.pageNumber =
+                  pageNumber ?? firstCitedPage(documentId!) ?? 1;
 
+                if (
+                  documentId === undefined ||
+                  documentId === ux.documentId
+                ) {
                   if (
-                    documentId === undefined ||
-                    documentId === ux.documentId
-                  ) {
-                    if (
-                      ux.selectedCitation?.citationHighlights.find(
-                        (ch) => ch.pageNumber === pageNumber
-                      )
+                    ux.selectedCitation?.citationHighlights.find(
+                      (ch) => ch.pageNumber === pageNumber
                     )
-                      return;
-                  } else {
-                    ux.documentId = documentId;
-                  }
-
-                  ux.selectedCitation = undefined;
+                  )
+                    return;
+                } else {
+                  ux.documentId = documentId;
                 }
 
-                function setAsync({
+                ux.selectedCitation = undefined;
+              }
+
+              function setAsync({
+                event,
+                onError,
+              }: {
+                event: Event;
+                onError: Action;
+              }) {
+                state.asyncState = {
+                  status: "pending",
+                  prevState,
                   event,
                   onError,
-                }: {
-                  event: Event;
-                  onError: Action;
-                }) {
-                  state.asyncState = {
-                    status: "pending",
-                    prevState,
-                    event,
-                    onError,
-                  };
+                };
+              }
+
+              function firstCitedPage(
+                documentId: number
+              ): number | undefined {
+                return questions[ux.questionIndex].citations
+                  .filter(
+                    (citation) =>
+                      citation.documentId === documentId && citation.bounds
+                  )
+                  .flatMap(({ bounds }) =>
+                    bounds!.map(({ pageNumber }) => pageNumber)
+                  )
+                  .sort()[0];
+              }
+
+              function selectCitation(
+                citationIndex?: number,
+                reviewCitations?: true
+              ) {
+                if (citationIndex == undefined) {
+                  ux.selectedCitation = undefined;
+                  return;
                 }
 
-                function firstCitedPage(
-                  documentId: number
-                ): number | undefined {
-                  return questions[ux.questionIndex].citations
-                    .filter(
-                      (citation) =>
-                        citation.documentId === documentId && citation.bounds
-                    )
-                    .flatMap(({ bounds }) =>
-                      bounds!.map(({ pageNumber }) => pageNumber)
-                    )
-                    .sort()[0];
+                const citation =
+                  questions[ux.questionIndex].citations[citationIndex];
+                const citationHighlights = citationHighlightsFor(citation);
+
+                if (citationHighlights.length == 0) {
+                  ux.selectedCitation = undefined;
+                  return;
                 }
 
-                function selectCitation(
-                  citationIndex?: number,
-                  reviewCitations?: true
-                ) {
-                  if (citationIndex == undefined) {
-                    ux.selectedCitation = undefined;
-                    return;
-                  }
+                ux.documentId = citation.documentId;
+                ux.pageNumber = citationHighlights[0].pageNumber;
+                ux.selectedCitation = {
+                  citationIndex,
+                  citationHighlights,
+                };
+
+                if (reviewCitations) ux.largeAnswerPanel = undefined;
+              }
+
+              function selectQuestion(questionIndex: number) {
+                ux.questionIndex = questionIndex;
+                selectUnreviewedCitation();
+                ux.largeAnswerPanel =
+                  questions[questionIndex].answer === undefined
+                    ? undefined
+                    : true;
+              }
+
+              function selectUnreviewedCitation() {
+                const citationIndex = indexOfNextUnreviewedCitation(
+                  questions[ux.questionIndex].citations,
+                  ux.documentId,
+                  ux.pageNumber
+                );
+
+                if (citationIndex != undefined) {
+                  selectCitation(citationIndex);
+                } else {
+                  ux.selectedCitation = undefined;
+                }
+              }
+
+              switch (action.type) {
+                case "selectCitation": {
+                  selectCitation(action.citationIndex, action.reviewCitation);
+                  break;
+                }
+
+                case "prevQuestion":
+                  selectQuestion(ux.questionIndex - 1);
+                  break;
+
+                case "nextQuestion":
+                  selectQuestion(ux.questionIndex + 1);
+                  break;
+
+                case "gotoQuestion":
+                  selectQuestion(action.questionIndex);
+                  break;
+
+                case "prevPage":
+                  goto(ux.pageNumber! - 1);
+                  break;
+
+                case "nextPage":
+                  goto(ux.pageNumber! + 1);
+                  break;
+
+                case "goto":
+                  goto(action.pageNumber, action.documentId);
+                  break;
+
+                case "setSelectedText":
+                  ux.range = action.range;
+                  break;
+
+                case "setViewerSize": {
+                  const { width, height } = action;
+                  state.viewer = { width, height };
+                  break;
+                }
+
+                case "emptyTextLayer": {
+                  const { isTextLayerEmpty } = action;
+                  state.isTextLayerEmpty = isTextLayerEmpty;
+                  break;
+                }
+
+                case "addSelection": {
+                  console.assert(!isAsyncing);
+                  console.assert(ux.range !== undefined);
+                  console.assert(ux.documentId !== undefined);
+                  const realRange = calculateRange(ux.range);
+                  console.assert(realRange !== undefined);
+
+                  const { excerpt, bounds } = findUserSelection(
+                    ux.pageNumber!,
+                    realRange!,
+                    docFromId[ux.documentId!].di
+                  );
+
+                  const citationId = createCitationId(metadata.formId, "client");
+
+                  selectCitation(
+                    questions[ux.questionIndex].citations.push({
+                      documentId: ux.documentId!,
+                      citationId: citationId,
+                      bounds,
+                      excerpt,
+                      review: Review.Unreviewed,
+                    }) - 1
+                  );
+
+                  setAsync({
+                    event: {
+                      type: "addCitation",
+                      formId: metadata.formId,
+                      questionId: questions[ux.questionIndex].questionId,
+                      documentId: ux.documentId!,
+                      citationId: citationId,
+                      excerpt,
+                      bounds,
+                      review: Review.Approved,
+                      creator: "client",
+                    },
+                    onError: {
+                      type: "errorAddSelection",
+                      questionIndex: ux.questionIndex,
+                    },
+                  });
+                  break;
+                }
+
+                case "errorAddSelection": {
+                  selectCitation(
+                    questions[ux.questionIndex].citations.length - 1
+                  );
+                  break;
+                }
+
+                case "reviewCitation": {
+                  console.assert(!isAsyncing);
+                  const { review, citationIndex } = action;
 
                   const citation =
                     questions[ux.questionIndex].citations[citationIndex];
-                  const citationHighlights = citationHighlightsFor(citation);
+                  citation.review = review;
 
-                  if (citationHighlights.length == 0) {
-                    ux.selectedCitation = undefined;
-                    return;
-                  }
-
-                  ux.documentId = citation.documentId;
-                  ux.pageNumber = citationHighlights[0].pageNumber;
-                  ux.selectedCitation = {
-                    citationIndex,
-                    citationHighlights,
-                  };
-
-                  if (reviewCitations) ux.largeAnswerPanel = undefined;
-                }
-
-                function selectQuestion(questionIndex: number) {
-                  ux.questionIndex = questionIndex;
-                  selectUnreviewedCitation();
-                  ux.largeAnswerPanel =
-                    questions[questionIndex].answer === undefined
-                      ? undefined
-                      : true;
-                }
-
-                function selectUnreviewedCitation() {
-                  const citationIndex = indexOfNextUnreviewedCitation(
-                    questions[ux.questionIndex].citations,
-                    ux.documentId,
-                    ux.pageNumber
-                  );
-
-                  if (citationIndex != undefined) {
-                    selectCitation(citationIndex);
+                  if (ux.selectedCitation?.citationIndex === citationIndex) {
+                    // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
+                    // if (review! != Review.Unreviewed) {
+                    //   selectUnreviewedCitation();
+                    // }
                   } else {
-                    ux.selectedCitation = undefined;
+                    selectCitation(citationIndex);
                   }
+
+                  setAsync({
+                    event: {
+                      type: "updateReview",
+                      citationId: citation.citationId,
+                      review,
+                      creator: "client",
+                    },
+                    onError: {
+                      type: "errorReviewCitation",
+                      questionIndex: ux.questionIndex,
+                      citationIndex,
+                    },
+                  });
+                  break;
                 }
 
-                switch (action.type) {
-                  case "selectCitation": {
-                    selectCitation(action.citationIndex, action.reviewCitation);
-                    break;
-                  }
+                case "errorReviewCitation":
+                  ux.questionIndex = action.questionIndex;
+                  selectCitation(action.citationIndex);
+                  break;
 
-                  case "prevQuestion":
-                    selectQuestion(ux.questionIndex - 1);
-                    break;
+                case "contractAnswerPanel":
+                  ux.largeAnswerPanel = undefined;
+                  break;
 
-                  case "nextQuestion":
-                    selectQuestion(ux.questionIndex + 1);
-                    break;
+                case "expandAnswerPanel":
+                  ux.largeAnswerPanel = true;
+                  break;
 
-                  case "gotoQuestion":
-                    selectQuestion(action.questionIndex);
-                    break;
+                case "startEditExcerpt":
+                  console.assert(!isAsyncing);
+                  console.assert(ux.selectedCitation !== undefined);
+                  ux.selectedCitation!.editing = true;
+                  break;
 
-                  case "prevPage":
-                    goto(ux.pageNumber! - 1);
-                    break;
+                case "updateExcerpt": {
+                  console.assert(!isAsyncing);
+                  console.assert(ux.selectedCitation !== undefined);
+                  console.assert(ux.selectedCitation?.editing !== undefined);
+                  ux.selectedCitation!.editing = undefined;
 
-                  case "nextPage":
-                    goto(ux.pageNumber! + 1);
-                    break;
+                  const { excerpt } = action;
+                  const { citationIndex } = ux.selectedCitation!;
 
-                  case "goto":
-                    goto(action.pageNumber, action.documentId);
-                    break;
+                  const citation =
+                    questions[ux.questionIndex].citations[citationIndex];
 
-                  case "setSelectedText":
-                    ux.range = action.range;
-                    break;
+                  if (citation.excerpt === excerpt) return;
 
-                  case "setViewerSize": {
-                    const { width, height } = action;
-                    state.viewer = { width, height };
-                    break;
-                  }
+                  citation.excerpt = excerpt;
 
-                  case "emptyTextLayer": {
-                    const { isTextLayerEmpty } = action;
-                    state.isTextLayerEmpty = isTextLayerEmpty;
-                    break;
-                  }
-
-                  case "addSelection": {
-                    console.assert(!isAsyncing);
-                    console.assert(ux.range !== undefined);
-                    console.assert(ux.documentId !== undefined);
-                    const realRange = calculateRange(ux.range);
-                    console.assert(realRange !== undefined);
-
-                    const { excerpt, bounds } = findUserSelection(
-                      ux.pageNumber!,
-                      realRange!,
-                      docFromId[ux.documentId!].di
-                    );
-
-                    const citationId = createCitationId(
-                      metadata.formId,
-                      "client"
-                    );
-
-                    selectCitation(
-                      questions[ux.questionIndex].citations.push({
-                        documentId: ux.documentId!,
-                        citationId: citationId,
-                        bounds,
-                        excerpt,
-                        review: Review.Unreviewed,
-                      }) - 1
-                    );
-
-                    setAsync({
-                      event: {
-                        type: "addCitation",
-                        formId: metadata.formId,
-                        questionId: questions[ux.questionIndex].questionId,
-                        documentId: ux.documentId!,
-                        citationId: citationId,
-                        excerpt,
-                        bounds,
-                        review: Review.Approved,
-                        creator: "client",
-                      },
-                      onError: {
-                        type: "errorAddSelection",
-                        questionIndex: ux.questionIndex,
-                      },
-                    });
-                    break;
-                  }
-
-                  case "errorAddSelection": {
-                    selectCitation(
-                      questions[ux.questionIndex].citations.length - 1
-                    );
-                    break;
-                  }
-
-                  case "reviewCitation": {
-                    console.assert(!isAsyncing);
-                    const { review, citationIndex } = action;
-
-                    const citation =
-                      questions[ux.questionIndex].citations[citationIndex];
-                    citation.review = review;
-
-                    if (ux.selectedCitation?.citationIndex === citationIndex) {
-                      // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
-                      // if (review! != Review.Unreviewed) {
-                      //   selectUnreviewedCitation();
-                      // }
-                    } else {
-                      selectCitation(citationIndex);
-                    }
-
-                    setAsync({
-                      event: {
-                        type: "updateReview",
-                        citationId: citation.citationId,
-                        review,
-                        creator: "client",
-                      },
-                      onError: {
-                        type: "errorReviewCitation",
-                        questionIndex: ux.questionIndex,
-                        citationIndex,
-                      },
-                    });
-                    break;
-                  }
-
-                  case "errorReviewCitation":
-                    ux.questionIndex = action.questionIndex;
-                    selectCitation(action.citationIndex);
-                    break;
-
-                  case "contractAnswerPanel":
-                    ux.largeAnswerPanel = undefined;
-                    break;
-
-                  case "expandAnswerPanel":
-                    ux.largeAnswerPanel = true;
-                    break;
-
-                  case "startEditExcerpt":
-                    console.assert(!isAsyncing);
-                    console.assert(ux.selectedCitation !== undefined);
-                    ux.selectedCitation!.editing = true;
-                    break;
-
-                  case "updateExcerpt": {
-                    console.assert(!isAsyncing);
-                    console.assert(ux.selectedCitation !== undefined);
-                    console.assert(ux.selectedCitation?.editing !== undefined);
-                    ux.selectedCitation!.editing = undefined;
-
-                    const { excerpt } = action;
-                    const { citationIndex } = ux.selectedCitation!;
-
-                    const citation =
-                      questions[ux.questionIndex].citations[citationIndex];
-
-                    if (citation.excerpt === excerpt) return;
-
-                    citation.excerpt = excerpt;
-
-                    setAsync({
-                      event: {
-                        type: "updateExcerpt",
-                        citationId: citation.citationId,
-                        excerpt,
-                        creator: "client",
-                      },
-                      onError: {
-                        type: "errorUpdateExcerpt",
-                        questionIndex: ux.questionIndex,
-                        citationIndex,
-                      },
-                    });
-                    break;
-                  }
-
-                  case "errorUpdateExcerpt":
-                    ux.questionIndex = action.questionIndex;
-                    selectCitation(action.citationIndex);
-                    break;
-
-                  case "cancelEditExcerpt":
-                    console.assert(!isAsyncing);
-                    console.assert(ux.selectedCitation?.editing !== undefined);
-                    ux.selectedCitation!.editing = undefined;
-                    break;
-
-                  case "updateAnswer": {
-                    console.assert(!isAsyncing);
-
-                    const { answer } = action;
-
-                    const question = questions[ux.questionIndex];
-
-                    if (question.answer === answer) return;
-
-                    question.answer = answer;
-
-                    setAsync({
-                      event: {
-                        type: "updateAnswer",
-                        formId: metadata.formId,
-                        questionId: question.questionId,
-                        answer,
-                        creator: "client",
-                      },
-                      onError: {
-                        type: "errorUpdateAnswer",
-                        questionIndex: ux.questionIndex,
-                      },
-                    });
-                    break;
-                  }
-
-                  case "errorUpdateAnswer":
-                    ux.questionIndex = action.questionIndex;
-                    break;
-
-                  case "asyncLoading":
-                    console.assert(asyncState.status === "pending");
-                    asyncState.status = "loading";
-                    break;
-
-                  case "asyncSuccess": {
-                    console.assert(asyncState.status === "loading");
-                    const { uxAtError } =
-                      asyncState as unknown as AsyncSuccessState;
-                    console.log("async success", uxAtError);
-                    if (uxAtError) {
-                      state.ux = uxAtError;
-                    }
-
-                    state.asyncState = {
-                      status: "idle",
-                    };
-                    break;
-                  }
-
-                  case "asyncError": {
-                    console.assert(asyncState.status === "loading");
-                    const { error } = action;
-                    asyncState.status = "error";
-                    (asyncState as AsyncErrorState).error = error;
-                    (asyncState as AsyncErrorState).uxAtError = ux;
-                    break;
-                  }
-
-                  case "asyncRetry": {
-                    console.assert(asyncState.status === "error");
-                    asyncState.status = "pending";
-                    break;
-                  }
-
-                  // case "asyncRevert":
-                  // here we need to assign the entire state to the ux.prevstate
-                  // we can't do that inside the 'create' function (which is just about
-                  // making changes *within* the state, so we do it at the top of the function
-
-                  default:
-                    console.log("unhandled action", action);
-                    break;
+                  setAsync({
+                    event: {
+                      type: "updateExcerpt",
+                      citationId: citation.citationId,
+                      excerpt,
+                      creator: "client",
+                    },
+                    onError: {
+                      type: "errorUpdateExcerpt",
+                      questionIndex: ux.questionIndex,
+                      citationIndex,
+                    },
+                  });
+                  break;
                 }
-              });
+
+                case "errorUpdateExcerpt":
+                  ux.questionIndex = action.questionIndex;
+                  selectCitation(action.citationIndex);
+                  break;
+
+                case "cancelEditExcerpt":
+                  console.assert(!isAsyncing);
+                  console.assert(ux.selectedCitation?.editing !== undefined);
+                  ux.selectedCitation!.editing = undefined;
+                  break;
+
+                case "updateAnswer": {
+                  console.assert(!isAsyncing);
+
+                  const { answer } = action;
+
+                  const question = questions[ux.questionIndex];
+
+                  if (question.answer === answer) return;
+
+                  question.answer = answer;
+
+                  setAsync({
+                    event: {
+                      type: "updateAnswer",
+                      formId: metadata.formId,
+                      questionId: question.questionId,
+                      answer,
+                      creator: "client",
+                    },
+                    onError: {
+                      type: "errorUpdateAnswer",
+                      questionIndex: ux.questionIndex,
+                    },
+                  });
+                  break;
+                }
+
+                case "errorUpdateAnswer":
+                  ux.questionIndex = action.questionIndex;
+                  break;
+
+                case "asyncLoading":
+                  console.assert(asyncState.status === "pending");
+                  asyncState.status = "loading";
+                  break;
+
+                case "asyncSuccess": {
+                  console.assert(asyncState.status === "loading");
+                  const { uxAtError } =
+                    asyncState as unknown as AsyncSuccessState;
+                  console.log("async success", uxAtError);
+                  if (uxAtError) {
+                    state.ux = uxAtError;
+                  }
+
+                  state.asyncState = {
+                    status: "idle",
+                  };
+                  break;
+                }
+
+                case "asyncError": {
+                  console.assert(asyncState.status === "loading");
+                  const { error } = action;
+                  asyncState.status = "error";
+                  (asyncState as AsyncErrorState).error = error;
+                  (asyncState as AsyncErrorState).uxAtError = ux;
+                  break;
+                }
+
+                case "asyncRetry": {
+                  console.assert(asyncState.status === "error");
+                  asyncState.status = "pending";
+                  break;
+                }
+
+                // case "asyncRevert":
+                // here we need to assign the entire state to the ux.prevstate
+                // we can't do that inside the 'create' function (which is just about
+                // making changes *within* the state, so we do it at the top of the function
+
+                default:
+                  console.log("unhandled action", action);
+                  break;
+              }
+            });
         break;
     }
 

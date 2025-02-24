@@ -99,8 +99,8 @@ export function createPerPageRegions(di: DocIntResponse) {
 
   for (const page of pages) {
     const pageNumber = page.pageNumber;
-    const lines = page.lines || [];
-    const words = page.words || [];
+    const lines = page.lines ?? [];
+    const words = page.words ?? [];
 
     // Build up an array of Region objects
     const regions: Region[] = [];
@@ -111,8 +111,8 @@ export function createPerPageRegions(di: DocIntResponse) {
     );
 
     // Filter paragraphs that mention this page
-    const paragraphsInThisPage = paragraphPairs.filter(([para]) =>
-      para.boundingRegions.some((br) => br.pageNumber === pageNumber)
+    const paragraphsInThisPage = paragraphPairs.filter(
+      ([{ boundingRegions }]) => boundingRegions.some((br) => br.pageNumber === pageNumber)
     );
 
     // For each paragraph on this page, compute its region

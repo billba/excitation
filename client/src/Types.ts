@@ -5,137 +5,137 @@ export type PseudoBoolean = undefined | true;
 
 export type Action =
   | {
-      type: "loadForm";
-    }
+    type: "loadForm";
+  }
   | {
-      type: "loadFormError";
-      error: string;
-    }
+    type: "loadFormError";
+    error: string;
+  }
   | {
-      type: "loadFormSuccess";
-      form: Form;
-      questionIndex: number;
-      docs: FormDocument[];
-    }
+    type: "loadFormSuccess";
+    form: Form;
+    questionIndex: number;
+    docs: FormDocument[];
+  }
   | {
-      type: "toggleQuestionPanel";
-    }
+    type: "toggleQuestionPanel";
+  }
   | {
-      type: "contractAnswerPanel";
-    }
+    type: "contractAnswerPanel";
+  }
   | {
-      type: "expandAnswerPanel";
-    }
+    type: "expandAnswerPanel";
+  }
   | {
-      type: "selectCitation";
-      citationIndex?: number;
-      reviewCitation?: true;
-    }
+    type: "selectCitation";
+    citationIndex?: number;
+    reviewCitation?: true;
+  }
   | {
-      type: "gotoQuestion";
-      questionIndex: number;
-    }
+    type: "gotoQuestion";
+    questionIndex: number;
+  }
   | {
-      type: "prevQuestion";
-    }
+    type: "prevQuestion";
+  }
   | {
-      type: "nextQuestion";
-    }
+    type: "nextQuestion";
+  }
   | {
-      type: "prevPage";
-    }
+    type: "prevPage";
+  }
   | {
-      type: "nextPage";
-    }
+    type: "nextPage";
+  }
   | {
-      type: "goto";
-      documentId?: number;
-      pageNumber?: number;
-    }
+    type: "goto";
+    documentId?: number;
+    pageNumber?: number;
+  }
   | {
-      type: "setSelectedText";
-      range?: SerializedRange;
-    }
+    type: "setSelectedText";
+    range?: SerializedRange;
+  }
   | {
-      type: "setViewerSize";
-      width: number;
-      height: number;
-    }
+    type: "setViewerSize";
+    width: number;
+    height: number;
+  }
   | {
-      type: "emptyTextLayer";
-      isTextLayerEmpty: boolean;
-    }
+    type: "emptyTextLayer";
+    isTextLayerEmpty: boolean;
+  }
   | {
-      type: "addSelection";
-    }
+    type: "addSelection";
+  }
   | {
-      type: "errorAddSelection";
-      questionIndex: number;
-    }
+    type: "errorAddSelection";
+    questionIndex: number;
+  }
   | {
-      type: "reviewCitation";
-      citationIndex: number;
-      review: Review;
-    }
+    type: "reviewCitation";
+    citationIndex: number;
+    review: Review;
+  }
   | {
-      type: "errorReviewCitation";
-      questionIndex: number;
-      citationIndex: number;
-    }
+    type: "errorReviewCitation";
+    questionIndex: number;
+    citationIndex: number;
+  }
   | {
-      type: "startEditExcerpt";
-    }
+    type: "startEditExcerpt";
+  }
   | {
-      type: "cancelEditExcerpt";
-    }
+    type: "cancelEditExcerpt";
+  }
   | {
-      type: "updateExcerpt";
-      excerpt: string;
-    }
+    type: "updateExcerpt";
+    excerpt: string;
+  }
   | {
-      type: "errorUpdateExcerpt";
-      questionIndex: number;
-      citationIndex: number;
-    }
+    type: "errorUpdateExcerpt";
+    questionIndex: number;
+    citationIndex: number;
+  }
   | {
-      type: "updateAnswer";
-      answer: string;
-    }
+    type: "updateAnswer";
+    answer: string;
+  }
   | {
-      type: "errorUpdateAnswer";
-      questionIndex: number;
-    }
+    type: "errorUpdateAnswer";
+    questionIndex: number;
+  }
   | {
-      type: "startEditExcerpt";
-    }
+    type: "startEditExcerpt";
+  }
   | {
-      type: "cancelEditExcerpt";
-    }
+    type: "cancelEditExcerpt";
+  }
   | {
-      type: "updateExcerpt";
-      excerpt: string;
-    }
+    type: "updateExcerpt";
+    excerpt: string;
+  }
   | {
-      type: "errorUpdateExcerpt";
-      questionIndex: number;
-      citationIndex: number;
-    }
+    type: "errorUpdateExcerpt";
+    questionIndex: number;
+    citationIndex: number;
+  }
   | {
-      type: "asyncLoading";
-    }
+    type: "asyncLoading";
+  }
   | {
-      type: "asyncSuccess";
-    }
+    type: "asyncSuccess";
+  }
   | {
-      type: "asyncError";
-      error: string;
-    }
+    type: "asyncError";
+    error: string;
+  }
   | {
-      type: "asyncRetry";
-    }
+    type: "asyncRetry";
+  }
   | {
-      type: "asyncRevert";
-    };
+    type: "asyncRevert";
+  };
 
 export type AsyncIdleState = {
   status: "idle";
@@ -266,51 +266,51 @@ export type LoadedState = {
 
 export type State =
   | {
-      formStatus: FormStatus.None;
-    }
+    formStatus: FormStatus.None;
+  }
   | {
-      formStatus: FormStatus.Loading;
-    }
+    formStatus: FormStatus.Loading;
+  }
   | {
-      formStatus: FormStatus.Error;
-      error: string;
-    }
+    formStatus: FormStatus.Error;
+    error: string;
+  }
   | LoadedState;
 
 export type Event =
   | {
-      type: "addCitation";
-      formId: number;
-      questionId: number;
-      documentId: number;
-      citationId: string;
-      excerpt: string;
-      bounds: Bounds[];
-      review: Review;
-      creator: string;
-    }
+    type: "addCitation";
+    formId: number;
+    questionId: number;
+    documentId: number;
+    citationId: string;
+    excerpt: string;
+    bounds: Bounds[];
+    review: Review;
+    creator: string;
+  }
   | {
-      type: "updateReview";
-      citationId: string;
-      review: Review;
-      creator: string;
-    }
+    type: "updateReview";
+    citationId: string;
+    review: Review;
+    creator: string;
+  }
   | {
-      type: "updateExcerpt";
-      citationId: string;
-      excerpt: string;
-      creator: string;
-    }
+    type: "updateExcerpt";
+    citationId: string;
+    excerpt: string;
+    creator: string;
+  }
   | {
-      type: "updateAnswer";
-      formId: number;
-      questionId: number;
-      answer: string;
-      creator: string;
-    }
+    type: "updateAnswer";
+    formId: number;
+    questionId: number;
+    answer: string;
+    creator: string;
+  }
   | {
-      type: "updateBounds";
-      citationId: string;
-      bounds: Bounds[];
-      creator: string;
-    };
+    type: "updateBounds";
+    citationId: string;
+    bounds: Bounds[];
+    creator: string;
+  };
