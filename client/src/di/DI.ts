@@ -1,4 +1,5 @@
 import {
+  Bounds,
   CursorRange,
   DocIntResponse,
   Page,
@@ -6,90 +7,17 @@ import {
   Polygon4,
   PolygonOnPage,
   Range,
-  Region,
   Summary,
+  Word,
 } from "./Types";
 import {
   comparePointToPolygon,
   comparePoints,
   combinePolygons,
+  flattenPolygon4,
+  isSameOrAdjacentParagraph,
 } from "./Utility";
 import { offsetSearch } from "./OffsetSearch";
-
-/**
- * Finds the index of the word that intersects with the given point within the specified region on a page.
- *
- * @param point - The target point to check for intersection.
- * @param page - The page containing the region and words.
- * @param region - The region in which to search for the word.
- * @returns The index of the intersecting word, or `null` if no word is found.
- */
-function findInRegion(point: Point, page: Page, region: Region): number | null {
-  const linesOfInterest = page.lines
-    .slice(region.lineIndices[0], region.lineIndices[1] + 1)
-    .filter(
-      (line) => comparePointToPolygon(point, line.polygon as Polygon4) == 0
-    );
-
-  const wordIndices = [] as number[];
-  for (const line of linesOfInterest) {
-    const offsetStart = line.spans[0].offset;
-    const offsetEnd = offsetStart + line.spans[0].length;
-    const wordRange = offsetSearch(page.words, [offsetStart, offsetEnd]);
-    if (!wordRange) return null;
-
-    const [startWord, endWord] = wordRange;
-    for (let index = startWord; index <= endWord; index++) {
-      if (
-        comparePointToPolygon(point, page.words[index].polygon as Polygon4) == 0
-      )
-        wordIndices.push(index);
-    }
-  }
-
-  if (wordIndices.length == 0) {
-    console.log(
-      `findInRegion | found no Word at point (${point.x}, ${point.y})`
-    );
-    return null;
-  } else if (wordIndices.length > 1)
-    console.log(
-      `findInRegion | found multiple Words at point (${point.x}, ${point.y})`
-    );
-
-  return wordIndices[0];
-}
-
-/**
- * Finds the index of the word that intersects with the given point on a page.
- *
- * @param point - The target point to check for intersection.
- * @param page - The page containing regions and words.
- * @returns The index of the intersecting word, or `null` if no word is found.
- */
-function findInPage(point: Point, page: Page): number | null {
-  if (!page.regions) return null;
-
-  const regionsOfInterest = page.regions.filter(
-    (region) => comparePointToPolygon(point, region.polygon) == 0
-  );
-  if (regionsOfInterest.length == 0) {
-    console.log(
-      `findInPage | found no Region at point (${point.x}, ${point.y})`
-    );
-    return null;
-  }
-  if (regionsOfInterest.length > 1)
-    console.log(
-      `findInPage | found multiple Regions at point (${point.x}, ${point.y})`
-    );
-
-  for (const region of regionsOfInterest) {
-    const index = findInRegion(point, page, region);
-    if (index != null) return index;
-  }
-  return null;
-}
 
 /**
  * Creates a summary from a specified range of words across one or more pages.
@@ -150,6 +78,121 @@ function createSummary(
 }
 
 /**
+ * Finds the index of the word whose bounding box contains the given point.
+ *
+ * Iterates through all words on the page and checks whether the specified point
+ * is inside the bounding box of any word. If multiple words contain the point,
+ * the function returns the first match.
+ *
+ * @param {Page} page - The page containing words with bounding boxes.
+ * @param {Point} point - The point to check for containment within word boundaries.
+ * @returns {number | null} The index of the first matching word, or `null` if none is found.
+ */
+function findContainedWordIndex(page: Page, point: Point): number | null {
+  if (!page.words || page.words.length === 0) return null;
+
+  for (let i = 0; i < page.words.length; i++) {
+    const word = page.words[i];
+    const poly = word.polygon as Polygon4;
+    if (comparePointToPolygon(point, poly) === 0) {
+      return i;
+    }
+  }
+  return null;
+}
+
+/**
+ * Calculates the squared distance between a point and the center of a word’s bounding box.
+ *
+ * @param {Point} point - The reference point.
+ * @param {Word} word - The word whose bounding box center is used for distance calculation.
+ * @returns {number} The squared distance between the point and the word’s center.
+ */
+function distanceToWordCenter(point: Point, word: Word): number {
+  const poly = word.polygon as Polygon4;
+  const left = Math.min(poly[0], poly[6]);
+  const right = Math.max(poly[2], poly[4]);
+  const top = Math.min(poly[1], poly[3]);
+  const bottom = Math.max(poly[5], poly[7]);
+
+  const centerX = (left + right) / 2;
+  const centerY = (top + bottom) / 2;
+
+  const dx = point.x - centerX;
+  const dy = point.y - centerY;
+  return dx * dx + dy * dy;
+}
+
+/**
+ * Finds the index of the word closest to the given point if no bounding box contains it.
+ *
+ * The function calculates the distance from the given point to the center of each
+ * word's bounding box and returns the index of the word with the shortest distance.
+ *
+ * @param {Page} page - The page containing words with bounding boxes.
+ * @param {Point} point - The point to compare against word centers.
+ * @returns {number | null} The index of the closest word by center, or `null` if no words exist.
+ */
+function findNearestWordIndexByCenter(page: Page, point: Point): number | null {
+  if (!page.words || page.words.length === 0) return null;
+
+  let bestIndex = 0;
+  let bestDistance = Number.MAX_SAFE_INTEGER;
+  for (let i = 0; i < page.words.length; i++) {
+    const dist = distanceToWordCenter(point, page.words[i]);
+    if (dist < bestDistance) {
+      bestDistance = dist;
+      bestIndex = i;
+    }
+  }
+  return bestIndex;
+}
+
+/**
+ * Determines the best word index for a given selection point.
+ *
+ * The selection process follows these steps:
+ * 1) If a word's bounding box contains the point, return its index.
+ * 2) Otherwise, return the index of the nearest word by bounding-box center.
+ *
+ * @param {Page} page - The page containing words with bounding boxes.
+ * @param {Point} point - The selection point.
+ * @returns {number | null} The index of the best matching word, or `null` if no words are found.
+ */
+export function findClosestWordIndex(page: Page, point: Point): number | null {
+  const contained = findContainedWordIndex(page, point);
+  if (contained !== null) return contained;
+  return findNearestWordIndexByCenter(page, point);
+}
+
+/**
+ * Finds the paragraph index that a given word index belongs to.
+ *
+ * Each region on the page defines a range of word indices that belong to
+ * a specific paragraph. This function iterates through the regions and
+ * determines which paragraph the given word index falls into.
+ *
+ * @param {Page} page - The page containing regions with word index ranges.
+ * @param {number} wordIndex - The index of the word to locate.
+ * @returns {number} The paragraph index the word belongs to, or `-1` if not found.
+ */
+export function getParagraphIndexForWord(
+  page: Page,
+  wordIndex: number
+): number {
+  if (!page.regions) return -1;
+
+  // Each region covers a range of word indices: region.wordIndices = [start, end]
+  for (const region of page.regions) {
+    const [start, end] = region.wordIndices;
+    if (wordIndex >= start && wordIndex <= end) {
+      return region.paragraphIndex;
+    }
+  }
+  return -1;
+}
+
+/**
  * Converts a cursor-based range selection into a `Summary` object.
  *
  * @param range - A `CursorRange` object specifying the start and end selection.
@@ -163,29 +206,67 @@ export function rangeToSummary(
   range: CursorRange,
   di: DocIntResponse
 ): Summary {
-  // page numbers are 1-indexed, so adjust
-  const startPage = range.start.page - 1;
-  const endPage = range.end.page - 1;
+  const startPageIdx = range.start.page - 1;
+  const endPageIdx = range.end.page - 1;
+  if (startPageIdx < 0 || startPageIdx >= di.analyzeResult.pages.length) {
+    console.warn("rangeToSummary | invalid start page index");
+    return {} as Summary;
+  }
+  if (endPageIdx < 0 || endPageIdx >= di.analyzeResult.pages.length) {
+    console.warn("rangeToSummary | invalid end page index");
+    return {} as Summary;
+  }
 
-  const startWord = findInPage(
-    range.start.point,
-    di.analyzeResult.pages[range.start.page - 1]
-  ); // as always, page numbers are 1-indexed and need to be adjusted
-  if (startWord == null) return {} as Summary;
+  const startPage = di.analyzeResult.pages[startPageIdx];
+  const endPage = di.analyzeResult.pages[endPageIdx];
 
-  // if we just want a single point, return just the start
-  if (comparePoints(range.start.point, range.end.point) == 0)
-    return createSummary([startPage, startPage], [startWord, startWord], di);
+  // Require that the start point is actually contained within a word.
+  const startContained = findContainedWordIndex(startPage, range.start.point);
+  if (startContained === null) {
+    console.warn("rangeToSummary | start point not contained in any word");
+    return {} as Summary;
+  }
+  const startWordIndex = startContained;
 
-  const endWord = findInPage(
-    range.end.point,
-    di.analyzeResult.pages[range.end.page - 1]
-  ); // as always, page numbers are 1-indexed and need to be adjusted
-  // if we can't find the end, return just the start
-  if (endWord == null)
-    return createSummary([startPage, startPage], [startWord, startWord], di);
+  // If the selection is a single point, return that word.
+  if (comparePoints(range.start.point, range.end.point) === 0) {
+    return createSummary(
+      [startPageIdx, startPageIdx],
+      [startWordIndex, startWordIndex],
+      di
+    );
+  }
 
-  return createSummary([startPage, endPage], [startWord, endWord], di);
+  // For the end point, try to find a containing word; if not, fall back to the nearest word.
+  let endWordIndex = findContainedWordIndex(endPage, range.end.point);
+  if (endWordIndex === null) {
+    endWordIndex = findClosestWordIndex(endPage, range.end.point);
+    if (endWordIndex === null) {
+      return createSummary(
+        [startPageIdx, startPageIdx],
+        [startWordIndex, startWordIndex],
+        di
+      );
+    }
+  }
+
+  // If the selection is on a single page, ensure the words belong to the same or an adjacent paragraph.
+  if (startPageIdx === endPageIdx) {
+    const startParaIdx = getParagraphIndexForWord(startPage, startWordIndex);
+    const endParaIdx = getParagraphIndexForWord(startPage, endWordIndex);
+    if (!isSameOrAdjacentParagraph(startParaIdx, endParaIdx)) {
+      console.warn(
+        `Selection crosses paragraphs [${startParaIdx}, ${endParaIdx}] that are not adjacent. Discarding.`
+      );
+      return {} as Summary;
+    }
+  }
+
+  return createSummary(
+    [startPageIdx, endPageIdx],
+    [startWordIndex, endWordIndex],
+    di
+  );
 }
 
 /**
@@ -350,4 +431,83 @@ export function excerptToSummary(excerpt: string, di: DocIntResponse): Summary {
 
   // Fallback to word-based search
   return wordSplitExcerpt(excerpt, di);
+}
+
+/**
+ * Converts a `Summary` object into an array of `Bounds` objects.
+ *
+ * The `Summary` consists of multiple polygons (`PolygonOnPage`), where each polygon
+ * contains a complex shape (`PolygonC`) that may have up to three distinct parts:
+ * `head`, `body`, and `tail`. Each part, if present, is represented as a `Polygon4`,
+ * which is a simple quadrilateral described by an array of 8 numerical coordinates.
+ *
+ * @param summary - The `Summary` object containing polygons to convert.
+ * @param forceOverlap - (Optional, default: `false`) If `true`, modifies the polygons
+ *   to ensure vertical continuity between `head`, `body`, and `tail`.
+ * @returns An array of `Bounds` objects, each containing a page number and a flattened `Polygon4`.
+ */
+export function summaryToBounds(
+  summary: Summary,
+  forceOverlap: boolean = false
+): Bounds[] {
+  const bounds: Bounds[] = [];
+
+  summary.polygons.forEach(({ polygon, page }) => {
+    const head = polygon.head ? ([...polygon.head] as Polygon4) : null;
+    const body = polygon.body ? ([...polygon.body] as Polygon4) : null;
+    const tail = polygon.tail ? ([...polygon.tail] as Polygon4) : null;
+
+    if (forceOverlap) {
+      // For head: if there is no body but a tail exists, extend the head's bottom edge.
+      if (head && !body && tail) {
+        const headBottom = Math.max(head[5], head[7]);
+        const tailTop = Math.min(tail[1], tail[3]);
+        if (headBottom < tailTop) {
+          head[5] = tailTop;
+          head[7] = tailTop;
+        }
+      }
+      // For body: adjust the top edge to align with head and the bottom edge to align with tail.
+      if (body) {
+        if (head) {
+          const headBottom = Math.max(head[5], head[7]);
+          const bodyTop = Math.min(body[1], body[3]);
+          if (headBottom < bodyTop) {
+            body[1] = headBottom;
+            body[3] = headBottom;
+          }
+        }
+        if (tail) {
+          const tailTop = Math.min(tail[1], tail[3]);
+          const bodyBottom = Math.max(body[5], body[7]);
+          if (bodyBottom < tailTop) {
+            body[5] = tailTop;
+            body[7] = tailTop;
+          }
+        }
+      }
+    }
+
+    // Push flattened parts (if valid)
+    if (head) {
+      const flatHead = flattenPolygon4(head);
+      if (flatHead.length === 8) {
+        bounds.push({ pageNumber: page, polygon: flatHead });
+      }
+    }
+    if (body) {
+      const flatBody = flattenPolygon4(body);
+      if (flatBody.length === 8) {
+        bounds.push({ pageNumber: page, polygon: flatBody });
+      }
+    }
+    if (tail) {
+      const flatTail = flattenPolygon4(tail);
+      if (flatTail.length === 8) {
+        bounds.push({ pageNumber: page, polygon: flatTail });
+      }
+    }
+  });
+
+  return bounds;
 }

@@ -80,6 +80,28 @@ export function adjacent(poly0: Polygon4, poly1: Polygon4, delta = 0): boolean {
   return !noOverlap;
 }
 
+/**
+ * Checks if two paragraph indices are the same or adjacent.
+ *
+ * A paragraph index is considered adjacent if the second index (endPara)
+ * is exactly one greater than the first index (startPara).
+ *
+ * Special Case:
+ * - If either `startPara` or `endPara` is `-1`, the function returns `false`.
+ *
+ * @param {number} startPara - The starting paragraph index.
+ * @param {number} endPara - The ending paragraph index.
+ * @returns {boolean} `true` if the indices are the same or adjacent; otherwise, `false`.
+ */
+export function isSameOrAdjacentParagraph(
+  startPara: number,
+  endPara: number
+): boolean {
+  if (startPara === -1 || endPara === -1) return false;
+  if (startPara === endPara) return true;
+  return endPara === startPara + 1;
+}
+
 // ==================
 // === COMPARISON ===
 // ==================
