@@ -226,10 +226,21 @@ export function rangeToSummary(
     console.warn("rangeToSummary | start point not contained in any word");
     return {} as Summary;
   }
-  const startWordIndex = startContained;
+  let startWordIndex = startContained;
 
+
+
+  // For the end point, try to find a containing word; if not, fall back to the nearest word.
+  let endWordIndex = findContainedWordIndex(endPage, range.end.point);
+  if (endWordIndex === null) {
+    // Try to find the next closest word; the null case will be handled below
+    endWordIndex = findClosestWordIndex(endPage, range.end.point);
+  }
   // If the selection is a single point, return that word.
-  if (comparePoints(range.start.point, range.end.point) === 0) {
+  if (
+      comparePoints(range.start.point, range.end.point) === 0 ||
+      endWordIndex === null
+    ) {
     return createSummary(
       [startPageIdx, startPageIdx],
       [startWordIndex, startWordIndex],
@@ -237,30 +248,26 @@ export function rangeToSummary(
     );
   }
 
-  // For the end point, try to find a containing word; if not, fall back to the nearest word.
-  let endWordIndex = findContainedWordIndex(endPage, range.end.point);
-  if (endWordIndex === null) {
-    endWordIndex = findClosestWordIndex(endPage, range.end.point);
-    if (endWordIndex === null) {
-      return createSummary(
-        [startPageIdx, startPageIdx],
-        [startWordIndex, startWordIndex],
-        di
-      );
-    }
-  }
-
   // If the selection is on a single page, ensure the words belong to the same or an adjacent paragraph.
   if (startPageIdx === endPageIdx) {
     const startParaIdx = getParagraphIndexForWord(startPage, startWordIndex);
     const endParaIdx = getParagraphIndexForWord(startPage, endWordIndex);
-    if (!isSameOrAdjacentParagraph(startParaIdx, endParaIdx)) {
-      console.warn(
-        `Selection crosses paragraphs [${startParaIdx}, ${endParaIdx}] that are not adjacent. Discarding.`
-      );
-      return {} as Summary;
+
+     // sort the paragraphs to account for highlighting LTR and RTL
+    const orderedParaIndices= [startParaIdx, endParaIdx].sort((a,b) => a - b)
+
+    if (!isSameOrAdjacentParagraph(orderedParaIndices[0], orderedParaIndices[1])) {
+        console.warn(
+            `Selection crosses paragraphs [${orderedParaIndices[0]}, ${orderedParaIndices[1]}] that are not adjacent. Discarding.`
+        );
+        return {} as Summary;
     }
   }
+
+  // account for highlighting LTR and RTL
+  const orderedWordIdx = [startWordIndex, endWordIndex].sort((a, b) => a - b);
+  startWordIndex = orderedWordIdx[0];
+  endWordIndex = orderedWordIdx[1];
 
   return createSummary(
     [startPageIdx, endPageIdx],
