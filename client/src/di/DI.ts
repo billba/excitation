@@ -220,15 +220,15 @@ export function rangeToSummary(
   const startPage = di.analyzeResult.pages[startPageIdx];
   const endPage = di.analyzeResult.pages[endPageIdx];
 
-  // Require that the start point is actually contained within a word.
-  const startContained = findContainedWordIndex(startPage, range.start.point);
-  if (startContained === null) {
-    console.warn("rangeToSummary | start point not contained in any word");
-    return {} as Summary;
-  }
-  let startWordIndex = startContained;
-
-
+  // For the start point, try to find a containing word; if not, fall back to the nearest word.
+  let startWordIndex = findContainedWordIndex(startPage, range.start.point);
+    if (startWordIndex === null) {
+      startWordIndex = findClosestWordIndex(startPage, range.start.point);
+      if (startWordIndex === null) {
+        console.warn("rangeToSummary | start point not contained in any word");
+        return {} as Summary;
+      }
+    }
 
   // For the end point, try to find a containing word; if not, fall back to the nearest word.
   let endWordIndex = findContainedWordIndex(endPage, range.end.point);
