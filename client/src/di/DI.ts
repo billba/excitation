@@ -225,6 +225,7 @@ export function rangeToSummary(
   if (startWordIndex === null) {
     startWordIndex = findClosestWordIndex(startPage, range.start.point);
     if (startWordIndex === null) {
+      console.log("test got to here?");
       console.warn("rangeToSummary | start point not contained in any word");
       return {} as Summary;
     }
