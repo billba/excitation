@@ -21,7 +21,7 @@ export const createCitationId = (formId: number, creator: string) => {
 };
 
 // Rounds a number to the given precision
-const round = (value: number, precision = 0) => {
+export const round = (value: number, precision = 0) => {
   const multiplier = Math.pow(10, precision);
   return Math.round(value * multiplier) / multiplier;
 };
@@ -29,7 +29,7 @@ const round = (value: number, precision = 0) => {
 // Return true if polygons overlap (including sharing borders); false otherwise
 // delta controls the amount of space that can be between polygons without them
 // being considered non-adjacent (i.e. accounts for spaces between words)
-const adjacent = (poly0: number[], poly1: number[], delta = 0.2) => {
+export const adjacent = (poly0: number[], poly1: number[], delta = 0.2) => {
   const x0 = [round(poly0[0], 1), round(poly0[2], 1)];
   const y0 = [round(poly0[1], 1), round(poly0[5], 1)];
 
@@ -47,7 +47,7 @@ const adjacent = (poly0: number[], poly1: number[], delta = 0.2) => {
 };
 
 // from x(x0, x1) and y(y0, y1) create an 8 value polygon
-const polygonize = (x: number[], y: number[]) => {
+export const polygonize = (x: number[], y: number[]) => {
   return [x[0], y[0], x[1], y[0], x[1], y[1], x[0], y[1]];
 };
 

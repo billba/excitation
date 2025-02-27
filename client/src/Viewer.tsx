@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Document, Page } from "react-pdf";
 import { TextContent } from "pdfjs-dist/types/src/display/api";
 import polygonClipping from "polygon-clipping";
+import { CursorRange, Point } from "./di";
 
 import {
   CheckmarkCircleFilled,
@@ -40,6 +41,58 @@ export function Viewer() {
   const editing = selectedCitation?.editing;
   const docFromId = useDocFromId();
   const viewerRef = useRef<HTMLDivElement>(null);
+  const [cursorStart, setCursorStart] = useState<Point | null>(null);
+
+  useEffect(() => {
+    const viewerElem = viewerRef.current;
+    if (!viewerElem) return;
+
+    // Helper to check if the event target is inside a citation control element.
+    const isCitationControl = (e: Event) => {
+      return (e.target as HTMLElement).closest(".citation-control");
+    };
+
+    const handleMouseDown = (e: MouseEvent) => {
+      // If the event target is part of a citation control, do nothing.
+      if (isCitationControl(e)) return;
+
+      // Otherwise, handle the event as before.
+      const rect = viewerElem.getBoundingClientRect();
+      const startPoint: Point = {
+        x: (e.clientX - rect.left) / multiple,
+        y: (e.clientY - rect.top) / multiple,
+      };
+      setCursorStart(startPoint);
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      // If the event target is part of a citation control, ignore it.
+      if (isCitationControl(e)) return;
+      if (!cursorStart || ux.pageNumber === undefined) return;
+      const rect = viewerElem.getBoundingClientRect();
+      const endPoint: Point = {
+        x: (e.clientX - rect.left) / multiple,
+        y: (e.clientY - rect.top) / multiple,
+      };
+
+      // Build a CursorRange from the captured points.
+      const cursorRange: CursorRange = {
+        start: { page: ux.pageNumber, point: cursorStart },
+        end: { page: ux.pageNumber, point: endPoint },
+      };
+
+      // Dispatch the action to store the new cursorRange.
+      dispatch({ type: "setCursorRange", cursorRange });
+    };
+
+    viewerElem.addEventListener("mousedown", handleMouseDown);
+    viewerElem.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      viewerElem.removeEventListener("mousedown", handleMouseDown);
+      viewerElem.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [cursorStart, ux.pageNumber, dispatch]);
 
   const selectionChange = useCallback(() => {
     const selection = document.getSelection();
@@ -260,7 +313,7 @@ const ViewerCitations = () => {
       DefaultIcon={CheckmarkCircleRegular}
       HoverIcon={CheckmarkCircleFilled}
       key="approve"
-      classes="approved off"
+      classes="approved off citation-control"
       onClick={reviewCitation(Review.Approved)}
       floating={true}
     />
@@ -271,7 +324,7 @@ const ViewerCitations = () => {
       DefaultIcon={DismissCircleRegular}
       HoverIcon={DismissCircleFilled}
       key="reject"
-      classes="rejected off"
+      classes="rejected off citation-control"
       onClick={reviewCitation(Review.Rejected)}
       floating={true}
     />

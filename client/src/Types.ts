@@ -1,4 +1,4 @@
-import { Bounds, DocIntResponse } from "./di";
+import { Bounds, CursorRange, DocIntResponse } from "./di";
 import { SerializedRange } from "./Range";
 
 export type PseudoBoolean = undefined | true;
@@ -135,6 +135,10 @@ export type Action =
   }
   | {
     type: "asyncRevert";
+  }
+  | {
+    type: "setCursorRange";
+    cursorRange: CursorRange;
   };
 
 export type AsyncIdleState = {
@@ -197,6 +201,7 @@ export interface UXState {
   documentId?: number;
   pageNumber?: number;
   range?: SerializedRange;
+  cursorRange?: CursorRange;
   selectedCitation?: {
     citationIndex: number;
     citationHighlights: CitationHighlight[];
