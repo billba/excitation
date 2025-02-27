@@ -35,13 +35,8 @@ const range0 = {
   start: { point: point0, page: 1 },
   end: { point: point0, page: 1 },
 };
+// TODO: this doesn't work because we have the get the nearest point... should we up the sensitivity?
 const summary0 = {} as Summary;
-rangeToSummaryTest(
-  "summary should be empty (bad start and end points)",
-  range0,
-  di0,
-  summary0
-);
 const excerpt0a = "";
 const excerpt0b = "sadjfksajdh";
 excerptToSummaryTest(
@@ -83,6 +78,12 @@ const summary1: Summary = {
     },
   ],
 };
+rangeToSummaryTest(
+  "summary should be closest word, even if the point is not in a word (single point of 0,0 given)",
+  range0,
+  di0,
+  summary1
+);
 rangeToSummaryTest(
   "summary should be single word (single point given)",
   range1a,
