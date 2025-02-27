@@ -171,7 +171,7 @@ const range4 = {
 };
 const summary4: Summary = {
   excerpt:
-    "· Search and news advertising revenue excluding traffic acquisition costs increased 12% Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third",
+    ". Search and news advertising revenue excluding traffic acquisition costs increased 12% Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third",
   polygons: [
     {
       polygon: {
@@ -211,8 +211,8 @@ const summary5: Summary = {
   polygons: [
     {
       polygon: {
-        head: [0.998, 3.0221, 7.1056, 3.0221, 7.1056, 3.1892, 0.998, 3.1892],
-        tail: [0.998, 3.2322, 4.1067, 3.2322, 4.1067, 3.3993, 0.998, 3.3993],
+        head: [0.9935, 3.0123, 7.111, 3.0123, 7.111, 3.1887,0.9935, 3.1887],
+        tail: [0.9877, 3.2282, 4.0989, 3.2282, 4.0989, 3.4046, 0.9877, 3.4046],
       },
       page: 1,
     },
@@ -238,9 +238,9 @@ const summary6: Summary = {
   polygons: [
     {
       polygon: {
-        head: [5.8975, 3.8242, 6.9098, 3.8242, 6.9098, 4.0009, 5.8975, 4.0009],
-        body: [0.9885, 4.0343, 7.3253, 4.0343, 7.3253, 4.2109, 0.9885, 4.2109],
-        tail: [0.9933, 4.2491, 2.2062, 4.2491, 2.2062, 4.4067, 0.9933, 4.4067],
+        head: [5.9125, 3.8228, 6.9173, 3.8228, 6.9173, 4.0081, 5.9125, 4.0081],
+        body: [0.9868, 4.0271, 7.3158, 4.0271, 7.3158, 4.2122, 0.9868, 4.2122],
+        tail: [0.9865, 4.2418, 2.2025, 4.2418, 2.2025, 4.4096, 0.9865, 4.4096] ,
       },
       page: 1,
     },
@@ -265,13 +265,13 @@ const summary7: Summary = {
   polygons: [
     {
       polygon: {
-        head: [0.9933, 4.2491, 2.2062, 4.2491, 2.2062, 4.4067, 0.9933, 4.4067],
+        head: [0.9865, 4.2418, 2.2025, 4.2418, 2.2025, 4.4096, 0.9865, 4.4096],
       },
       page: 1,
     },
     {
       polygon: {
-        head: [0.998, 4.6311, 2.2635, 4.6311, 2.2635, 4.7982, 0.998, 4.7982],
+        head: [0.9897, 4.6234, 2.2799, 4.6234, 2.2799, 4.8052, 0.9897, 4.8052],
       },
       page: 1,
     },
@@ -290,19 +290,19 @@ excerptToSummaryTest(
   summary7
 );
 
-const point8a = { x: 2, y: 8.7 };
-const point8b = { x: 7, y: 8.9 };
+const point8a = { x: 1.0, y: 3.1 };
+const point8b = { x: 7.1, y: 3.3 };
 const range8 = {
   start: { point: point8a, page: 1 },
   end: { point: point8b, page: 1 },
 };
 const summary8: Summary = {
   excerpt:
-    "Windows revenue increased 11% with Windows OEM revenue growth of 11% and Windows Commercial products and cloud services revenue growth of 13% (up 12% in constant currency)",
+    "\"Microsoft Copilot and Copilot stack are orchestrating a new era of Al transformation, driving better business outcomes across every role and industry,\" said Satya Nadella, chairman and chief executive",
   polygons: [
     {
       polygon: {
-        body: [1.4899, 8.651, 7.2871, 8.651, 7.2871, 9.0282, 1.4899, 9.0282],
+        body: [0.9877, 3.0123, 7.1165, 3.0123, 7.1165, 3.4046, 0.9877, 3.4046],
       },
       page: 1,
     },
