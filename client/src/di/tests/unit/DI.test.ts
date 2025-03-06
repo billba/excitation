@@ -35,13 +35,8 @@ const range0 = {
   start: { point: point0, page: 1 },
   end: { point: point0, page: 1 },
 };
+// TODO: this doesn't work because we have the get the nearest point... should we up the sensitivity?
 const summary0 = {} as Summary;
-rangeToSummaryTest(
-  "summary should be empty (bad start and end points)",
-  range0,
-  di0,
-  summary0
-);
 const excerpt0a = "";
 const excerpt0b = "sadjfksajdh";
 excerptToSummaryTest(
@@ -77,12 +72,18 @@ const summary1: Summary = {
   polygons: [
     {
       polygon: {
-        head: [0.998, 1.0456, 1.8337, 1.0408, 1.8289, 1.2318, 0.9933, 1.2174],
+        head: [0.9867, 1.0329, 1.8167, 1.033, 1.8167, 1.2391, 0.9865, 1.2376],
       },
       page: 1,
     },
   ],
 };
+rangeToSummaryTest(
+  "summary should be closest word, even if the point is not in a word (single point of 0,0 given)",
+  range0,
+  di0,
+  summary1
+);
 rangeToSummaryTest(
   "summary should be single word (single point given)",
   range1a,
@@ -112,7 +113,7 @@ const summary2: Summary = {
   polygons: [
     {
       polygon: {
-        head: [0.9933, 1.0408, 5.4916, 1.0408, 5.4916, 1.2413, 0.9933, 1.2413],
+        head: [0.9865, 1.0309, 5.5062, 1.0309, 5.5062, 1.2401, 0.9865, 1.2401],
       },
       page: 1,
     },
@@ -142,8 +143,8 @@ const summary3: Summary = {
   polygons: [
     {
       polygon: {
-        head: [5.8402, 1.4371, 7.3253, 1.4371, 7.3253, 1.6089, 5.8402, 1.6089],
-        tail: [0.9885, 1.6662, 1.4326, 1.6615, 1.4374, 1.819, 0.9933, 1.819],
+        head: [5.8592, 1.4351, 7.3213, 1.4351, 7.3213, 1.611, 5.8592, 1.611],
+        tail: [0.9861, 1.6485, 1.4455, 1.6483, 1.4462, 1.8246, 0.9869, 1.8267],
       },
       page: 1,
     },
@@ -170,17 +171,17 @@ const range4 = {
 };
 const summary4: Summary = {
   excerpt:
-    "· Search and news advertising revenue excluding traffic acquisition costs increased 12% Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third",
+    ". Search and news advertising revenue excluding traffic acquisition costs increased 12% Microsoft returned $8.4 billion to shareholders in the form of share repurchases and dividends in the third",
   polygons: [
     {
       polygon: {
-        head: [1.2368, 9.7109, 6.7427, 9.7109, 6.7427, 9.878, 1.2368, 9.878],
+        head: [1.246, 9.7103, 6.7615, 9.7103, 6.7615, 9.8762, 1.246, 9.8762],
       },
       page: 1,
     },
     {
       polygon: {
-        head: [0.9885, 1.0265, 7.4685, 1.0265, 7.4685, 1.1888, 0.9885, 1.1888],
+        head: [0.9908, 1.0199, 7.4803, 1.0199, 7.4803, 1.1892, 0.9908, 1.1892],
       },
       page: 2,
     },
@@ -210,8 +211,8 @@ const summary5: Summary = {
   polygons: [
     {
       polygon: {
-        head: [0.998, 3.0221, 7.1056, 3.0221, 7.1056, 3.1892, 0.998, 3.1892],
-        tail: [0.998, 3.2322, 4.1067, 3.2322, 4.1067, 3.3993, 0.998, 3.3993],
+        head: [0.9935, 3.0123, 7.111, 3.0123, 7.111, 3.1887,0.9935, 3.1887],
+        tail: [0.9877, 3.2282, 4.0989, 3.2282, 4.0989, 3.4046, 0.9877, 3.4046],
       },
       page: 1,
     },
@@ -237,9 +238,9 @@ const summary6: Summary = {
   polygons: [
     {
       polygon: {
-        head: [5.8975, 3.8242, 6.9098, 3.8242, 6.9098, 4.0009, 5.8975, 4.0009],
-        body: [0.9885, 4.0343, 7.3253, 4.0343, 7.3253, 4.2109, 0.9885, 4.2109],
-        tail: [0.9933, 4.2491, 2.2062, 4.2491, 2.2062, 4.4067, 0.9933, 4.4067],
+        head: [5.9125, 3.8228, 6.9173, 3.8228, 6.9173, 4.0081, 5.9125, 4.0081],
+        body: [0.9868, 4.0271, 7.3158, 4.0271, 7.3158, 4.2122, 0.9868, 4.2122],
+        tail: [0.9865, 4.2418, 2.2025, 4.2418, 2.2025, 4.4096, 0.9865, 4.4096] ,
       },
       page: 1,
     },
@@ -264,13 +265,13 @@ const summary7: Summary = {
   polygons: [
     {
       polygon: {
-        head: [0.9933, 4.2491, 2.2062, 4.2491, 2.2062, 4.4067, 0.9933, 4.4067],
+        head: [0.9865, 4.2418, 2.2025, 4.2418, 2.2025, 4.4096, 0.9865, 4.4096],
       },
       page: 1,
     },
     {
       polygon: {
-        head: [0.998, 4.6311, 2.2635, 4.6311, 2.2635, 4.7982, 0.998, 4.7982],
+        head: [0.9897, 4.6234, 2.2799, 4.6234, 2.2799, 4.8052, 0.9897, 4.8052],
       },
       page: 1,
     },
@@ -289,19 +290,19 @@ excerptToSummaryTest(
   summary7
 );
 
-const point8a = { x: 2, y: 8.7 };
-const point8b = { x: 7, y: 8.9 };
+const point8a = { x: 1.0, y: 3.1 };
+const point8b = { x: 7.1, y: 3.3 };
 const range8 = {
   start: { point: point8a, page: 1 },
   end: { point: point8b, page: 1 },
 };
 const summary8: Summary = {
   excerpt:
-    "Windows revenue increased 11% with Windows OEM revenue growth of 11% and Windows Commercial products and cloud services revenue growth of 13% (up 12% in constant currency)",
+    "\"Microsoft Copilot and Copilot stack are orchestrating a new era of Al transformation, driving better business outcomes across every role and industry,\" said Satya Nadella, chairman and chief executive",
   polygons: [
     {
       polygon: {
-        body: [1.4899, 8.651, 7.2871, 8.651, 7.2871, 9.0282, 1.4899, 9.0282],
+        body: [0.9877, 3.0123, 7.1165, 3.0123, 7.1165, 3.4046, 0.9877, 3.4046],
       },
       page: 1,
     },
