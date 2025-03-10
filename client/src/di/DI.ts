@@ -17,7 +17,7 @@ import {
   flattenPolygon4,
   isSameOrAdjacentParagraph,
 } from "./Utility";
-import { offsetSearch } from "./OffsetSearch";
+import { wordOffsetSearch } from "./OffsetSearch";
 
 /**
  * Creates a summary from a specified range of words across one or more pages.
@@ -323,7 +323,7 @@ function offsetBasedExcerpt(excerpt: string, di: DocIntResponse): Summary {
  * @param di - The document interpretation response containing analyzed text.
  * @returns A tuple `[pageIndex, wordIndex]` if found, otherwise `null`.
  */
-function findWordByOffset(
+export function findWordByOffset(
   offset: number,
   di: DocIntResponse
 ): [number, number] | null {
@@ -332,9 +332,9 @@ function findWordByOffset(
     const page = pages[pageIndex];
     if (!page.words || page.words.length === 0) continue;
 
-    const match = offsetSearch(page.words, [offset, offset]);
-    if (match) {
-      return [pageIndex, match[0]];
+    const wordId = wordOffsetSearch(page.words, offset);
+    if (wordId !== -1) {
+      return [pageIndex, wordId];
     }
   }
   return null;

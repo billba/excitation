@@ -1,7 +1,8 @@
 import { expect, test } from "vitest";
 import { createPerPageRegions } from "../../Preprocess";
 import { excerptToSummary, rangeToSummary } from "../../DI";
-import { CursorRange, DocIntResponse, Summary } from "../../Types";
+import { CursorRange, DocIntResponse, SearchResultSegment, Summary } from "../../Types";
+import { exactMatchSearch } from "../../Utility";
 
 import json0 from "../../../../../local-backend/files/PressReleaseFY24Q3.pdf.json";
 
@@ -319,4 +320,97 @@ excerptToSummaryTest(
   summary8.excerpt,
   di0,
   summary8
+);
+
+
+
+const exactMatchSearchTest = (
+  description: string,
+  input: string,
+  di: DocIntResponse,
+  expected: []
+) =>
+  test(`exactMatchSearchTest | ${description}`, () => {
+    const actual = exactMatchSearch(input, di);
+    expect(actual).toEqual(expected);
+  });
+
+  const input0 = "sadjfksajdh"
+  // expected should be a empty array
+  exactMatchSearchTest(
+   "the input should not be found in the document",
+    input0,
+    di0,
+    []
+  );
+
+  const input1 = "Microsoft Cloud Strength Fuels Third Quarter Results"
+  const searchResult1: SearchResultSegment = {
+    text: "Microsoft Cloud Strength Fuels Third Quarter Results",
+    page: 1,
+    boundingRegions: 
+    {
+      head: [0.9865, 1.0309, 5.5062, 1.0309, 5.5062, 1.2401, 0.9865, 1.2401],
+    },
+  };
+  
+  const expected1 = [{segments: [searchResult1], matchingRatio:1}];
+
+  exactMatchSearchTest(
+    "should find one exact match in the document",
+    input1,
+    di0,
+    expected1 as []
+  );
+
+const input2 = "Revenue in"
+const expected2 = [
+  {
+    segments: 
+    [
+      {
+      text: "Revenue in",
+      page: 1,
+      boundingRegions:
+      {
+        head: [0.9898, 4.9695, 1.65, 4.9695, 1.65, 5.1483, 0.9898, 5.1483],
+      }
+    } as SearchResultSegment,
+  ],
+    matchingRatio: 1
+  },
+  {
+    segments: 
+    [
+      {
+      text: "Revenue in",
+      page: 1,
+      boundingRegions:{
+        head: [0.9903, 7.1594, 1.6489, 7.1594, 1.6489, 7.3416, 0.9903, 7.3416],
+      }
+    } as SearchResultSegment,
+  ],
+    matchingRatio: 1
+  },
+  {
+    segments: 
+    [
+      {
+      text: "Revenue in",
+      page: 1,
+      boundingRegions:{
+        head: [0.989, 8.0757, 1.6541, 8.0757, 1.6541, 8.253, 0.989, 8.253],
+      }
+    } as SearchResultSegment,
+  ],
+    matchingRatio: 1
+  },
+];
+
+
+exactMatchSearchTest(
+  "should multi exact matches in the document",
+  input2,
+  di0,
+  expected2 as []
 );
