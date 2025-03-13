@@ -296,3 +296,13 @@ interface Span {
   offset: number;
   length: number;
 }
+
+/**
+ * Represents a search result segment, including the text, page number,
+ * and associated bounding regions.
+ */
+export interface SearchResultSegment {
+  text: string;
+  page: number;
+  boundingRegions: PolygonC;
+}
