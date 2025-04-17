@@ -464,6 +464,20 @@ h1 {
   position: absolute;
   background-color: transparent;
   pointer-events: none;
+  
+  /* Connect the highlight-svg hover state to the floater */
+  .highlight-svg:hover + #floater {
+    opacity: 0.4;
+    
+    .background {
+      color: transparent;
+    }
+    
+    /* Keep the controls visible when directly hovered */
+    .icon-container:hover {
+      opacity: 1;
+    }
+  }
 }
 
 .highlight-svg {
@@ -472,6 +486,30 @@ h1 {
   left: 0;
   pointer-events: none;
   z-index: 999;
+  
+  /* Group containing all paths for a single citation */
+  .citation-group {
+    /* When any area in the group is hovered, affect all paths and the floater */
+    &:hover {
+      .citation-path-highlight {
+        opacity: 0.7;
+        stroke-opacity: 0.7;
+      }
+      
+      /* This plus the + selector in .viewer-citations makes the floater dim */
+      opacity: 0.4;
+    }
+  }
+  
+  /* Path that covers the entire citation area to capture hover events */
+  .citation-area-highlight {
+    pointer-events: auto;
+  }
+  
+  /* The visible outline stroke */
+  .citation-path-highlight {
+    pointer-events: none;
+  }
 }
 
 #viewer-citation-highlight {

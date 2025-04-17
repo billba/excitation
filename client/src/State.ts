@@ -18,7 +18,15 @@ import {
   Question,
   FormStatus,
   LoadedState,
+  ApplicationMode,
+  BaseDocumentModeState,
 } from "./Types";
+import {
+  hasDocumentContext,
+  getDocumentId,
+  getPageNumber,
+  hasCitationContext
+} from "./StateUtils";
 import { createCitationId, returnTextPolygonsFromDI } from "./Utility";
 import { createPerPageRegions, summaryToBounds, rangeToSummary } from "./di";
 import { BlobClient } from "@azure/storage-blob";
@@ -218,33 +226,35 @@ function initialUXState(
   questionIndex: number,
   { citations, answer }: Question
 ): UXState {
-  if (citations.length == 0)
+  if (citations.length == 0) {
     return {
       questionIndex,
-      documentId: undefined,
+      mode: ApplicationMode.Idle,
+      largeAnswerPanel: answer === undefined ? undefined : true
     };
+  }
 
   const citationIndex = indexOfNextUnreviewedCitation(citations);
 
-  if (citationIndex == undefined)
+  if (citationIndex == undefined) {
     return {
       largeAnswerPanel: answer === undefined ? undefined : true,
       questionIndex,
-      documentId: undefined,
+      mode: ApplicationMode.Idle
     };
+  }
 
   const citation = citations[citationIndex];
   const citationHighlights = citationHighlightsFor(citation);
 
   return {
     questionIndex,
+    mode: ApplicationMode.ViewingCitation,
     documentId: citation.documentId,
     pageNumber: citationHighlights[0]?.pageNumber ?? 1,
-    range: undefined,
-    selectedCitation: {
-      citationIndex,
-      citationHighlights,
-    },
+    citationIndex,
+    citationHighlights,
+    largeAnswerPanel: answer === undefined ? undefined : true
   };
 }
 
@@ -323,31 +333,36 @@ const stateAtom = atom<State, [Action], void>(
         newState =
           action.type === "asyncRevert"
             ? (prevState.asyncState as AsyncErrorState).prevState
-            : create(prevState, (state) => {
-                const { metadata, questions, ux, asyncState } = state;
+            : create<LoadedState>(prevState, (state) => {
+                const { metadata, questions, asyncState } = state;
                 const { isAsyncing } = asyncHelpers(asyncState);
 
                 function goto(pageNumber?: number, documentId?: number) {
-                  console.assert(ux.documentId !== undefined);
-                  ux.range = undefined;
-                  ux.pageNumber =
-                    pageNumber ?? firstCitedPage(documentId!) ?? 1;
+                  const newDocId = documentId ?? getDocumentId(state.ux);
 
-                  if (
-                    documentId === undefined ||
-                    documentId === ux.documentId
-                  ) {
-                    if (
-                      ux.selectedCitation?.citationHighlights.find(
-                        (ch) => ch.pageNumber === pageNumber
-                      )
-                    )
-                      return;
-                  } else {
-                    ux.documentId = documentId;
+                  if (newDocId === undefined) {
+                    console.error("Cannot go to page without document ID");
+                    return;
                   }
+                  
+                  const newPageNumber = pageNumber ?? 
+                    getPageNumber(state.ux) ?? firstCitedPage(newDocId) ?? 1;
 
-                  ux.selectedCitation = undefined;
+                  if (hasCitationContext(state.ux)) {
+                      const pageNumbers = state.ux.citationHighlights.map(({ pageNumber }) => pageNumber);
+                      if (pageNumbers.includes(newPageNumber)) {
+                        state.ux.pageNumber = newPageNumber;
+                        return;
+                      }
+                    }
+
+                  state.ux = {
+                    mode: ApplicationMode.ViewingDocument,
+                    questionIndex: state.ux.questionIndex,
+                    documentId: newDocId,
+                    pageNumber: newPageNumber,
+                    largeAnswerPanel: state.ux.largeAnswerPanel
+                  };
                 }
 
                 function setAsync({
@@ -368,7 +383,7 @@ const stateAtom = atom<State, [Action], void>(
                 function firstCitedPage(
                   documentId: number
                 ): number | undefined {
-                  return questions[ux.questionIndex].citations
+                  return questions[state.ux.questionIndex].citations
                     .filter(
                       (citation) =>
                         citation.documentId === documentId && citation.bounds
@@ -383,50 +398,133 @@ const stateAtom = atom<State, [Action], void>(
                   citationIndex?: number,
                   reviewCitations?: true
                 ) {
+                  // If no citation index, go to document view mode
                   if (citationIndex == undefined) {
-                    ux.selectedCitation = undefined;
+                    // If we already have a document ID, stay in viewing document mode
+                    if (hasDocumentContext(state.ux)) {
+                      state.ux = {
+                        mode: ApplicationMode.ViewingDocument,
+                        questionIndex: state.ux.questionIndex,
+                        documentId: state.ux.documentId,
+                        pageNumber: state.ux.pageNumber ?? 1,
+                        largeAnswerPanel: state.ux.largeAnswerPanel
+                      };
+                    } else {
+                      // Otherwise go to idle mode
+                      state.ux = {
+                        mode: ApplicationMode.Idle,
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel
+                      };
+                    }
                     return;
                   }
 
-                  const citation =
-                    questions[ux.questionIndex].citations[citationIndex];
+                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
                   const citationHighlights = citationHighlightsFor(citation);
 
+                  // If no highlights, go to document view mode
                   if (citationHighlights.length == 0) {
-                    ux.selectedCitation = undefined;
+                    if (hasDocumentContext(state.ux)) {
+                      state.ux = {
+                        mode: ApplicationMode.ViewingDocument,
+                        questionIndex: state.ux.questionIndex,
+                        documentId: state.ux.documentId,
+                        pageNumber: state.ux.pageNumber ?? 1,
+                        largeAnswerPanel: state.ux.largeAnswerPanel
+                      };
+                    } else {
+                      state.ux = {
+                        mode: ApplicationMode.Idle,
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel
+                      };
+                    }
                     return;
                   }
 
-                  ux.documentId = citation.documentId;
-                  ux.pageNumber = citationHighlights[0].pageNumber;
-                  ux.selectedCitation = {
+                  // Go to citation view mode
+                  state.ux = {
+                    mode: ApplicationMode.ViewingCitation,
+                    questionIndex: state.ux.questionIndex,
+                    documentId: citation.documentId,
+                    pageNumber: citationHighlights[0].pageNumber,
                     citationIndex,
                     citationHighlights,
+                    largeAnswerPanel: reviewCitations ? undefined : state.ux.largeAnswerPanel
                   };
-
-                  if (reviewCitations) ux.largeAnswerPanel = undefined;
                 }
 
                 function selectQuestion(questionIndex: number) {
-                  ux.questionIndex = questionIndex;
-                  selectUnreviewedCitation();
-                  ux.largeAnswerPanel =
-                    questions[questionIndex].answer === undefined
-                      ? undefined
-                      : true;
+                  // First save the answer panel state
+                  const largeAnswerPanel = questions[questionIndex].answer === undefined ? undefined : true;
+                  
+                  // Then check if there's an unreviewed citation to select
+                  const citationIndex = indexOfNextUnreviewedCitation(
+                    questions[questionIndex].citations
+                  );
+                  
+                  if (citationIndex !== undefined) {
+                    // We have an unreviewed citation to go to
+                    const citation = questions[questionIndex].citations[citationIndex];
+                    const citationHighlights = citationHighlightsFor(citation);
+                    
+                    if (citationHighlights.length > 0) {
+                      // Go to citation view mode
+                      state.ux = {
+                        mode: ApplicationMode.ViewingCitation,
+                        questionIndex,
+                        documentId: citation.documentId,
+                        pageNumber: citationHighlights[0].pageNumber,
+                        citationIndex,
+                        citationHighlights,
+                        largeAnswerPanel
+                      };
+                      return;
+                    }
+                  }
+                  
+                  // No valid citation to view, go to idle mode
+                  state.ux = {
+                    mode: ApplicationMode.Idle,
+                    questionIndex,
+                    largeAnswerPanel
+                  };
                 }
 
-                function selectUnreviewedCitation() {
+                // This function is intentionally kept but marked as unused
+                // It could be useful for future functionality that wants to find and select
+                // the next unreviewed citation
+                function _selectUnreviewedCitation() {
+                  const documentId = getDocumentId(state.ux);
+                  const pageNumber = getPageNumber(state.ux);
+                  
                   const citationIndex = indexOfNextUnreviewedCitation(
-                    questions[ux.questionIndex].citations,
-                    ux.documentId,
-                    ux.pageNumber
+                    questions[state.ux.questionIndex].citations,
+                    documentId,
+                    pageNumber
                   );
 
-                  if (citationIndex != undefined) {
+                  if (citationIndex !== undefined) {
                     selectCitation(citationIndex);
                   } else {
-                    ux.selectedCitation = undefined;
+                    // If we already have document context, stay in viewing document mode
+                    if (hasDocumentContext(state.ux)) {
+                      state.ux = {
+                        mode: ApplicationMode.ViewingDocument,
+                        questionIndex: state.ux.questionIndex,
+                        documentId: state.ux.documentId,
+                        pageNumber: state.ux.pageNumber,
+                        largeAnswerPanel: state.ux.largeAnswerPanel
+                      };
+                    } else {
+                      // Otherwise go to idle mode
+                      state.ux = {
+                        mode: ApplicationMode.Idle,
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel
+                      };
+                    }
                   }
                 }
 
@@ -437,11 +535,11 @@ const stateAtom = atom<State, [Action], void>(
                   }
 
                   case "prevQuestion":
-                    selectQuestion(ux.questionIndex - 1);
+                    selectQuestion(state.ux.questionIndex - 1);
                     break;
 
                   case "nextQuestion":
-                    selectQuestion(ux.questionIndex + 1);
+                    selectQuestion(state.ux.questionIndex + 1);
                     break;
 
                   case "gotoQuestion":
@@ -449,11 +547,11 @@ const stateAtom = atom<State, [Action], void>(
                     break;
 
                   case "prevPage":
-                    goto(ux.pageNumber! - 1);
+                    goto((state.ux as BaseDocumentModeState).pageNumber - 1);
                     break;
 
                   case "nextPage":
-                    goto(ux.pageNumber! + 1);
+                    goto((state.ux as BaseDocumentModeState).pageNumber + 1);
                     break;
 
                   case "goto":
@@ -461,7 +559,13 @@ const stateAtom = atom<State, [Action], void>(
                     break;
 
                   case "setSelectedText":
-                    ux.range = action.range;
+                    // Range is only available in SelectingNewCitationMode
+                    if (state.ux.mode === ApplicationMode.SelectingNewCitation) {
+                      state.ux = {
+                        ...state.ux,
+                        range: action.range
+                      };
+                    }
                     break;
 
                   case "setViewerSize": {
@@ -478,13 +582,20 @@ const stateAtom = atom<State, [Action], void>(
 
                   case "addSelection": {
                     console.assert(!isAsyncing);
-                    console.assert(ux.cursorRange !== undefined);
-                    console.assert(ux.documentId !== undefined);
+                    
+                    // We can only add a selection when in the SelectingNewCitation mode
+                    if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
+                      console.warn("Can only add selection in SelectingNewCitation mode");
+                      return;
+                    }
+                    
+                    console.assert(state.ux.cursorRange !== undefined);
+                    console.assert(state.ux.documentId !== undefined);
 
                     // Use the captured cursorRange (built from mouse events) directly
                     const summary = rangeToSummary(
-                      ux.cursorRange!,
-                      docFromId[ux.documentId!].di
+                      state.ux.cursorRange!,
+                      docFromId[state.ux.documentId!].di
                     );
                     if (!summary.excerpt) {
                       console.warn(
@@ -500,7 +611,7 @@ const stateAtom = atom<State, [Action], void>(
 
                     // Create the new citation using the summary polygons for bounds.
                     const newCitation: Citation = {
-                      documentId: ux.documentId!,
+                      documentId: state.ux.documentId!,
                       citationId,
                       bounds: summaryToBounds(summary, true),
                       excerpt: summary.excerpt,
@@ -508,17 +619,28 @@ const stateAtom = atom<State, [Action], void>(
                     };
 
                     // Insert the new citation.
-                    selectCitation(
-                      questions[ux.questionIndex].citations.push(newCitation) -
-                        1
-                    );
+                    const newCitationIndex = questions[state.ux.questionIndex].citations.push(newCitation) - 1;
+
+                    // Switch to viewing the newly created citation
+                    const citationHighlights = citationHighlightsFor(newCitation);
+                    
+                    // Set the state to ViewingCitation mode with the new citation
+                    state.ux = {
+                      questionIndex: state.ux.questionIndex,
+                      largeAnswerPanel: state.ux.largeAnswerPanel,
+                      mode: ApplicationMode.ViewingCitation,
+                      documentId: state.ux.documentId,
+                      pageNumber: state.ux.pageNumber,
+                      citationIndex: newCitationIndex,
+                      citationHighlights
+                    };
 
                     setAsync({
                       event: {
                         type: "addCitation",
                         formId: metadata.formId,
-                        questionId: questions[ux.questionIndex].questionId,
-                        documentId: ux.documentId!,
+                        questionId: questions[state.ux.questionIndex].questionId,
+                        documentId: state.ux.documentId!,
                         citationId,
                         excerpt: summary.excerpt,
                         bounds: newCitation.bounds!,
@@ -527,7 +649,7 @@ const stateAtom = atom<State, [Action], void>(
                       },
                       onError: {
                         type: "errorAddSelection",
-                        questionIndex: ux.questionIndex,
+                        questionIndex: state.ux.questionIndex,
                       },
                     });
                     break;
@@ -535,7 +657,7 @@ const stateAtom = atom<State, [Action], void>(
 
                   case "errorAddSelection": {
                     selectCitation(
-                      questions[ux.questionIndex].citations.length - 1
+                      questions[state.ux.questionIndex].citations.length - 1
                     );
                     break;
                   }
@@ -545,17 +667,11 @@ const stateAtom = atom<State, [Action], void>(
                     const { review, citationIndex } = action;
 
                     const citation =
-                      questions[ux.questionIndex].citations[citationIndex];
+                      questions[state.ux.questionIndex].citations[citationIndex];
                     citation.review = review;
 
-                    if (ux.selectedCitation?.citationIndex === citationIndex) {
-                      // After approving or rejecting the current citation, if there's still a citation that's unreviewed, go to it
-                      // if (review! != Review.Unreviewed) {
-                      //   selectUnreviewedCitation();
-                      // }
-                    } else {
-                      selectCitation(citationIndex);
-                    }
+                    // Always update the citation view regardless of current mode
+                    selectCitation(citationIndex);
 
                     setAsync({
                       event: {
@@ -566,7 +682,7 @@ const stateAtom = atom<State, [Action], void>(
                       },
                       onError: {
                         type: "errorReviewCitation",
-                        questionIndex: ux.questionIndex,
+                        questionIndex: state.ux.questionIndex,
                         citationIndex,
                       },
                     });
@@ -574,39 +690,53 @@ const stateAtom = atom<State, [Action], void>(
                   }
 
                   case "errorReviewCitation":
-                    ux.questionIndex = action.questionIndex;
+                    state.ux.questionIndex = action.questionIndex;
                     selectCitation(action.citationIndex);
                     break;
 
                   case "contractAnswerPanel":
-                    ux.largeAnswerPanel = undefined;
+                    state.ux.largeAnswerPanel = undefined;
                     break;
 
                   case "expandAnswerPanel":
-                    ux.largeAnswerPanel = true;
+                    state.ux.largeAnswerPanel = true;
                     break;
 
                   case "startEditExcerpt":
                     console.assert(!isAsyncing);
-                    console.assert(ux.selectedCitation !== undefined);
-                    ux.selectedCitation!.editing = true;
+                    
+                    // We can only edit an excerpt when in ViewingCitation mode
+                    if (state.ux.mode === ApplicationMode.ViewingCitation) {
+                      // Switch to EditingCitation mode, keeping all the same properties
+                      state.ux = {
+                        ...state.ux,
+                        mode: ApplicationMode.EditingCitation
+                      };
+                    }
                     break;
 
                   case "updateExcerpt": {
                     console.assert(!isAsyncing);
-                    console.assert(ux.selectedCitation !== undefined);
-                    console.assert(ux.selectedCitation?.editing !== undefined);
-                    ux.selectedCitation!.editing = undefined;
+                    
+                    // Can only update excerpt in EditingCitation mode
+                    if (state.ux.mode !== ApplicationMode.EditingCitation) {
+                      console.warn("Can only update excerpt in EditingCitation mode");
+                      return;
+                    }
 
                     const { excerpt } = action;
-                    const { citationIndex } = ux.selectedCitation!;
-
-                    const citation =
-                      questions[ux.questionIndex].citations[citationIndex];
+                    const { citationIndex } = state.ux;
+                    const citation = questions[state.ux.questionIndex].citations[citationIndex];
 
                     if (citation.excerpt === excerpt) return;
-
+                    
                     citation.excerpt = excerpt;
+                    
+                    // Switch back to ViewingCitation mode
+                    state.ux = {
+                      ...state.ux,
+                      mode: ApplicationMode.ViewingCitation
+                    };
 
                     setAsync({
                       event: {
@@ -617,7 +747,7 @@ const stateAtom = atom<State, [Action], void>(
                       },
                       onError: {
                         type: "errorUpdateExcerpt",
-                        questionIndex: ux.questionIndex,
+                        questionIndex: state.ux.questionIndex,
                         citationIndex,
                       },
                     });
@@ -625,14 +755,21 @@ const stateAtom = atom<State, [Action], void>(
                   }
 
                   case "errorUpdateExcerpt":
-                    ux.questionIndex = action.questionIndex;
+                    state.ux.questionIndex = action.questionIndex;
                     selectCitation(action.citationIndex);
                     break;
 
                   case "cancelEditExcerpt":
                     console.assert(!isAsyncing);
-                    console.assert(ux.selectedCitation?.editing !== undefined);
-                    ux.selectedCitation!.editing = undefined;
+                    
+                    // Can only cancel editing in EditingCitation mode
+                    if (state.ux.mode === ApplicationMode.EditingCitation) {
+                      // Switch back to ViewingCitation mode
+                      state.ux = {
+                        ...state.ux,
+                        mode: ApplicationMode.ViewingCitation
+                      };
+                    }
                     break;
 
                   case "updateAnswer": {
@@ -640,7 +777,7 @@ const stateAtom = atom<State, [Action], void>(
 
                     const { answer } = action;
 
-                    const question = questions[ux.questionIndex];
+                    const question = questions[state.ux.questionIndex];
 
                     if (question.answer === answer) return;
 
@@ -656,14 +793,14 @@ const stateAtom = atom<State, [Action], void>(
                       },
                       onError: {
                         type: "errorUpdateAnswer",
-                        questionIndex: ux.questionIndex,
+                        questionIndex: state.ux.questionIndex,
                       },
                     });
                     break;
                   }
 
                   case "errorUpdateAnswer":
-                    ux.questionIndex = action.questionIndex;
+                    state.ux.questionIndex = action.questionIndex;
                     break;
 
                   case "asyncLoading":
@@ -691,7 +828,7 @@ const stateAtom = atom<State, [Action], void>(
                     const { error } = action;
                     asyncState.status = "error";
                     (asyncState as AsyncErrorState).error = error;
-                    (asyncState as AsyncErrorState).uxAtError = ux;
+                    (asyncState as AsyncErrorState).uxAtError = state.ux;
                     break;
                   }
 
@@ -707,8 +844,259 @@ const stateAtom = atom<State, [Action], void>(
                   // making changes *within* the state, so we do it at the top of the function
 
                   case "setCursorRange": {
-                    ux.cursorRange = action.cursorRange;
+                    // Can only set cursor range in SelectingNewCitation mode
+                    if (state.ux.mode === ApplicationMode.SelectingNewCitation) {
+                      state.ux = {
+                        ...state.ux,
+                        cursorRange: action.cursorRange
+                      };
+                    } else {
+                      console.warn("Can only set cursor range in SelectingNewCitation mode");
+                    }
                     break;
+                  }
+                  
+                  case "confirmSelection": {
+                    // Can only confirm selection when in SelectingNewCitation mode
+                    if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
+                      console.warn("Can only confirm selection when in SelectingNewCitation mode");
+                      return;
+                    }
+
+                    // Must have a valid cursor range to confirm selection
+                    if (!state.ux.cursorRange) {
+                      console.warn("Cannot confirm selection without a cursorRange");
+                      return;
+                    }
+
+                    // Use the captured cursorRange to create a summary
+                    const summary = rangeToSummary(
+                      state.ux.cursorRange,
+                      docFromId[state.ux.documentId].di
+                    );
+
+                    // If no excerpt was found, we can't create a citation
+                    if (!summary.excerpt) {
+                      console.warn("No valid excerpt found from user selection");
+                      return;
+                    }
+
+                    // Create citation ID
+                    const citationId = createCitationId(
+                      metadata.formId,
+                      "client"
+                    );
+
+                    // Create the new citation
+                    const newCitation: Citation = {
+                      documentId: state.ux.documentId,
+                      citationId,
+                      bounds: summaryToBounds(summary, true),
+                      excerpt: summary.excerpt,
+                      review: Review.Unreviewed,
+                    };
+
+                    // Add the citation
+                    const newCitationIndex = questions[state.ux.questionIndex].citations.push(newCitation) - 1;
+                    
+                    // Get citation highlights
+                    const citationHighlights = citationHighlightsFor(newCitation);
+
+                    // Create a new state object for ViewingCitation mode
+                    state.ux = {
+                      questionIndex: state.ux.questionIndex,
+                      largeAnswerPanel: state.ux.largeAnswerPanel,
+                      mode: ApplicationMode.ViewingCitation,
+                      documentId: state.ux.documentId,
+                      pageNumber: state.ux.pageNumber,
+                      citationIndex: newCitationIndex,
+                      citationHighlights
+                    };
+
+                    // Send async event to store the citation remotely
+                    setAsync({
+                      event: {
+                        type: "addCitation",
+                        formId: metadata.formId,
+                        questionId: questions[state.ux.questionIndex].questionId,
+                        documentId: state.ux.documentId,
+                        citationId,
+                        excerpt: summary.excerpt,
+                        bounds: newCitation.bounds!,
+                        review: Review.Unreviewed,
+                        creator: "client",
+                      },
+                      onError: {
+                        type: "errorAddSelection",
+                        questionIndex: state.ux.questionIndex,
+                      },
+                    });
+                    break;
+                  }
+                  
+                  case "cancelSelection": {
+                    // Can only cancel selection when in SelectingNewCitation mode
+                    if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
+                      console.warn("Can only cancel selection when in SelectingNewCitation mode");
+                      return;
+                    }
+                    
+                    // Return to document viewing mode with a new state object
+                    state.ux = {
+                      questionIndex: state.ux.questionIndex,
+                      largeAnswerPanel: state.ux.largeAnswerPanel,
+                      mode: ApplicationMode.ViewingDocument,
+                      documentId: state.ux.documentId,
+                      pageNumber: state.ux.pageNumber
+                    };
+                    
+                    break;
+                  }
+
+                  // Mode-related actions
+                  case "enterIdleMode": {
+                    return {
+                      ...state,
+                      ux: {
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel,
+                        mode: ApplicationMode.Idle
+                      }
+                    };
+                  }
+
+                  case "enterAnswerMode": {
+                    // Create a new UX state with QuestionFocus mode
+                    const newUx = {
+                      questionIndex: state.ux.questionIndex,
+                      largeAnswerPanel: state.ux.largeAnswerPanel,
+                      mode: ApplicationMode.Answer,
+                    };
+                    
+                    // Add document context if available
+                    if (hasDocumentContext(state.ux)) {
+                      Object.assign(newUx, {
+                        documentId: state.ux.documentId,
+                        pageNumber: state.ux.pageNumber
+                      });
+                    }
+                    
+                    return {
+                      ...state,
+                      ux: newUx
+                    };
+                  }
+
+                  case "enterViewingDocumentMode": {
+                    // Get documentId from action or current state using getDocumentId helper
+                    const documentId = action.documentId || getDocumentId(state.ux);
+                    
+                    // Get pageNumber from action, current state using getPageNumber helper, or default to 1
+                    const pageNumber = action.pageNumber || getPageNumber(state.ux) || 1;
+                    
+                    if (!documentId) {
+                      console.error("Cannot enter ViewingDocumentMode without a document ID");
+                      return state;
+                    }
+
+                    return {
+                      ...state,
+                      ux: {
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel,
+                        mode: ApplicationMode.ViewingDocument,
+                        documentId,
+                        pageNumber
+                      }
+                    };
+                  }
+
+                  case "enterViewingCitationMode": {
+                    const { citationIndex } = action;
+                    const citation = questions[state.ux.questionIndex].citations[citationIndex];
+                    const citationHighlights = citationHighlightsFor(citation);
+
+                    if (citationHighlights.length === 0) {
+                      console.error("Cannot enter ViewingCitationMode with empty citation highlights");
+                      return state;
+                    }
+
+                    return {
+                      ...state,
+                      ux: {
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel,
+                        mode: ApplicationMode.ViewingCitation,
+                        documentId: citation.documentId,
+                        pageNumber: citationHighlights[0].pageNumber,
+                        citationIndex,
+                        citationHighlights
+                      }
+                    };
+                  }
+
+                  case "enterEditingCitationMode": {
+                    if (state.ux.mode !== ApplicationMode.ViewingCitation) {
+                      console.error("Can only enter EditingCitationMode from ViewingCitationMode");
+                      return state;
+                    }
+
+                    return {
+                      ...state,
+                      ux: {
+                        ...state.ux,
+                        mode: ApplicationMode.EditingCitation
+                      }
+                    };
+                  }
+
+                  case "enterSelectingNewCitationMode": {
+                    // Check if we have document context using the helper function
+                    if (!hasDocumentContext(state.ux)) {
+                      console.error("Cannot enter SelectingNewCitationMode without document context");
+                      return state;
+                    }
+
+                    // Now TypeScript knows these properties exist after the check
+                    return {
+                      ...state,
+                      ux: {
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel,
+                        mode: ApplicationMode.SelectingNewCitation,
+                        documentId: state.ux.documentId,
+                        pageNumber: state.ux.pageNumber,
+                        range: undefined,
+                        cursorRange: undefined
+                      }
+                    };
+                  }
+
+                  case "enterResizingCitationMode": {
+                    if (state.ux.mode !== ApplicationMode.ViewingCitation) {
+                      console.error("Can only enter ResizingCitationMode from ViewingCitationMode");
+                      return state;
+                    }
+
+                    // Since we've verified we're in ViewingCitation mode, these properties will exist
+                    const { citationIndex, citationHighlights, documentId, pageNumber } = state.ux;
+                    const citation = questions[state.ux.questionIndex].citations[citationIndex];
+                    
+                    return {
+                      ...state,
+                      ux: {
+                        questionIndex: state.ux.questionIndex,
+                        largeAnswerPanel: state.ux.largeAnswerPanel,
+                        mode: ApplicationMode.ResizingCitation,
+                        documentId,
+                        pageNumber,
+                        citationIndex,
+                        citationHighlights,
+                        previousBounds: citation.bounds || [],
+                        currentBounds: citation.bounds || [],
+                        selectedExcerpt: citation.excerpt
+                      }
+                    };
                   }
 
                   default:

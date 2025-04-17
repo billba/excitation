@@ -4,8 +4,9 @@ import {
   useCallback,
   useMemo,
 } from "react";
-import { Citation, LoadedState } from "./Types";
+import { Citation, LoadedState, ApplicationMode } from "./Types";
 import { CitationUX } from "./Citation";
+import { getDocumentId, hasCitationContext } from "./StateUtils";
 import {
   DocumentRegular,
   DocumentOnePageRegular,
@@ -30,8 +31,11 @@ const sortIndex = sortBy(
 export function Sidebar() {
   const [state, dispatch] = useAppState();
   const { questions, ux, docs, isTextLayerEmpty } = state as LoadedState;
-  const { questionIndex, selectedCitation, documentId } = ux;
+  const { questionIndex } = ux;
   const question = questions[questionIndex];
+
+  const documentId = getDocumentId(ux);
+  const selectedCitationIndex = hasCitationContext(ux) ? ux.citationIndex : undefined;
   const { citations } = question;
 
   const { isAsyncing, isError } = useAsyncHelper();
@@ -67,8 +71,8 @@ export function Sidebar() {
           .map(({ firstPage, lastPage, citationIndex }) => {
             const pageGroupSelected =
               docSelected &&
-              selectedCitation != undefined &&
-              selectedCitation.citationIndex === citationIndex;
+              selectedCitationIndex != undefined &&
+              selectedCitationIndex === citationIndex;
             return {
               firstPage,
               lastPage,
@@ -93,14 +97,14 @@ export function Sidebar() {
           noCitations: docSelected && !pageGroups.length,
         };
       }),
-    [citations, documentId, selectedCitation, docs]
+    [citations, documentId, selectedCitationIndex, docs]
   );
 
   const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
 
-  const addSelection = useCallback(
+  const enterSelectionMode = useCallback(
     (event: React.MouseEvent) => {
-      dispatch({ type: "addSelection" });
+      dispatch({ type: "enterSelectingNewCitationMode" });
       document.getSelection()?.empty();
       event.stopPropagation();
     },
@@ -112,11 +116,11 @@ export function Sidebar() {
       <h3 id="citations-label">Review Citations</h3>
       <div className="sidebar-divider" />
       <div id="disclaimer-section">
-          Citation Tool is for demo purposes only. AI generated highlights 
-          may be incomplete or factually incorrect and should be reviewed.
+        Citation Tool is for demo purposes only. AI generated highlights
+        may be incomplete or factually incorrect and should be reviewed.
       </div>
       <div className="sidebar-divider" />
-        <div id="docs">
+      <div id="docs">
         {groupedCitations.map(
           ({
             doc: { documentId, pdfUrl, name },
@@ -130,9 +134,8 @@ export function Sidebar() {
               <div className="doc" key={documentId}>
                 <DocSpacer docSelected={docSelected} className="prefix" />
                 <div
-                  className={`doc-main ${
-                    docSelected ? "selected" : "unselected"
-                  }`}
+                  className={`doc-main ${docSelected ? "selected" : "unselected"
+                    }`}
                 >
                   <DocHeader
                     firstPageGroupSelected={firstPageGroupSelected}
@@ -164,9 +167,9 @@ export function Sidebar() {
                           pageGroupSelected
                             ? undefined
                             : dispatchUnlessError({
-                                type: "selectCitation",
-                                citationIndex,
-                              })
+                              type: "selectCitation",
+                              citationIndex,
+                            })
                         }
                       >
                         <CitationUX
@@ -175,7 +178,7 @@ export function Sidebar() {
                           review={citations[citationIndex].review}
                           excerpt={citations[citationIndex].excerpt}
                           selected={
-                            selectedCitation?.citationIndex == citationIndex
+                            selectedCitationIndex == citationIndex
                           }
                         />
                       </PageGroupHeader>
@@ -214,16 +217,30 @@ export function Sidebar() {
           )}
           <div id="answer">
             <div className="answer-section">
-              To manually add a citation, highlight the relevant text and click
-              the button that pops up below. Some documents may contain text that 
-              is not selectable.
-              {isAsyncing || ux.range == undefined || isTextLayerEmpty ? (
+              {isAsyncing || isTextLayerEmpty ? (
                 " "
+              ) : ux.mode === ApplicationMode.SelectingNewCitation ? (
+                <div className="selection-controls">
+                  <span>Selection in progress: </span>
+                  <button
+                    className="action confirm"
+                    onClick={dispatchHandler({ type: "confirmSelection" })}
+                    disabled={!(ux.mode === ApplicationMode.SelectingNewCitation && ux.cursorRange)}
+                  >
+                    confirm selection
+                  </button>
+                  <button
+                    className="action cancel"
+                    onClick={dispatchHandler({ type: "cancelSelection" })}
+                  >
+                    cancel
+                  </button>
+                </div>
               ) : (
                 <>
                   &nbsp;
-                  <button className="action" onClick={addSelection}>
-                    add new citation
+                  <button className="action" onClick={enterSelectionMode}>
+                    select new citation
                   </button>
                 </>
               )}
@@ -278,9 +295,8 @@ const DocHeader = ({
   return (
     <>
       <div
-        className={`doc-header ${
-          firstPageGroupSelected ? "first-page-selected" : ""
-        }`}
+        className={`doc-header ${firstPageGroupSelected ? "first-page-selected" : ""
+          }`}
         onClick={
           docSelected
             ? undefined
