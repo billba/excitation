@@ -37,8 +37,7 @@ export function Viewer() {
   const viewerRef = useRef<HTMLDivElement>(null);
 
   const mode = ux.mode;
-  const isSelecting = mode === ApplicationMode.SelectingNewCitation && ux.isSelecting;
-
+  
   useEffect(() => {
     const viewerElem = viewerRef.current;
 
@@ -57,13 +56,10 @@ export function Viewer() {
     }
 
     const handleMouseUp = () => {
-      console.assert(isSelecting, "Mouse up without mouse down");
       dispatch({ type: "endSelection" });
     }
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isSelecting) return;
-
       const rect = viewerElem.getBoundingClientRect();
 
       dispatch({
@@ -74,16 +70,22 @@ export function Viewer() {
       });
     }
 
+    const handleMouseLeave = () => {
+      dispatch({ type: "endSelectionHover" });
+    }
+
     viewerElem.addEventListener("mousedown", handleMouseDown);
     viewerElem.addEventListener("mouseup", handleMouseUp);
     viewerElem.addEventListener("mousemove", handleMouseMove);
+    viewerElem.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
       viewerElem.removeEventListener("mousedown", handleMouseDown);
       viewerElem.removeEventListener("mouseup", handleMouseUp);
       viewerElem.removeEventListener("mousemove", handleMouseMove);
+      viewerElem.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, [isSelecting, mode, dispatch]);
+  }, [mode, dispatch]);
 
   const onDocumentLoadSuccess = useCallback(() => { }, []);
 
@@ -222,15 +224,30 @@ const AddSelection = () => {
 
   if (ux.mode !== ApplicationMode.SelectingNewCitation) return null;
 
-  const { pageNumber, bounds } = ux;
+  const { pageNumber, bounds, hoverBounds } = ux;
 
-  if (bounds === undefined || bounds.length === 0) return null;
+  let highlightSvg: JSX.Element;
+  let hoverSvg: JSX.Element;
 
-  const polygons = bounds
-    .filter((bounds) => bounds.pageNumber === pageNumber)
-    .map(({ polygon }) => polygon);
+  if (bounds === undefined || bounds.length === 0) {
+    highlightSvg = (<></>);
+  } else {
+    const polygons = bounds
+      .filter((bounds) => bounds.pageNumber === pageNumber)
+      .map(({ polygon }) => polygon);
 
-  const highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
+    highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
+  }
+
+  if (hoverBounds === undefined || hoverBounds.length === 0) {
+    hoverSvg = (<></>);
+  } else {
+    const polygons = hoverBounds
+      .filter((bounds) => bounds.pageNumber === pageNumber)
+      .map(({ polygon }) => polygon);
+
+    hoverSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
+  }
 
   return (
     <div
@@ -241,6 +258,7 @@ const AddSelection = () => {
       }}
     >
       {highlightSvg}
+      {hoverSvg}
     </div>
   )
 }
