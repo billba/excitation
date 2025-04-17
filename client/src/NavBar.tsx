@@ -4,15 +4,18 @@ import {
   TriangleLeftFilled,
   TriangleRightFilled,
 } from "@fluentui/react-icons";
-import { LoadedState } from "./Types";
+import { LoadedState,  } from "./Types";
+import { hasCitationContext, getDocumentId, getPageNumber } from "./StateUtils";
 
 export const NavBar = () => {  
-  const { ux: { pageNumber, selectedCitation, documentId } } = useAppStateValue() as LoadedState;
+  const { ux } = useAppStateValue() as LoadedState;
   const docFromId = useDocFromId();
 
   const { isError } = useAsyncHelper();
   const { dispatchUnlessError } = useDispatchHandler();
-
+  
+  const documentId = getDocumentId(ux);
+  
   if (documentId === undefined) return (
     <div id="navbar">
       <div className="navbar-page">
@@ -20,19 +23,24 @@ export const NavBar = () => {
     </div>
   );
 
+  const pageNumber = getPageNumber(ux)!;
+
   const { pages } = docFromId[documentId];
 
-  const pageNumbers =
-    selectedCitation == undefined
-      ? []
-      : selectedCitation.citationHighlights
-        .map(({ pageNumber }) => pageNumber);
-
+  const citationHighlights = hasCitationContext(ux) ? ux.citationHighlights : [];
+  
+  // Get the page numbers from the citation highlights
+  const pageNumbers = citationHighlights.map((highlight: { pageNumber: number }) => highlight.pageNumber);
+  
   const enablePrev = !isError && pageNumber !== 1 || undefined;
   const enableNext = !isError && pageNumber !== pages || undefined;
-
-  const citationPrev = enablePrev && pageNumbers.includes(pageNumber! - 1) || undefined;
-  const citationNext = enableNext && pageNumbers.includes(pageNumber! + 1) || undefined;
+  
+  const citationOnThisPage = pageNumbers.includes(pageNumber) 
+  
+  const citationPrev = enablePrev && citationOnThisPage && pageNumbers.includes(pageNumber - 1) || undefined;
+  const citationNext = enableNext && citationOnThisPage && pageNumbers.includes(pageNumber + 1) || undefined;
+  
+  console.log("pageNumbers", pageNumber, pageNumbers, citationPrev, citationNext);
 
   return (
     <div id="navbar" className="unselectable">
@@ -63,8 +71,7 @@ export const NavBar = () => {
           >
             Citation continues on next page
           </span>
-          {selectedCitation &&
-            selectedCitation.citationHighlights.length == 0 && (
+          {hasCitationContext(ux) && citationHighlights.length === 0 && (
               <span className="selected">Unable to locate citation</span>
             )}
         </div>

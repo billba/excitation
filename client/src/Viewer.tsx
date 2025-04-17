@@ -22,7 +22,8 @@ import {
 } from "./Range";
 import { useDispatchHandler } from "./Hooks";
 import { HoverableIcon } from "./Hooks.tsx";
-import { LoadedState, Review } from "./Types";
+import { LoadedState, Review, ApplicationMode } from "./Types";
+import { getDocumentId, getPageNumber } from "./StateUtils";
 
 const colors = ["#00acdc", "#00ac00", "#f07070"];
 const multiple = 72;
@@ -37,8 +38,8 @@ interface PageCallback {
 export function Viewer() {
   const [state, dispatch] = useAppState();
   const { ux } = state as LoadedState;
-  const { documentId, selectedCitation } = ux;
-  const editing = selectedCitation?.editing;
+  const documentId = getDocumentId(ux);
+  const pageNumber = getPageNumber(ux);
   const docFromId = useDocFromId();
   const viewerRef = useRef<HTMLDivElement>(null);
   const [cursorStart, setCursorStart] = useState<Point | null>(null);
@@ -53,6 +54,11 @@ export function Viewer() {
     };
 
     const handleMouseDown = (e: MouseEvent) => {
+      // If not in SelectingNewCitation mode, do nothing
+      if (ux.mode !== ApplicationMode.SelectingNewCitation) {
+        return;
+      }
+
       // If the event target is part of a citation control, do nothing.
       if (isCitationControl(e)) return;
 
@@ -66,6 +72,11 @@ export function Viewer() {
     };
 
     const handleMouseUp = (e: MouseEvent) => {
+      // If not in SelectingNewCitation mode, do nothing
+      if (ux.mode !== ApplicationMode.SelectingNewCitation) {
+        return;
+      }
+
       // If the event target is part of a citation control, ignore it.
       if (isCitationControl(e)) return;
       if (!cursorStart || ux.pageNumber === undefined) return;
@@ -92,9 +103,14 @@ export function Viewer() {
       viewerElem.removeEventListener("mousedown", handleMouseDown);
       viewerElem.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [cursorStart, ux.pageNumber, dispatch]);
+  }, [cursorStart, pageNumber, ux.mode, dispatch]);
 
   const selectionChange = useCallback(() => {
+    // Only process selection changes when in SelectingNewCitation mode
+    if (ux.mode !== ApplicationMode.SelectingNewCitation) {
+      return;
+    }
+
     const selection = document.getSelection();
     let range: SerializedRange | undefined;
     if (selection?.rangeCount) {
@@ -111,19 +127,20 @@ export function Viewer() {
       type: "setSelectedText",
       range,
     });
-  }, [dispatch]);
+  }, [dispatch, ux.mode]);
 
   useEffect(() => {
-    if (editing) return;
+    // Don't listen for selection changes when not in SelectingNewCitation mode
+    if (ux.mode !== ApplicationMode.SelectingNewCitation) return;
 
     document.addEventListener("selectionchange", selectionChange);
 
     return () => {
       document.removeEventListener("selectionchange", selectionChange);
     };
-  }, [selectionChange, editing]);
+  }, [selectionChange, ux.mode]);
 
-  const onDocumentLoadSuccess = useCallback(() => {}, []);
+  const onDocumentLoadSuccess = useCallback(() => { }, []);
 
   const onTextLayerRender = useCallback(
     (text: TextContent) => {
@@ -146,7 +163,9 @@ export function Viewer() {
     [dispatch]
   );
 
-  const range = documentId == undefined ? undefined : ux.range;
+  // Safely access range property only when in SelectingNewCitation mode
+  const range = documentId == undefined ? undefined :
+    (ux.mode === ApplicationMode.SelectingNewCitation) ? ux.range : undefined;
 
   useEffect(() => {
     if (!range) return;
@@ -175,7 +194,7 @@ export function Viewer() {
         <div>
           <p>You can select a document in the sidebar.</p>
         </div>
-      ) : ux.pageNumber == undefined ? (
+      ) : pageNumber == undefined ? (
         <div>
           <p>
             The selected citation could not be found on the document. You may
@@ -189,14 +208,14 @@ export function Viewer() {
             onLoadSuccess={onDocumentLoadSuccess}
           >
             <Page
-              pageNumber={ux.pageNumber}
+              pageNumber={pageNumber}
               onRenderSuccess={updateViewerSize}
               className="viewer-page"
               renderAnnotationLayer={false}
               onGetTextSuccess={onTextLayerRender}
             />
           </Document>
-          <ViewerCitations />
+          {ux.mode === ApplicationMode.ViewingCitation && <ViewerCitations />}
         </>
       )}
     </div>
@@ -206,21 +225,35 @@ export function Viewer() {
 const ViewerCitations = () => {
   const { dispatchUnlessAsyncing } = useDispatchHandler();
   const { ux, questions, viewer } = useAppStateValue() as LoadedState;
-  const { questionIndex, pageNumber, selectedCitation } = ux;
+  const { questionIndex } = ux;
 
-  if (!selectedCitation) return null;
+  // In ViewingCitation mode, these properties are directly on the ux object
+  if (ux.mode !== ApplicationMode.ViewingCitation) return null;
 
-  const { citationIndex, citationHighlights } = selectedCitation;
+  // We only access these properties after confirming we're in ViewingCitation mode
+  const { citationIndex, citationHighlights, pageNumber } = ux;
 
   const citation = questions[questionIndex].citations[citationIndex];
   const { review } = citation;
   const color = colors[review || 0];
 
-  const polygons = citationHighlights.filter(
-    (citationHighlight) => citationHighlight.pageNumber == ux.pageNumber
-  )[0]?.polygons;
+  // Get the highlight for current page - use strict equality for comparing page numbers
+  const highlightForCurrentPage = citationHighlights.find(
+    (citationHighlight) => citationHighlight.pageNumber === pageNumber
+  );
 
-  if (!polygons) return null;
+  // Get the polygons for highlighting
+  const polygons = highlightForCurrentPage?.polygons;
+
+  if (!polygons || polygons.length === 0) return;
+
+  // Prepare SVG highlighting and floater positioning
+  let highlightSvg = null;
+  let top = 20;
+  let left = 20;
+  let width = 160;
+  let height = 32;
+
   const rectsForUnion: [number, number][][][] = polygons.map((poly) => {
     const x1 = poly[0];
     const y1 = poly[1];
@@ -241,8 +274,7 @@ const ViewerCitations = () => {
       ring
         .map(
           (coords, i) =>
-            `${i === 0 ? "M" : "L"} ${coords[0] * multiple},${
-              coords[1] * multiple
+            `${i === 0 ? "M" : "L"} ${coords[0] * multiple},${coords[1] * multiple
             }`
         )
         .join(" ") + " Z"
@@ -255,29 +287,52 @@ const ViewerCitations = () => {
     });
   });
 
-  const highlightSvg = (
+  highlightSvg = (
     <svg
       className="highlight-svg"
       style={{
         width: viewer.width,
         height: viewer.height,
       }}
+      data-citation-index={citationIndex}
     >
-      {allPaths.map((d, i) => (
-        <path key={i} d={d} fill="none" stroke={color} strokeWidth={2} />
-      ))}
+      <g className="citation-group">
+        {/* First render all the fill areas that capture hover events */}
+        {allPaths.map((d, i) => (
+          <path
+            key={`area-${i}`}
+            d={d}
+            fill={color}
+            fillOpacity={0.01}
+            stroke="none"
+            className="citation-area-highlight"
+          />
+        ))}
+        {/* Then render all the visible outlines */}
+        {allPaths.map((d, i) => (
+          <path
+            key={`outline-${i}`}
+            d={d}
+            fill="none"
+            stroke={color}
+            strokeWidth={2}
+            className="citation-path-highlight"
+            pointerEvents="none"
+          />
+        ))}
+      </g>
     </svg>
   );
 
   const polygon = polygons[0];
 
   // for now we'll center the floater on top of the top polygon
-  const height = 32;
+  height = 32;
   const highlightWidth = (polygon[4] - polygon[0]) * multiple;
   const highlightMiddle = polygon[0] * multiple + highlightWidth / 2;
-  const width = Math.max(160, highlightWidth);
-  const top = polygon[1] * multiple - height;
-  const left = highlightMiddle - width / 2;
+  width = Math.max(160, highlightWidth);
+  top = polygon[1] * multiple - height;
+  left = highlightMiddle - width / 2;
 
   const reviewCitation = (review: Review) =>
     dispatchUnlessAsyncing({
@@ -330,9 +385,10 @@ const ViewerCitations = () => {
     />
   );
 
+  // Define navigation controls
   const pageNumbers = citationHighlights.map(({ pageNumber }) => pageNumber);
-  const citationPrev = pageNumbers.includes(pageNumber! - 1);
-  const citationNext = pageNumbers.includes(pageNumber! + 1);
+  const citationPrev = pageNumbers.includes(pageNumber - 1);
+  const citationNext = pageNumbers.includes(pageNumber + 1);
 
   const Prev = () => (
     <HoverableIcon
@@ -356,12 +412,13 @@ const ViewerCitations = () => {
     />
   );
 
+  // Single return statement handles both cases (with and without polygons)
   return (
     <div
       className="viewer-citations"
       style={{
         ...viewer,
-        zIndex: 1000, //isError ? 1000 : 1,
+        zIndex: 1000,
       }}
     >
       {highlightSvg}
