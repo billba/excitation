@@ -1,5 +1,4 @@
-import { Bounds, CursorRange, DocIntResponse } from "./di";
-import { SerializedRange } from "./Range";
+import { Bounds, DocIntResponse, Point } from "./di";
 
 export type PseudoBoolean = undefined | true;
 
@@ -51,10 +50,6 @@ export type Action =
     type: "goto";
     documentId?: number;
     pageNumber?: number;
-  }
-  | {
-    type: "setSelectedText";
-    range?: SerializedRange;
   }
   | {
     type: "setViewerSize";
@@ -137,8 +132,15 @@ export type Action =
     type: "asyncRevert";
   }
   | {
-    type: "setCursorRange";
-    cursorRange: CursorRange;
+    type: "setSelectionStart";
+    start: Point;
+  }
+  | {
+    type: "setSelectionEnd";
+    end: Point;
+  }
+  | {
+    type: "endSelection";
   }
   | {
     type: "enterIdleMode";
@@ -165,7 +167,6 @@ export type Action =
   }
   | {
     type: "enterSelectingNewCitationMode";
-    // Document context is already available in non-Idle modes
   }
   | {
     type: "enterResizingCitationMode";
@@ -311,8 +312,10 @@ export interface EditingCitationModeState extends BaseCitationModeState {
 // Selecting a new citation area - now a dedicated mode for text selection
 export interface SelectingNewCitationModeState extends BaseDocumentModeState {
   mode: ApplicationMode.SelectingNewCitation;
-  range?: SerializedRange;
-  cursorRange?: CursorRange;
+  isSelecting: boolean;
+  start: Point;
+  excerpt?: string;
+  bounds?: Bounds[];
 }
 
 // Resizing an existing citation

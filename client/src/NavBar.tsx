@@ -40,8 +40,6 @@ export const NavBar = () => {
   const citationPrev = enablePrev && citationOnThisPage && pageNumbers.includes(pageNumber - 1) || undefined;
   const citationNext = enableNext && citationOnThisPage && pageNumbers.includes(pageNumber + 1) || undefined;
   
-  console.log("pageNumbers", pageNumber, pageNumbers, citationPrev, citationNext);
-
   return (
     <div id="navbar" className="unselectable">
       <div className="navbar-page">
