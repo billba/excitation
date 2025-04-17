@@ -6,7 +6,7 @@ This repo also contains a ***client application*** implementing the _Excitation_
 
 The client requires ***a backend***, and two reference implementations are provided. A local deno backend built on in-memory demonstration data for rapid development, and an Azure backend built on a SQL Server database. But don't be fooled, **this database is empty, and is meant to be populated by additional services which are not part of this repo**.
 
-Why toy with your heart in this way? Because every company is different, every scenario is different, every tech stack is different, and the technological landsape is changing in real time. So you will have to figure out how to best determine relevant excerpts and, perhaps generate answers.
+Why toy with your heart in this way? Because every company is different, every scenario is different, every tech stack is different, and the technological landsape is changing in real time. So you will have to figure out how to best determine relevant excerpts and, perhaps, generate answers.
 
 ## Quick Start
 
