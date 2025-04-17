@@ -338,22 +338,33 @@ const stateAtom = atom<State, [Action], void>(
               const { isAsyncing } = asyncHelpers(asyncState);
 
               function goto(pageNumber?: number, documentId?: number) {
-                const newDocId = documentId ?? getDocumentId(state.ux);
+                const currentDocId = getDocumentId(state.ux);
+                const currentPageNumber = getPageNumber(state.ux);
+                const newDocId = documentId ?? currentDocId;
+                let newPageNumber: number;
 
                 if (newDocId === undefined) {
                   console.error("Cannot go to page without document ID");
                   return;
                 }
 
-                const newPageNumber = pageNumber ??
-                  getPageNumber(state.ux) ?? firstCitedPage(newDocId) ?? 1;
-
-                if (hasCitationContext(state.ux)) {
-                  const pageNumbers = state.ux.citationHighlights.map(({ pageNumber }) => pageNumber);
-                  if (pageNumbers.includes(newPageNumber)) {
-                    state.ux.pageNumber = newPageNumber;
+                if (newDocId === currentDocId) {
+                  if (pageNumber === currentPageNumber) {
+                    console.warn("Already on the requested page");
                     return;
                   }
+
+                  newPageNumber = pageNumber ?? currentPageNumber!;
+
+                  if (hasCitationContext(state.ux)) {
+                    const pageNumbers = state.ux.citationHighlights.map(({ pageNumber }) => pageNumber);
+                    if (pageNumbers.includes(newPageNumber)) {
+                      state.ux.pageNumber = newPageNumber;
+                      return;
+                    }
+                  }
+                } else {
+                  newPageNumber = firstCitedPage(newDocId) ?? 1;
                 }
 
                 state.ux = {
