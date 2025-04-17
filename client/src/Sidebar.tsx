@@ -225,10 +225,11 @@ export function Sidebar() {
                   <button
                     className="action confirm"
                     onClick={dispatchHandler({ type: "confirmSelection" })}
-                    disabled={!(ux.mode === ApplicationMode.SelectingNewCitation && ux.cursorRange)}
+                    disabled={ux.isSelecting || ux.bounds === undefined}
                   >
-                    confirm selection
+                    add citation
                   </button>
+                  &nbsp;
                   <button
                     className="action cancel"
                     onClick={dispatchHandler({ type: "cancelSelection" })}

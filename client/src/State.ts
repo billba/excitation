@@ -25,10 +25,10 @@ import {
   hasDocumentContext,
   getDocumentId,
   getPageNumber,
-  hasCitationContext
+  hasCitationContext,
 } from "./StateUtils";
 import { createCitationId, returnTextPolygonsFromDI } from "./Utility";
-import { createPerPageRegions, summaryToBounds, rangeToSummary } from "./di";
+import { createPerPageRegions, summaryToBounds, rangeToSummary, Bounds } from "./di";
 import { BlobClient } from "@azure/storage-blob";
 
 export function togglePseudoBoolean(pb: PseudoBoolean): PseudoBoolean {
@@ -56,6 +56,17 @@ const docFromIdAtom = atom<{ [id: number]: FormDocument }>((get) => {
 
 export function useDocFromId() {
   return useAtomValue(docFromIdAtom);
+}
+
+function arraysAreEqual(arr1: number[], arr2: number[]) {
+  if (arr1.length !== arr2.length) return false;
+  return arr1.every((value, index) => value === arr2[index]);
+}
+
+function boundsAreEqual(bounds1?: Bounds[], bounds2?: Bounds[]) {
+  if (bounds1 === undefined || bounds2 === undefined) return false;
+  if (bounds1.length !== bounds2.length) return false;
+  return bounds1.every((b1, index) => arraysAreEqual(b1.polygon, bounds2[index].polygon));
 }
 
 export function useLoadForm(formId: number, questionIndex = 0) {
@@ -273,7 +284,7 @@ const stateAtom = atom<State, [Action], void>(
 
     // let's get some special cases out of the way
 
-    if (action.type != "setSelectedText") {
+    if (action.type != "setSelectionEnd") {
       console.log("dispatching", action, prevState);
     }
 
@@ -569,16 +580,6 @@ const stateAtom = atom<State, [Action], void>(
                   goto(action.pageNumber, action.documentId);
                   break;
 
-                case "setSelectedText":
-                  // Range is only available in SelectingNewCitationMode
-                  if (state.ux.mode === ApplicationMode.SelectingNewCitation) {
-                    state.ux = {
-                      ...state.ux,
-                      range: action.range
-                    };
-                  }
-                  break;
-
                 case "setViewerSize": {
                   const { width, height } = action;
                   state.viewer = { width, height };
@@ -588,88 +589,6 @@ const stateAtom = atom<State, [Action], void>(
                 case "emptyTextLayer": {
                   const { isTextLayerEmpty } = action;
                   state.isTextLayerEmpty = isTextLayerEmpty;
-                  break;
-                }
-
-                case "addSelection": {
-                  console.assert(!isAsyncing);
-
-                  // We can only add a selection when in the SelectingNewCitation mode
-                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
-                    console.warn("Can only add selection in SelectingNewCitation mode");
-                    return;
-                  }
-
-                  console.assert(state.ux.cursorRange !== undefined);
-                  console.assert(state.ux.documentId !== undefined);
-
-                  // Use the captured cursorRange (built from mouse events) directly
-                  const summary = rangeToSummary(
-                    state.ux.cursorRange!,
-                    docFromId[state.ux.documentId!].di
-                  );
-                  if (!summary.excerpt) {
-                    console.warn(
-                      "No valid excerpt found from user selection"
-                    );
-                    return;
-                  }
-
-                  const citationId = createCitationId(
-                    metadata.formId,
-                    "client"
-                  );
-
-                  // Create the new citation using the summary polygons for bounds.
-                  const newCitation: Citation = {
-                    documentId: state.ux.documentId!,
-                    citationId,
-                    bounds: summaryToBounds(summary, true),
-                    excerpt: summary.excerpt,
-                    review: Review.Unreviewed,
-                  };
-
-                  // Insert the new citation.
-                  const newCitationIndex = questions[state.ux.questionIndex].citations.push(newCitation) - 1;
-
-                  // Switch to viewing the newly created citation
-                  const citationHighlights = citationHighlightsFor(newCitation);
-
-                  // Set the state to ViewingCitation mode with the new citation
-                  state.ux = {
-                    questionIndex: state.ux.questionIndex,
-                    largeAnswerPanel: state.ux.largeAnswerPanel,
-                    mode: ApplicationMode.ViewingCitation,
-                    documentId: state.ux.documentId,
-                    pageNumber: state.ux.pageNumber,
-                    citationIndex: newCitationIndex,
-                    citationHighlights
-                  };
-
-                  setAsync({
-                    event: {
-                      type: "addCitation",
-                      formId: metadata.formId,
-                      questionId: questions[state.ux.questionIndex].questionId,
-                      documentId: state.ux.documentId!,
-                      citationId,
-                      excerpt: summary.excerpt,
-                      bounds: newCitation.bounds!,
-                      review: Review.Unreviewed,
-                      creator: "client",
-                    },
-                    onError: {
-                      type: "errorAddSelection",
-                      questionIndex: state.ux.questionIndex,
-                    },
-                  });
-                  break;
-                }
-
-                case "errorAddSelection": {
-                  selectCitation(
-                    questions[state.ux.questionIndex].citations.length - 1
-                  );
                   break;
                 }
 
@@ -854,16 +773,55 @@ const stateAtom = atom<State, [Action], void>(
                 // we can't do that inside the 'create' function (which is just about
                 // making changes *within* the state, so we do it at the top of the function
 
-                case "setCursorRange": {
-                  // Can only set cursor range in SelectingNewCitation mode
-                  if (state.ux.mode === ApplicationMode.SelectingNewCitation) {
-                    state.ux = {
-                      ...state.ux,
-                      cursorRange: action.cursorRange
-                    };
-                  } else {
-                    console.warn("Can only set cursor range in SelectingNewCitation mode");
+                
+                case "setSelectionStart": {
+                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
+                    return;
                   }
+
+                  state.ux.start = action.start;
+                  const point = action.start;
+                  const page = state.ux.pageNumber;
+
+                  const summary = rangeToSummary(
+                    { start: { page, point }, end: { page, point } },
+                    docFromId[state.ux.documentId].di
+                  );
+
+                  state.ux.excerpt = summary.excerpt;
+                  state.ux.bounds = summaryToBounds(summary, true);
+                  state.ux.isSelecting = true;
+                  break;
+                }
+
+                case "setSelectionEnd": {
+                  // Can only set cursor range in SelectingNewCitation mode
+                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation || !state.ux.isSelecting ) {
+                    return;
+                  }
+
+                  const page = state.ux.pageNumber;
+                  const summary = rangeToSummary(
+                    { start: { page, point: state.ux.start }, end: { page, point: action.end } },  
+                    docFromId[state.ux.documentId].di
+                  );
+
+                  const bounds = summaryToBounds(summary, true);
+
+                  if (!boundsAreEqual(bounds, state.ux.bounds)) {
+                    state.ux.bounds = bounds;
+                    state.ux.excerpt = summary.excerpt;
+                  }
+                  break;
+                }
+
+                case "endSelection": {
+                  // Can only end selection in SelectingNewCitation mode
+                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
+                    return;
+                  }
+
+                  state.ux.isSelecting = false;
                   break;
                 }
 
@@ -874,20 +832,11 @@ const stateAtom = atom<State, [Action], void>(
                     return;
                   }
 
-                  // Must have a valid cursor range to confirm selection
-                  if (!state.ux.cursorRange) {
-                    console.warn("Cannot confirm selection without a cursorRange");
-                    return;
-                  }
+                  console.assert(!state.ux.isSelecting);
 
-                  // Use the captured cursorRange to create a summary
-                  const summary = rangeToSummary(
-                    state.ux.cursorRange,
-                    docFromId[state.ux.documentId].di
-                  );
-
+                  const { bounds, excerpt } = state.ux;
                   // If no excerpt was found, we can't create a citation
-                  if (!summary.excerpt) {
+                  if (!excerpt || !bounds) {
                     console.warn("No valid excerpt found from user selection");
                     return;
                   }
@@ -902,8 +851,8 @@ const stateAtom = atom<State, [Action], void>(
                   const newCitation: Citation = {
                     documentId: state.ux.documentId,
                     citationId,
-                    bounds: summaryToBounds(summary, true),
-                    excerpt: summary.excerpt,
+                    bounds,
+                    excerpt,
                     review: Review.Unreviewed,
                   };
 
@@ -932,8 +881,8 @@ const stateAtom = atom<State, [Action], void>(
                       questionId: questions[state.ux.questionIndex].questionId,
                       documentId: state.ux.documentId,
                       citationId,
-                      excerpt: summary.excerpt,
-                      bounds: newCitation.bounds!,
+                      excerpt,
+                      bounds,
                       review: Review.Unreviewed,
                       creator: "client",
                     },
@@ -1072,13 +1021,12 @@ const stateAtom = atom<State, [Action], void>(
                   return {
                     ...state,
                     ux: {
+                      mode: ApplicationMode.SelectingNewCitation,
                       questionIndex: state.ux.questionIndex,
                       largeAnswerPanel: state.ux.largeAnswerPanel,
-                      mode: ApplicationMode.SelectingNewCitation,
                       documentId: state.ux.documentId,
                       pageNumber: state.ux.pageNumber,
-                      range: undefined,
-                      cursorRange: undefined
+                      isSelecting: false,
                     }
                   };
                 }

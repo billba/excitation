@@ -1,8 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Document, Page } from "react-pdf";
-import { TextContent } from "pdfjs-dist/types/src/display/api";
 import polygonClipping from "polygon-clipping";
-import { CursorRange, Point } from "./di";
+import { Point } from "./di";
 
 import {
   CheckmarkCircleFilled,
@@ -14,12 +13,6 @@ import {
 } from "@fluentui/react-icons";
 
 import { useDocFromId, useAppState, useAppStateValue } from "./State";
-import {
-  calculateRange,
-  calculateSerializedRange,
-  compareRanges,
-  SerializedRange,
-} from "./Range";
 import { useDispatchHandler } from "./Hooks";
 import { HoverableIcon } from "./Hooks.tsx";
 import { LoadedState, Review, ApplicationMode } from "./Types";
@@ -42,115 +35,57 @@ export function Viewer() {
   const pageNumber = getPageNumber(ux);
   const docFromId = useDocFromId();
   const viewerRef = useRef<HTMLDivElement>(null);
-  const [cursorStart, setCursorStart] = useState<Point | null>(null);
+
+  const mode = ux.mode;
+  const isSelecting = mode === ApplicationMode.SelectingNewCitation && ux.isSelecting;
 
   useEffect(() => {
     const viewerElem = viewerRef.current;
-    if (!viewerElem) return;
 
-    // Helper to check if the event target is inside a citation control element.
-    const isCitationControl = (e: Event) => {
-      return (e.target as HTMLElement).closest(".citation-control");
-    };
+    if (!viewerElem || mode !== ApplicationMode.SelectingNewCitation) return;
 
     const handleMouseDown = (e: MouseEvent) => {
-      // If not in SelectingNewCitation mode, do nothing
-      if (ux.mode !== ApplicationMode.SelectingNewCitation) {
-        return;
-      }
-
-      // If the event target is part of a citation control, do nothing.
-      if (isCitationControl(e)) return;
-
-      // Otherwise, handle the event as before.
       const rect = viewerElem.getBoundingClientRect();
       const startPoint: Point = {
         x: (e.clientX - rect.left) / multiple,
         y: (e.clientY - rect.top) / multiple,
       };
-      setCursorStart(startPoint);
-    };
 
-    const handleMouseUp = (e: MouseEvent) => {
-      // If not in SelectingNewCitation mode, do nothing
-      if (ux.mode !== ApplicationMode.SelectingNewCitation) {
-        return;
-      }
+      dispatch({
+        type: "setSelectionStart", start: startPoint,
+      });
+    }
 
-      // If the event target is part of a citation control, ignore it.
-      if (isCitationControl(e)) return;
-      if (!cursorStart || ux.pageNumber === undefined) return;
+    const handleMouseUp = () => {
+      console.assert(isSelecting, "Mouse up without mouse down");
+      dispatch({ type: "endSelection" });
+    }
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isSelecting) return;
+
       const rect = viewerElem.getBoundingClientRect();
-      const endPoint: Point = {
-        x: (e.clientX - rect.left) / multiple,
-        y: (e.clientY - rect.top) / multiple,
-      };
 
-      // Build a CursorRange from the captured points.
-      const cursorRange: CursorRange = {
-        start: { page: ux.pageNumber, point: cursorStart },
-        end: { page: ux.pageNumber, point: endPoint },
-      };
-
-      // Dispatch the action to store the new cursorRange.
-      dispatch({ type: "setCursorRange", cursorRange });
-    };
+      dispatch({
+        type: "setSelectionEnd", end: {
+          x: (e.clientX - rect.left) / multiple,
+          y: (e.clientY - rect.top) / multiple,
+        }
+      });
+    }
 
     viewerElem.addEventListener("mousedown", handleMouseDown);
     viewerElem.addEventListener("mouseup", handleMouseUp);
+    viewerElem.addEventListener("mousemove", handleMouseMove);
 
     return () => {
       viewerElem.removeEventListener("mousedown", handleMouseDown);
       viewerElem.removeEventListener("mouseup", handleMouseUp);
+      viewerElem.removeEventListener("mousemove", handleMouseMove);
     };
-  }, [cursorStart, pageNumber, ux.mode, dispatch]);
-
-  const selectionChange = useCallback(() => {
-    // Only process selection changes when in SelectingNewCitation mode
-    if (ux.mode !== ApplicationMode.SelectingNewCitation) {
-      return;
-    }
-
-    const selection = document.getSelection();
-    let range: SerializedRange | undefined;
-    if (selection?.rangeCount) {
-      const selectionRange = selection.getRangeAt(0);
-      console.assert(viewerRef.current != undefined);
-      if (
-        !selectionRange.collapsed &&
-        viewerRef.current!.contains(selectionRange.commonAncestorContainer)
-      ) {
-        range = calculateSerializedRange(selectionRange);
-      }
-    }
-    dispatch({
-      type: "setSelectedText",
-      range,
-    });
-  }, [dispatch, ux.mode]);
-
-  useEffect(() => {
-    // Don't listen for selection changes when not in SelectingNewCitation mode
-    if (ux.mode !== ApplicationMode.SelectingNewCitation) return;
-
-    document.addEventListener("selectionchange", selectionChange);
-
-    return () => {
-      document.removeEventListener("selectionchange", selectionChange);
-    };
-  }, [selectionChange, ux.mode]);
+  }, [isSelecting, mode, dispatch]);
 
   const onDocumentLoadSuccess = useCallback(() => { }, []);
-
-  const onTextLayerRender = useCallback(
-    (text: TextContent) => {
-      dispatch({
-        type: "emptyTextLayer",
-        isTextLayerEmpty: text.items.length == 0,
-      });
-    },
-    [dispatch]
-  );
 
   const updateViewerSize = useCallback(
     ({ height, width }: PageCallback) => {
@@ -163,33 +98,11 @@ export function Viewer() {
     [dispatch]
   );
 
-  // Safely access range property only when in SelectingNewCitation mode
-  const range = documentId == undefined ? undefined :
-    (ux.mode === ApplicationMode.SelectingNewCitation) ? ux.range : undefined;
-
-  useEffect(() => {
-    if (!range) return;
-
-    const selection = document.getSelection()!;
-    const currentRange = selection.rangeCount && selection.getRangeAt(0);
-
-    if (currentRange) {
-      if (compareRanges(currentRange, range)) return;
-      selection.empty();
-    }
-
-    const realRange = calculateRange(range);
-
-    if (!realRange) return;
-
-    selection.addRange(realRange);
-  }, [range]);
-
   if (documentId !== undefined)
     console.log("pdf", docFromId[documentId].pdfUrl);
 
   return (
-    <div ref={viewerRef} id="viewer-viewport">
+    <div ref={viewerRef} id="viewer-viewport" className="unselectable">
       {documentId == undefined ? (
         <div>
           <p>You can select a document in the sidebar.</p>
@@ -212,47 +125,25 @@ export function Viewer() {
               onRenderSuccess={updateViewerSize}
               className="viewer-page"
               renderAnnotationLayer={false}
-              onGetTextSuccess={onTextLayerRender}
+              renderTextLayer={false}
             />
           </Document>
-          {ux.mode === ApplicationMode.ViewingCitation && <ViewerCitations />}
+          {mode === ApplicationMode.ViewingCitation && <ViewerCitations />}
+          {mode === ApplicationMode.SelectingNewCitation && <AddSelection />}
         </>
       )}
     </div>
   );
 }
 
-const ViewerCitations = () => {
-  const { dispatchUnlessAsyncing } = useDispatchHandler();
-  const { ux, questions, viewer } = useAppStateValue() as LoadedState;
-  const { questionIndex } = ux;
+interface HighlightSvgProps {
+  polygons: number[][];
+  width: number;
+  height: number;
+  color: string;
+}
 
-  // In ViewingCitation mode, these properties are directly on the ux object
-  if (ux.mode !== ApplicationMode.ViewingCitation) return null;
-
-  // We only access these properties after confirming we're in ViewingCitation mode
-  const { citationIndex, citationHighlights, pageNumber } = ux;
-
-  const citation = questions[questionIndex].citations[citationIndex];
-  const { review } = citation;
-  const color = colors[review || 0];
-
-  // Get the highlight for current page - use strict equality for comparing page numbers
-  const highlightForCurrentPage = citationHighlights.find(
-    (citationHighlight) => citationHighlight.pageNumber === pageNumber
-  );
-
-  // Get the polygons for highlighting
-  const polygons = highlightForCurrentPage?.polygons;
-
-  if (!polygons || polygons.length === 0) return;
-
-  // Prepare SVG highlighting and floater positioning
-  let highlightSvg = null;
-  let top = 20;
-  let left = 20;
-  let width = 160;
-  let height = 32;
+const HighlightSvg = ({ polygons, width, height, color }: HighlightSvgProps) => {
 
   const rectsForUnion: [number, number][][][] = polygons.map((poly) => {
     const x1 = poly[0];
@@ -287,14 +178,14 @@ const ViewerCitations = () => {
     });
   });
 
-  highlightSvg = (
+  return (
     <svg
       className="highlight-svg"
       style={{
-        width: viewer.width,
-        height: viewer.height,
+        width,
+        height,
       }}
-      data-citation-index={citationIndex}
+    // data-citation-index={citationIndex}
     >
       <g className="citation-group">
         {/* First render all the fill areas that capture hover events */}
@@ -323,6 +214,68 @@ const ViewerCitations = () => {
       </g>
     </svg>
   );
+
+}
+
+const AddSelection = () => {
+  const { ux, viewer } = useAppStateValue() as LoadedState;
+
+  if (ux.mode !== ApplicationMode.SelectingNewCitation) return null;
+
+  const { pageNumber, bounds } = ux;
+
+  if (bounds === undefined || bounds.length === 0) return null;
+
+  const polygons = bounds
+    .filter((bounds) => bounds.pageNumber === pageNumber)
+    .map(({ polygon }) => polygon);
+
+  const highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
+
+  return (
+    <div
+      className="viewer-citations"
+      style={{
+        ...viewer,
+        zIndex: 1000,
+      }}
+    >
+      {highlightSvg}
+    </div>
+  )
+}
+
+const ViewerCitations = () => {
+  const { dispatchUnlessAsyncing } = useDispatchHandler();
+  const { ux, questions, viewer } = useAppStateValue() as LoadedState;
+  const { questionIndex } = ux;
+
+  // In ViewingCitation mode, these properties are directly on the ux object
+  if (ux.mode !== ApplicationMode.ViewingCitation) return null;
+
+  // We only access these properties after confirming we're in ViewingCitation mode
+  const { citationIndex, citationHighlights, pageNumber } = ux;
+
+  const citation = questions[questionIndex].citations[citationIndex];
+  const { review } = citation;
+  const color = colors[review || 0];
+
+  // Get the highlight for current page - use strict equality for comparing page numbers
+  const highlightForCurrentPage = citationHighlights.find(
+    (citationHighlight) => citationHighlight.pageNumber === pageNumber
+  );
+
+  // Get the polygons for highlighting
+  const polygons = highlightForCurrentPage?.polygons;
+
+  if (!polygons || polygons.length === 0) return;
+
+  // Prepare SVG highlighting and floater positioning
+  const highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={color} />;
+  let top = 20;
+  let left = 20;
+  let width = 160;
+  let height = 32;
 
   const polygon = polygons[0];
 
@@ -412,7 +365,6 @@ const ViewerCitations = () => {
     />
   );
 
-  // Single return statement handles both cases (with and without polygons)
   return (
     <div
       className="viewer-citations"
