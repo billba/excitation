@@ -140,6 +140,9 @@ export type Action =
     end: Point;
   }
   | {
+    type: "endSelectionHover";
+  }
+  | {
     type: "endSelection";
   }
   | {
@@ -316,6 +319,7 @@ export interface SelectingNewCitationModeState extends BaseDocumentModeState {
   start: Point;
   excerpt?: string;
   bounds?: Bounds[];
+  hoverBounds?: Bounds[];
 }
 
 // Resizing an existing citation

@@ -773,7 +773,6 @@ const stateAtom = atom<State, [Action], void>(
                 // we can't do that inside the 'create' function (which is just about
                 // making changes *within* the state, so we do it at the top of the function
 
-                
                 case "setSelectionStart": {
                   if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
                     return;
@@ -791,27 +790,45 @@ const stateAtom = atom<State, [Action], void>(
                   state.ux.excerpt = summary.excerpt;
                   state.ux.bounds = summaryToBounds(summary, true);
                   state.ux.isSelecting = true;
+                  state.ux.hoverBounds = undefined;
                   break;
                 }
 
                 case "setSelectionEnd": {
                   // Can only set cursor range in SelectingNewCitation mode
-                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation || !state.ux.isSelecting ) {
+                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
                     return;
                   }
 
+                  const start = state.ux.isSelecting ? state.ux.start : action.end;
                   const page = state.ux.pageNumber;
+
                   const summary = rangeToSummary(
-                    { start: { page, point: state.ux.start }, end: { page, point: action.end } },  
+                    { start: { page, point: start }, end: { page, point: action.end } },
                     docFromId[state.ux.documentId].di
                   );
 
                   const bounds = summaryToBounds(summary, true);
 
-                  if (!boundsAreEqual(bounds, state.ux.bounds)) {
-                    state.ux.bounds = bounds;
-                    state.ux.excerpt = summary.excerpt;
+                  if (state.ux.isSelecting) {
+                    if (!boundsAreEqual(bounds, state.ux.bounds)) {
+                      state.ux.bounds = bounds;
+                      state.ux.excerpt = summary.excerpt;
+                    }
+                  } else {
+                    if (state.ux.hoverBounds === undefined || !boundsAreEqual(bounds, state.ux.hoverBounds)) {
+                      state.ux.hoverBounds = bounds;
+                    }
                   }
+                  break;
+                }
+
+                case "endSelectionHover": {
+                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
+                    return;
+                  }
+
+                  state.ux.hoverBounds = undefined;
                   break;
                 }
 
