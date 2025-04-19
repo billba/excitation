@@ -30,7 +30,7 @@ const sortIndex = sortBy(
 
 export function Sidebar() {
   const [state, dispatch] = useAppState();
-  const { questions, ux, docs, isTextLayerEmpty } = state as LoadedState;
+  const { questions, ux, docs } = state as LoadedState;
   const { questionIndex } = ux;
   const question = questions[questionIndex];
 
@@ -217,7 +217,7 @@ export function Sidebar() {
           )}
           <div id="answer">
             <div className="answer-section">
-              {isAsyncing || isTextLayerEmpty ? (
+              {isAsyncing ? (
                 " "
               ) : ux.mode === ApplicationMode.SelectingNewCitation ? (
                 <div className="selection-controls">
@@ -237,7 +237,7 @@ export function Sidebar() {
                     cancel
                   </button>
                 </div>
-              ) : (
+                            ) : (
                 <>
                   &nbsp;
                   <button className="action" onClick={enterSelectionMode}>
