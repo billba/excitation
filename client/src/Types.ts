@@ -57,10 +57,6 @@ export type Action =
     height: number;
   }
   | {
-    type: "emptyTextLayer";
-    isTextLayerEmpty: boolean;
-  }
-  | {
     type: "addSelection";
   }
   | {
@@ -399,7 +395,6 @@ export type LoadedState = {
   asyncState: AsyncState;
   viewer: ViewerState;
   docs: FormDocument[];
-  isTextLayerEmpty?: boolean;
 } & Form;
 
 export type State =

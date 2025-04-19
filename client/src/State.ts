@@ -586,12 +586,6 @@ const stateAtom = atom<State, [Action], void>(
                   break;
                 }
 
-                case "emptyTextLayer": {
-                  const { isTextLayerEmpty } = action;
-                  state.isTextLayerEmpty = isTextLayerEmpty;
-                  break;
-                }
-
                 case "reviewCitation": {
                   console.assert(!isAsyncing);
                   const { review, citationIndex } = action;
