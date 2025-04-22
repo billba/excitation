@@ -237,10 +237,41 @@ export function Sidebar() {
                     cancel
                   </button>
                 </div>
-                            ) : (
+              ) : ux.mode === ApplicationMode.ResizingCitation ? (
+                <div className="resize-controls">
+                  <span>Resize in progress: </span>
+                  <button
+                    className="action confirm"
+                    onClick={dispatchHandler({ type: "completeResize" })}
+                  >
+                    confirm resize
+                  </button>
+                  &nbsp;
+                  <button
+                    className="action cancel"
+                    onClick={dispatchHandler({ type: "cancelResize" })}
+                  >
+                    cancel
+                  </button>
+                </div>
+              ) : ux.mode === ApplicationMode.ViewingCitation ? (
                 <>
                   &nbsp;
-                  <button className="action" onClick={enterSelectionMode}>
+                  <button
+                    className="action"
+                    onClick={dispatchHandler({ type: "enterResizingCitationMode" })}
+                  >
+                    resize citation
+                  </button>
+                  <br />
+                  <button className="action" onClick={dispatchHandler({ type: "enterSelectingNewCitationMode" })}>
+                    select new citation
+                  </button>
+                </>
+              ) : (
+                <>
+                  &nbsp;
+                  <button className="action" onClick={dispatchHandler({ type: "enterSelectingNewCitationMode" })}>
                     select new citation
                   </button>
                 </>

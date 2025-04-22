@@ -19,6 +19,7 @@ import {
   FormStatus,
   LoadedState,
   ApplicationMode,
+  ResizeHandle,
   BaseDocumentModeState,
 } from "./Types";
 import {
@@ -639,50 +640,6 @@ const stateAtom = atom<State, [Action], void>(
                   }
                   break;
 
-                case "updateExcerpt": {
-                  console.assert(!isAsyncing);
-
-                  // Can only update excerpt in EditingCitation mode
-                  if (state.ux.mode !== ApplicationMode.EditingCitation) {
-                    console.warn("Can only update excerpt in EditingCitation mode");
-                    return;
-                  }
-
-                  const { excerpt } = action;
-                  const { citationIndex } = state.ux;
-                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
-
-                  if (citation.excerpt === excerpt) return;
-
-                  citation.excerpt = excerpt;
-
-                  // Switch back to ViewingCitation mode
-                  state.ux = {
-                    ...state.ux,
-                    mode: ApplicationMode.ViewingCitation
-                  };
-
-                  setAsync({
-                    event: {
-                      type: "updateExcerpt",
-                      citationId: citation.citationId,
-                      excerpt,
-                      creator: "client",
-                    },
-                    onError: {
-                      type: "errorUpdateExcerpt",
-                      questionIndex: state.ux.questionIndex,
-                      citationIndex,
-                    },
-                  });
-                  break;
-                }
-
-                case "errorUpdateExcerpt":
-                  state.ux.questionIndex = action.questionIndex;
-                  selectCitation(action.citationIndex);
-                  break;
-
                 case "cancelEditExcerpt":
                   console.assert(!isAsyncing);
 
@@ -695,6 +652,198 @@ const stateAtom = atom<State, [Action], void>(
                     };
                   }
                   break;
+
+                case "enterResizingCitationMode":
+                  console.assert(!isAsyncing);
+                  
+                  if (state.ux.mode === ApplicationMode.ViewingCitation) {
+                    const citation = questions[state.ux.questionIndex].citations[state.ux.citationIndex];
+                    const currentBounds = citation.bounds || [];
+                    
+                    state.ux = {
+                      ...state.ux,
+                      mode: ApplicationMode.ResizingCitation,
+                      currentBounds,
+                      selectedExcerpt: citation.excerpt,
+                    };
+                  }
+                  break;
+
+                case "selectResizeHandle": {
+                  // Can only select resize handle when in ResizingCitation mode
+                  if (state.ux.mode !== ApplicationMode.ResizingCitation) {
+                    console.warn("Can only select resize handle when in ResizingCitation mode");
+                    return;
+                  }
+
+                  // Update the state with the selected handle
+                  state.ux.activeHandle = action.handle;
+                  break;
+                }
+
+                case "updateResizeDrag": {
+                  // Can only update resize when in ResizingCitation mode
+                  if (state.ux.mode !== ApplicationMode.ResizingCitation) {
+                    console.warn("Can only update resize when in ResizingCitation mode");
+                    return;
+                  }
+                  
+                  // Store the current pointer position
+                  state.ux.currentPointerPosition = action.currentPointerPosition;
+                  
+                  // Only calculate new bounds if we have an active handle
+                  const { activeHandle, currentBounds, documentId, pageNumber } = state.ux;
+                  
+                  if (activeHandle !== undefined && currentBounds.length > 0) {
+                    const currentPoint = action.currentPointerPosition;
+                    
+                    // Get the document intelligence data
+                    const docIntelligence = docFromId[documentId]?.di;
+                    if (!docIntelligence) return;
+                    
+                    // Get the anchor point (the opposite end of what we're dragging)
+                    let start, end;
+                    
+                    if (activeHandle === ResizeHandle.Start) {
+                      // We're dragging the start point, so the current position is the start
+                      // and we need to extract the end point from the current bounds
+                      start = { page: pageNumber, point: currentPoint };
+                      
+                      // Find the bound for the current page
+                      const pageBound = currentBounds.find(bound => bound.pageNumber === pageNumber);
+                      if (!pageBound) return;
+                      
+                      // Extract end point from the bottom-right corner (indices 2,3)
+                      end = { 
+                        page: pageNumber, 
+                        point: { 
+                          x: pageBound.polygon[2],
+                          y: pageBound.polygon[3]
+                        } 
+                      };
+                    } else {
+                      // We're dragging the end point, so the current position is the end
+                      end = { page: pageNumber, point: currentPoint };
+                      
+                      // Find the bound for the current page
+                      const pageBound = currentBounds.find(bound => bound.pageNumber === pageNumber);
+                      if (!pageBound) return;
+                      
+                      // Extract start point from the top-left corner (indices 0,1)
+                      start = { 
+                        page: pageNumber, 
+                        point: { 
+                          x: pageBound.polygon[0],
+                          y: pageBound.polygon[1]
+                        } 
+                      };
+                    }
+                    
+                    // Calculate new bounds using the same approach as for new citations
+                    const summary = rangeToSummary({ start, end }, docIntelligence);
+                    const newBounds = summaryToBounds(summary, true);
+                    
+                    // Update the bounds and excerpt in the state
+                    if (newBounds && newBounds.length > 0) {
+                      state.ux.currentBounds = newBounds;
+                      state.ux.selectedExcerpt = summary.excerpt;
+                    }
+                  }
+                  break;
+                }
+
+                case "stopResizeDrag": {
+                  // Can only stop resize drag when in ResizingCitation mode
+                  if (state.ux.mode !== ApplicationMode.ResizingCitation) {
+                    console.warn("Can only stop resize drag when in ResizingCitation mode");
+                    return;
+                  }
+
+                  // Remove the selected handle but keep the current bounds
+                  state.ux.activeHandle = undefined;
+                  break;
+                }
+
+                case "completeResize": {
+                  // Can only complete resize when in ResizingCitation mode
+                  if (state.ux.mode !== ApplicationMode.ResizingCitation) {
+                    console.warn("Can only complete resize when in ResizingCitation mode");
+                    return;
+                  }
+
+                  console.assert(!isAsyncing);
+                  const { currentBounds, selectedExcerpt } = state.ux;
+                  const { citationIndex } = state.ux;
+                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
+                  
+                  // Update both the bounds and excerpt from the resize state
+                  citation.bounds = currentBounds;
+                  citation.excerpt = selectedExcerpt;
+                  
+                  // Get updated citation highlights
+                  const citationHighlights = citationHighlightsFor(citation);
+
+                  // Return to ViewingCitation mode
+                  state.ux = {
+                    mode: ApplicationMode.ViewingCitation,
+                    questionIndex: state.ux.questionIndex,
+                    largeAnswerPanel: state.ux.largeAnswerPanel,
+                    documentId: state.ux.documentId,
+                    pageNumber: state.ux.pageNumber,
+                    citationIndex,
+                    citationHighlights
+                  };
+
+                  // Send async event to update citation bounds and excerpt remotely
+                  setAsync({
+                    event: {
+                      type: "updateBounds",
+                      citationId: citation.citationId,
+                      bounds: citation.bounds,
+                      creator: "client",
+                    },
+                    onError: {
+                      type: "errorUpdateBounds",
+                      questionIndex: state.ux.questionIndex,
+                      citationIndex,
+                    },
+                  });
+                  break;
+                }
+
+                case "cancelResize": {
+                  // Can only cancel resize when in ResizingCitation mode
+                  if (state.ux.mode !== ApplicationMode.ResizingCitation) {
+                    console.warn("Can only cancel resize when in ResizingCitation mode");
+                    return;
+                  }
+
+                  // We simply discard the currentBounds and transition back to viewing mode
+                  // No need to modify the original citation since we never changed it
+                  const { citationIndex } = state.ux;
+                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
+                  
+                  // Get citation highlights from the unchanged citation
+                  const citationHighlights = citationHighlightsFor(citation);
+
+                  // Return to ViewingCitation mode
+                  state.ux = {
+                    mode: ApplicationMode.ViewingCitation,
+                    questionIndex: state.ux.questionIndex,
+                    largeAnswerPanel: state.ux.largeAnswerPanel,
+                    documentId: state.ux.documentId,
+                    pageNumber: state.ux.pageNumber,
+                    citationIndex,
+                    citationHighlights
+                  };
+                  break;
+                }
+
+                case "errorUpdateBounds": {
+                  state.ux.questionIndex = action.questionIndex;
+                  selectCitation(action.citationIndex);
+                  break;
+                }
 
                 case "updateAnswer": {
                   console.assert(!isAsyncing);
@@ -1038,33 +1187,6 @@ const stateAtom = atom<State, [Action], void>(
                       documentId: state.ux.documentId,
                       pageNumber: state.ux.pageNumber,
                       isSelecting: false,
-                    }
-                  };
-                }
-
-                case "enterResizingCitationMode": {
-                  if (state.ux.mode !== ApplicationMode.ViewingCitation) {
-                    console.error("Can only enter ResizingCitationMode from ViewingCitationMode");
-                    return state;
-                  }
-
-                  // Since we've verified we're in ViewingCitation mode, these properties will exist
-                  const { citationIndex, citationHighlights, documentId, pageNumber } = state.ux;
-                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
-
-                  return {
-                    ...state,
-                    ux: {
-                      questionIndex: state.ux.questionIndex,
-                      largeAnswerPanel: state.ux.largeAnswerPanel,
-                      mode: ApplicationMode.ResizingCitation,
-                      documentId,
-                      pageNumber,
-                      citationIndex,
-                      citationHighlights,
-                      previousBounds: citation.bounds || [],
-                      currentBounds: citation.bounds || [],
-                      selectedExcerpt: citation.excerpt
                     }
                   };
                 }

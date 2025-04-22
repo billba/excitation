@@ -97,6 +97,11 @@ export type Action =
     questionIndex: number;
   }
   | {
+    type: "errorUpdateBounds";
+    questionIndex: number;
+    citationIndex: number;
+  }
+  | {
     type: "startEditExcerpt";
   }
   | {
@@ -178,7 +183,6 @@ export type Action =
   | {
     type: "updateResizeDrag";
     currentPointerPosition: { x: number, y: number };
-    currentBounds: Bounds[];
   }
   | {
     type: "stopResizeDrag";
@@ -322,9 +326,8 @@ export interface SelectingNewCitationModeState extends BaseDocumentModeState {
 export interface ResizingCitationModeState extends BaseCitationModeState {
   mode: ApplicationMode.ResizingCitation;
   activeHandle?: ResizeHandle;     // Currently selected handle (optional - none selected initially)
-  previousBounds: Bounds[];        // Previous bounds before any resizing
   currentBounds: Bounds[];         // Current bounds as user is dragging
-  currentPointerPosition?: { x: number, y: number }; // Current pointer position during drag (replaces isDragging)
+  currentPointerPosition?: { x: number, y: number }; // Current pointer position during drag
   selectedExcerpt: string;         // The currently selected excerpt text
 }
 
