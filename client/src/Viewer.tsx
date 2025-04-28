@@ -10,6 +10,9 @@ import {
   DismissCircleRegular,
   MoreCircleRegular,
   MoreCircleFilled,
+  CircleFilled,
+  SubtractCircleFilled,
+  SubtractCircleRegular,
 } from "@fluentui/react-icons";
 
 import { useDocFromId, useAppState, useAppStateValue } from "./State";
@@ -37,7 +40,7 @@ export function Viewer() {
   const viewerRef = useRef<HTMLDivElement>(null);
 
   const mode = ux.mode;
-  
+
   useEffect(() => {
     const viewerElem = viewerRef.current;
 
@@ -143,9 +146,12 @@ interface HighlightSvgProps {
   width: number;
   height: number;
   color: string;
+  strokeDasharray?: string;
 }
 
-const HighlightSvg = ({ polygons, width, height, color }: HighlightSvgProps) => {
+const HighlightSvg = ({ polygons, width, height, color, strokeDasharray }: HighlightSvgProps) => {
+
+  strokeDasharray = strokeDasharray || "none";
 
   const rectsForUnion: [number, number][][][] = polygons.map((poly) => {
     const x1 = poly[0];
@@ -209,6 +215,7 @@ const HighlightSvg = ({ polygons, width, height, color }: HighlightSvgProps) => 
             fill="none"
             stroke={color}
             strokeWidth={2}
+            strokeDasharray={strokeDasharray}
             className="citation-path-highlight"
             pointerEvents="none"
           />
@@ -236,7 +243,7 @@ const AddSelection = () => {
       .filter((bounds) => bounds.pageNumber === pageNumber)
       .map(({ polygon }) => polygon);
 
-    highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
+    highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} strokeDasharray="4 2" />;
   }
 
   if (hoverBounds === undefined || hoverBounds.length === 0) {
@@ -246,7 +253,7 @@ const AddSelection = () => {
       .filter((bounds) => bounds.pageNumber === pageNumber)
       .map(({ polygon }) => polygon);
 
-    hoverSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
+    hoverSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color="red" strokeDasharray="4 2" />;
   }
 
   return (
@@ -275,7 +282,7 @@ const ViewerCitations = () => {
   const { citationIndex, citationHighlights, pageNumber } = ux;
 
   const citation = questions[questionIndex].citations[citationIndex];
-  const { review } = citation;
+  const { review, userAdded } = citation;
   const color = colors[review || 0];
 
   // Get the highlight for current page - use strict equality for comparing page numbers
@@ -316,10 +323,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={CheckmarkCircleFilled}
       HoverIcon={CheckmarkCircleRegular}
+      MaskIcon={CircleFilled}
       key="approved"
       classes="approved on"
       onClick={reviewCitation(Review.Unreviewed)}
-      floating={true}
     />
   );
 
@@ -327,10 +334,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={DismissCircleFilled}
       HoverIcon={DismissCircleRegular}
+      MaskIcon={CircleFilled}
       key="rejected"
       classes="rejected on"
       onClick={reviewCitation(Review.Unreviewed)}
-      floating={true}
     />
   );
 
@@ -338,10 +345,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={CheckmarkCircleRegular}
       HoverIcon={CheckmarkCircleFilled}
+      MaskIcon={CircleFilled}
       key="approve"
       classes="approved off citation-control"
       onClick={reviewCitation(Review.Approved)}
-      floating={true}
     />
   );
 
@@ -349,10 +356,21 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={DismissCircleRegular}
       HoverIcon={DismissCircleFilled}
+      MaskIcon={CircleFilled}
       key="reject"
       classes="rejected off citation-control"
       onClick={reviewCitation(Review.Rejected)}
-      floating={true}
+    />
+  );
+
+  const Delete = () => (
+    <HoverableIcon
+      DefaultIcon={SubtractCircleRegular}
+      HoverIcon={SubtractCircleFilled}
+      MaskIcon={CircleFilled}
+      key="delete"
+      classes="rejected off citation-control"
+      onClick={dispatchUnlessAsyncing({ type: "deleteCitation" })}
     />
   );
 
@@ -365,10 +383,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={MoreCircleRegular}
       HoverIcon={MoreCircleFilled}
+      MaskIcon={CircleFilled}
       key="prev"
       classes="prev"
       onClick={dispatchUnlessAsyncing({ type: "prevPage" })}
-      floating={true}
     />
   );
 
@@ -376,10 +394,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={MoreCircleRegular}
       HoverIcon={MoreCircleFilled}
+      MaskIcon={CircleFilled}
       key="next"
       classes="next"
       onClick={dispatchUnlessAsyncing({ type: "nextPage" })}
-      floating={true}
     />
   );
 
@@ -401,7 +419,7 @@ const ViewerCitations = () => {
         {citationPrev ? <Prev /> : <div />}
         {review === Review.Unreviewed ? (
           <>
-            <Approve /> <Reject />
+            <Approve /> {userAdded ? <Delete /> : <Reject />}
           </>
         ) : review === Review.Approved ? (
           <Approved />

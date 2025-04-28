@@ -1014,6 +1014,7 @@ const stateAtom = atom<State, [Action], void>(
                     bounds,
                     excerpt,
                     review: Review.Unreviewed,
+                    userAdded: true,
                   };
 
                   // Add the citation
@@ -1052,6 +1053,15 @@ const stateAtom = atom<State, [Action], void>(
                     },
                   });
                   break;
+                }
+
+                case "deleteCitation": {
+                  // Can only delete citation when in ViewingCitation mode
+                  if (state.ux.mode !== ApplicationMode.ViewingCitation) {
+                    console.warn("Can only delete citation when in ViewingCitation mode");
+                    return;
+                  }
+                  return;
                 }
 
                 case "cancelSelection": {

@@ -7,6 +7,7 @@ import {
   // DismissCircleRegular,
   AddCircleRegular,
   AddCircleFilled,
+  CircleFilled,
 } from "@fluentui/react-icons";
 import { useCallback } from "react";
 import { Link } from "react-router";
@@ -63,9 +64,9 @@ export const ApprovedCitations = ({ answer, addExcerptToAnswer }: Props) => {
     <HoverableIcon
       DefaultIcon={AddCircleRegular}
       HoverIcon={AddCircleFilled}
+      MaskIcon={CircleFilled}
       classes="large-icon add-excerpt-to-answer"
       onClick={_addExcerptToAnswer(parent, excerpt)}
-      floating={true}
     />
   );
 

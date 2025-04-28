@@ -197,6 +197,9 @@ export type Action =
     type: "confirmSelection";
   }
   | {
+    type: "deleteCitation";
+  }
+  | {
     type: "cancelSelection";
   };
 
@@ -362,6 +365,7 @@ export interface Citation {
   review: Review;
   citationId: string;
   bounds?: Bounds[];
+  userAdded?: true;
 }
 
 export interface Question {
