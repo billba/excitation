@@ -27,7 +27,7 @@ export type Action =
   }
   | {
     type: "selectCitation";
-    citationIndex?: number;
+    citationId?: string;
     reviewCitation?: true;
   }
   | {
@@ -65,13 +65,13 @@ export type Action =
   }
   | {
     type: "reviewCitation";
-    citationIndex: number;
+    citationId: string;
     review: Review;
   }
   | {
     type: "errorReviewCitation";
     questionIndex: number;
-    citationIndex: number;
+    citationId: string;
   }
   | {
     type: "startEditExcerpt";
@@ -99,7 +99,7 @@ export type Action =
   | {
     type: "errorUpdateBounds";
     questionIndex: number;
-    citationIndex: number;
+    citationId: string;
   }
   | {
     type: "startEditExcerpt";
@@ -114,7 +114,7 @@ export type Action =
   | {
     type: "errorUpdateExcerpt";
     questionIndex: number;
-    citationIndex: number;
+    citationId: string;
   }
   | {
     type: "asyncLoading";
@@ -161,9 +161,8 @@ export type Action =
   }
   | {
     type: "enterViewingCitationMode";
-    citationIndex: number;
-    // documentId, pageNumber, and citationHighlights can be derived 
-    // from the citationIndex and current state
+    citationId: string;
+   
   }
   | {
     type: "enterEditingCitationMode";
@@ -301,7 +300,7 @@ export interface ViewingDocumentModeState extends BaseDocumentModeState {
 
 // Base citation state shared by citation-related modes
 export interface BaseCitationModeState extends BaseDocumentModeState {
-  citationIndex: number;
+  citationId: string;
   citationHighlights: CitationHighlight[];
 }
 

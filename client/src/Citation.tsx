@@ -6,13 +6,13 @@ import {
 } from "@fluentui/react-icons";
 
 interface Props {
-  citationIndex: number; // the citation to render
+  citationId: string; // the citation to render (just used for the key)
   review: Review;
   excerpt: string;
   selected: boolean; // is this citation currently selected?
 }
 
-export const CitationUX = ({ citationIndex, review, excerpt, selected }: Props) => {
+export const CitationUX = ({ citationId, review, excerpt, selected }: Props) => {
   const Unreviewed = () => (
     <div className="icon-container unreviewed">
       <CircleRegular className="icon" />
@@ -34,7 +34,7 @@ export const CitationUX = ({ citationIndex, review, excerpt, selected }: Props) 
   return (
     <div
       className={`citation ${selected ? "selected" : "unselected"}`}
-      key={citationIndex}
+      key={citationId}
     >
       {review === Review.Unreviewed ? (
         <Unreviewed />

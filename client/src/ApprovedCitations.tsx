@@ -93,8 +93,8 @@ export const ApprovedCitations = ({ answer, addExcerptToAnswer }: Props) => {
     <div id="approved-citations" className="unselectable">
       <h3>Approved Citations</h3>
       {citations.map(
-        ({ excerpt, documentId, bounds, review }, citationIndex) => {
-          if (review !== Review.Approved) return <div key={citationIndex} />;
+        ({ excerpt, documentId, bounds, review, citationId }) => {
+          if (review !== Review.Approved) return <div key={citationId} />;
 
           const pageNumbers = (bounds ?? [{ pageNumber: unlocatedPage }])
             .map(({ pageNumber }) => pageNumber)
@@ -112,12 +112,12 @@ export const ApprovedCitations = ({ answer, addExcerptToAnswer }: Props) => {
 
           return (
             <div
-              id={`citation-${citationIndex}`}
-              key={citationIndex}
+              id={`citation-${citationId}`}
+              key={citationId}
               className="approved-citation-container"
             >
               <AddExcerptToAnswer
-                parent={`citation-${citationIndex}`}
+                parent={`citation-${citationId}`}
                 excerpt={excerpt}
               />
               <div className="approved-citation selectable">
@@ -128,7 +128,7 @@ export const ApprovedCitations = ({ answer, addExcerptToAnswer }: Props) => {
                     className="action"
                     onClick={dispatchHandler({
                       type: "selectCitation",
-                      citationIndex,
+                      citationId,
                       reviewCitation: true,
                     })}
                   >

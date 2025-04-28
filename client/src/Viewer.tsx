@@ -19,7 +19,7 @@ import { useDocFromId, useAppState, useAppStateValue } from "./State";
 import { useDispatchHandler } from "./Hooks";
 import { HoverableIcon } from "./Hooks.tsx";
 import { LoadedState, Review, ApplicationMode } from "./Types";
-import { getDocumentId, getPageNumber } from "./StateUtils";
+import { getDocumentId, getPageNumber, getCitation } from "./StateUtils";
 
 const colors = ["#00acdc", "#00ac00", "#f07070"];
 const multiple = 72;
@@ -272,17 +272,17 @@ const AddSelection = () => {
 
 const ViewerCitations = () => {
   const { dispatchUnlessAsyncing } = useDispatchHandler();
-  const { ux, questions, viewer } = useAppStateValue() as LoadedState;
-  const { questionIndex } = ux;
+  const state = useAppStateValue() as LoadedState;
+  const { ux, viewer } = state;
 
   // In ViewingCitation mode, these properties are directly on the ux object
   if (ux.mode !== ApplicationMode.ViewingCitation) return null;
 
   // We only access these properties after confirming we're in ViewingCitation mode
-  const { citationIndex, citationHighlights, pageNumber } = ux;
+  const { citationHighlights, pageNumber } = ux;
 
-  const citation = questions[questionIndex].citations[citationIndex];
-  const { review, userAdded } = citation;
+  const citation = getCitation(state)!;
+  const { review, userAdded, citationId } = citation;
   const color = colors[review || 0];
 
   // Get the highlight for current page - use strict equality for comparing page numbers
@@ -316,7 +316,7 @@ const ViewerCitations = () => {
     dispatchUnlessAsyncing({
       type: "reviewCitation",
       review,
-      citationIndex,
+      citationId,
     });
 
   const Approved = () => (

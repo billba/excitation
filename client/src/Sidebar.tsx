@@ -1,10 +1,9 @@
 import { useAppState, sortBy } from "./State";
 import {
   ReactNode,
-  useCallback,
   useMemo,
 } from "react";
-import { Citation, LoadedState, ApplicationMode } from "./Types";
+import { LoadedState, ApplicationMode, Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import { getDocumentId, hasCitationContext } from "./StateUtils";
 import {
@@ -21,7 +20,7 @@ const unlocatedPage = maxPageNumber;
 interface PageGroup {
   firstPage: number;
   lastPage: number;
-  citationIndex: number;
+  citation: Citation;
 }
 
 const sortIndex = sortBy(
@@ -29,13 +28,13 @@ const sortIndex = sortBy(
 );
 
 export function Sidebar() {
-  const [state, dispatch] = useAppState();
+  const [state] = useAppState();
   const { questions, ux, docs } = state as LoadedState;
   const { questionIndex } = ux;
   const question = questions[questionIndex];
 
   const documentId = getDocumentId(ux);
-  const selectedCitationIndex = hasCitationContext(ux) ? ux.citationIndex : undefined;
+  const selectedCitationId = hasCitationContext(ux) ? ux.citationId : undefined;
   const { citations } = question;
 
   const { isAsyncing, isError } = useAsyncHelper();
@@ -46,15 +45,10 @@ export function Sidebar() {
         const docSelected = doc.documentId == documentId;
 
         const pageGroups = citations
-          // we bind each citation to its index, because filter will change the index
-          .map<[Citation, number]>((citation, citationIndex) => [
-            citation,
-            citationIndex,
-          ])
           // one document at a time
-          .filter(([citation]) => citation.documentId === doc.documentId)
+          .filter((citation) => citation.documentId === doc.documentId)
           // some citations span pages, so we gather first and last pages
-          .map(([citation, citationIndex]) => {
+          .map((citation) => {
             const pageNumbers = (
               citation.bounds ?? [{ pageNumber: unlocatedPage }]
             )
@@ -63,20 +57,19 @@ export function Sidebar() {
             return {
               firstPage: pageNumbers[0],
               lastPage: pageNumbers[pageNumbers.length - 1],
-              citationIndex,
+              citation,
             };
           })
           .sort(sortIndex)
           // note whether a given page group is selected
-          .map(({ firstPage, lastPage, citationIndex }) => {
+          .map(({ firstPage, lastPage, citation }) => {
             const pageGroupSelected =
               docSelected &&
-              selectedCitationIndex != undefined &&
-              selectedCitationIndex === citationIndex;
+              selectedCitationId === citation.citationId;
             return {
               firstPage,
               lastPage,
-              citationIndex,
+              citation,
               pageGroupSelected,
             };
           });
@@ -97,19 +90,10 @@ export function Sidebar() {
           noCitations: docSelected && !pageGroups.length,
         };
       }),
-    [citations, documentId, selectedCitationIndex, docs]
+    [citations, documentId, selectedCitationId, docs]
   );
 
   const { dispatchHandler, dispatchUnlessError } = useDispatchHandler();
-
-  const enterSelectionMode = useCallback(
-    (event: React.MouseEvent) => {
-      dispatch({ type: "enterSelectingNewCitationMode" });
-      document.getSelection()?.empty();
-      event.stopPropagation();
-    },
-    [dispatch]
-  );
 
   return (
     <div id="sidebar" className="unselectable" onClick={dispatchUnlessError({ type: "selectCitation" })}>
@@ -149,7 +133,7 @@ export function Sidebar() {
                       {
                         firstPage,
                         lastPage,
-                        citationIndex,
+                        citation: { citationId, excerpt, review },
                         pageGroupSelected,
                         prevPageGroupSelected,
                         nextPageGroupSelected,
@@ -168,17 +152,17 @@ export function Sidebar() {
                             ? undefined
                             : dispatchUnlessError({
                               type: "selectCitation",
-                              citationIndex,
+                              citationId,
                             })
                         }
                       >
                         <CitationUX
-                          key={citationIndex}
-                          citationIndex={citationIndex}
-                          review={citations[citationIndex].review}
-                          excerpt={citations[citationIndex].excerpt}
+                          key={citationId}
+                          citationId={citationId}
+                          review={review}
+                          excerpt={excerpt}
                           selected={
-                            selectedCitationIndex == citationIndex
+                            selectedCitationId === citationId
                           }
                         />
                       </PageGroupHeader>

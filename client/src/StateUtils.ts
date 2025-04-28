@@ -8,6 +8,8 @@ import {
   EditingCitationModeState,
   SelectingNewCitationModeState,
   ResizingCitationModeState,
+  LoadedState,
+  Citation
 } from "./Types";
 
 // Type guard functions to check what mode the UX state is in
@@ -66,4 +68,19 @@ export function getDocumentId(ux: UXState): number | undefined {
 // Helper to safely get pageNumber, returning undefined if not available
 export function getPageNumber(ux: UXState): number | undefined {
   return hasDocumentContext(ux) ? ux.pageNumber : undefined;
+}
+
+/**
+ * Helper to get the current citation from the state's UX context
+ * Returns the citation object if found or undefined if not in citation mode
+ * or the citation with the current id cannot be found
+ * @param state The loaded application state
+ * @param citationId Optional citation ID to look up, defaults to the currently selected citation ID
+ */
+export function getCitation(state: LoadedState, citationId?: string): Citation | undefined {
+  const { ux, questions } = state;
+  
+  citationId = citationId ?? (hasCitationContext(ux) ? ux.citationId : undefined);
+  
+  return questions[ux.questionIndex].citations.find(c => c.citationId === citationId);
 }

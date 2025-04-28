@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import { create } from "mutative";
+import { getCitation } from "./StateUtils";
 import {
   Citation,
   CitationHighlight,
@@ -206,7 +207,7 @@ const citationHighlightsFor = (citation?: Citation) => {
 };
 
 const sortUnreviewedCitations = (documentId?: number, pageNumber?: number) =>
-  sortBy(([citation]: [Citation, number]) => {
+  sortBy((citation: Citation) => {
     if (!citation.bounds) return Number.MAX_SAFE_INTEGER;
 
     const ch = citationHighlightsFor(citation);
@@ -220,18 +221,15 @@ const sortUnreviewedCitations = (documentId?: number, pageNumber?: number) =>
       : citation.documentId * 1000000 + firstPage * 1000 + lastPage;
   });
 
-function indexOfNextUnreviewedCitation(
+function findNextUnreviewedCitation(
   citations: Citation[],
   documentId?: number,
   pageNumber?: number
-) {
+): Citation | undefined {
   return citations
-    .map<[Citation, number]>((citation, citationIndex) => [
-      citation,
-      citationIndex,
-    ])
-    .filter(([{ review }]) => review === Review.Unreviewed)
-    .sort(sortUnreviewedCitations(documentId, pageNumber))[0]?.[1];
+    .filter(citation => citation.review === Review.Unreviewed)
+    .sort(sortUnreviewedCitations(documentId, pageNumber))
+  [0];
 }
 
 function initialUXState(
@@ -246,9 +244,9 @@ function initialUXState(
     };
   }
 
-  const citationIndex = indexOfNextUnreviewedCitation(citations);
+  const citation = findNextUnreviewedCitation(citations);
 
-  if (citationIndex == undefined) {
+  if (!citation) {
     return {
       largeAnswerPanel: answer === undefined ? undefined : true,
       questionIndex,
@@ -256,7 +254,6 @@ function initialUXState(
     };
   }
 
-  const citation = citations[citationIndex];
   const citationHighlights = citationHighlightsFor(citation);
 
   return {
@@ -264,7 +261,7 @@ function initialUXState(
     mode: ApplicationMode.ViewingCitation,
     documentId: citation.documentId,
     pageNumber: citationHighlights[0]?.pageNumber ?? 1,
-    citationIndex,
+    citationId: citation.citationId,
     citationHighlights,
     largeAnswerPanel: answer === undefined ? undefined : true
   };
@@ -418,11 +415,11 @@ const stateAtom = atom<State, [Action], void>(
               }
 
               function selectCitation(
-                citationIndex?: number,
+                citationId?: string,
                 reviewCitations?: true
               ) {
-                // If no citation index, go to document view mode
-                if (citationIndex == undefined) {
+                // If no citation ID, go to document view mode
+                if (citationId == undefined) {
                   // If we already have a document ID, stay in viewing document mode
                   if (hasDocumentContext(state.ux)) {
                     state.ux = {
@@ -443,7 +440,8 @@ const stateAtom = atom<State, [Action], void>(
                   return;
                 }
 
-                const citation = questions[state.ux.questionIndex].citations[citationIndex];
+                // Get the citation using the helper function with the specified ID
+                const citation = getCitation(state as LoadedState, citationId)!;
                 const citationHighlights = citationHighlightsFor(citation);
 
                 // If no highlights, go to document view mode
@@ -472,7 +470,7 @@ const stateAtom = atom<State, [Action], void>(
                   questionIndex: state.ux.questionIndex,
                   documentId: citation.documentId,
                   pageNumber: citationHighlights[0].pageNumber,
-                  citationIndex,
+                  citationId: citation.citationId,
                   citationHighlights,
                   largeAnswerPanel: reviewCitations ? undefined : state.ux.largeAnswerPanel
                 };
@@ -483,23 +481,22 @@ const stateAtom = atom<State, [Action], void>(
                 const largeAnswerPanel = questions[questionIndex].answer === undefined ? undefined : true;
 
                 // Then check if there's an unreviewed citation to select
-                const citationIndex = indexOfNextUnreviewedCitation(
+                const nextCitation = findNextUnreviewedCitation(
                   questions[questionIndex].citations
                 );
 
-                if (citationIndex !== undefined) {
+                if (nextCitation) {
                   // We have an unreviewed citation to go to
-                  const citation = questions[questionIndex].citations[citationIndex];
-                  const citationHighlights = citationHighlightsFor(citation);
+                  const citationHighlights = citationHighlightsFor(nextCitation);
 
                   if (citationHighlights.length > 0) {
                     // Go to citation view mode
                     state.ux = {
                       mode: ApplicationMode.ViewingCitation,
                       questionIndex,
-                      documentId: citation.documentId,
+                      documentId: nextCitation.documentId,
                       pageNumber: citationHighlights[0].pageNumber,
-                      citationIndex,
+                      citationId: nextCitation.citationId,
                       citationHighlights,
                       largeAnswerPanel
                     };
@@ -515,45 +512,10 @@ const stateAtom = atom<State, [Action], void>(
                 };
               }
 
-              // This function is intentionally kept but marked as unused
-              // It could be useful for future functionality that wants to find and select
-              // the next unreviewed citation
-              function _selectUnreviewedCitation() {
-                const documentId = getDocumentId(state.ux);
-                const pageNumber = getPageNumber(state.ux);
-
-                const citationIndex = indexOfNextUnreviewedCitation(
-                  questions[state.ux.questionIndex].citations,
-                  documentId,
-                  pageNumber
-                );
-
-                if (citationIndex !== undefined) {
-                  selectCitation(citationIndex);
-                } else {
-                  // If we already have document context, stay in viewing document mode
-                  if (hasDocumentContext(state.ux)) {
-                    state.ux = {
-                      mode: ApplicationMode.ViewingDocument,
-                      questionIndex: state.ux.questionIndex,
-                      documentId: state.ux.documentId,
-                      pageNumber: state.ux.pageNumber,
-                      largeAnswerPanel: state.ux.largeAnswerPanel
-                    };
-                  } else {
-                    // Otherwise go to idle mode
-                    state.ux = {
-                      mode: ApplicationMode.Idle,
-                      questionIndex: state.ux.questionIndex,
-                      largeAnswerPanel: state.ux.largeAnswerPanel
-                    };
-                  }
-                }
-              }
 
               switch (action.type) {
                 case "selectCitation": {
-                  selectCitation(action.citationIndex, action.reviewCitation);
+                  selectCitation(action.citationId, action.reviewCitation);
                   break;
                 }
 
@@ -589,26 +551,26 @@ const stateAtom = atom<State, [Action], void>(
 
                 case "reviewCitation": {
                   console.assert(!isAsyncing);
-                  const { review, citationIndex } = action;
+                  const { review, citationId } = action;
 
-                  const citation =
-                    questions[state.ux.questionIndex].citations[citationIndex];
+                  // Get the citation using the helper function with the specified ID
+                  const citation = getCitation(state as LoadedState, citationId)!;
                   citation.review = review;
 
                   // Always update the citation view regardless of current mode
-                  selectCitation(citationIndex);
+                  selectCitation(citationId);
 
                   setAsync({
                     event: {
                       type: "updateReview",
-                      citationId: citation.citationId,
+                      citationId,
                       review,
                       creator: "client",
                     },
                     onError: {
                       type: "errorReviewCitation",
                       questionIndex: state.ux.questionIndex,
-                      citationIndex,
+                      citationId,
                     },
                   });
                   break;
@@ -616,7 +578,7 @@ const stateAtom = atom<State, [Action], void>(
 
                 case "errorReviewCitation":
                   state.ux.questionIndex = action.questionIndex;
-                  selectCitation(action.citationIndex);
+                  selectCitation(action.citationId);
                   break;
 
                 case "contractAnswerPanel":
@@ -655,11 +617,11 @@ const stateAtom = atom<State, [Action], void>(
 
                 case "enterResizingCitationMode":
                   console.assert(!isAsyncing);
-                  
+
                   if (state.ux.mode === ApplicationMode.ViewingCitation) {
-                    const citation = questions[state.ux.questionIndex].citations[state.ux.citationIndex];
+                    const citation = getCitation(state)!;
                     const currentBounds = citation.bounds || [];
-                    
+
                     state.ux = {
                       ...state.ux,
                       mode: ApplicationMode.ResizingCitation,
@@ -687,62 +649,62 @@ const stateAtom = atom<State, [Action], void>(
                     console.warn("Can only update resize when in ResizingCitation mode");
                     return;
                   }
-                  
+
                   // Store the current pointer position
                   state.ux.currentPointerPosition = action.currentPointerPosition;
-                  
+
                   // Only calculate new bounds if we have an active handle
                   const { activeHandle, currentBounds, documentId, pageNumber } = state.ux;
-                  
+
                   if (activeHandle !== undefined && currentBounds.length > 0) {
                     const currentPoint = action.currentPointerPosition;
-                    
+
                     // Get the document intelligence data
                     const docIntelligence = docFromId[documentId]?.di;
                     if (!docIntelligence) return;
-                    
+
                     // Get the anchor point (the opposite end of what we're dragging)
                     let start, end;
-                    
+
                     if (activeHandle === ResizeHandle.Start) {
                       // We're dragging the start point, so the current position is the start
                       // and we need to extract the end point from the current bounds
                       start = { page: pageNumber, point: currentPoint };
-                      
+
                       // Find the bound for the current page
                       const pageBound = currentBounds.find(bound => bound.pageNumber === pageNumber);
                       if (!pageBound) return;
-                      
+
                       // Extract end point from the bottom-right corner (indices 2,3)
-                      end = { 
-                        page: pageNumber, 
-                        point: { 
+                      end = {
+                        page: pageNumber,
+                        point: {
                           x: pageBound.polygon[2],
                           y: pageBound.polygon[3]
-                        } 
+                        }
                       };
                     } else {
                       // We're dragging the end point, so the current position is the end
                       end = { page: pageNumber, point: currentPoint };
-                      
+
                       // Find the bound for the current page
                       const pageBound = currentBounds.find(bound => bound.pageNumber === pageNumber);
                       if (!pageBound) return;
-                      
+
                       // Extract start point from the top-left corner (indices 0,1)
-                      start = { 
-                        page: pageNumber, 
-                        point: { 
+                      start = {
+                        page: pageNumber,
+                        point: {
                           x: pageBound.polygon[0],
                           y: pageBound.polygon[1]
-                        } 
+                        }
                       };
                     }
-                    
+
                     // Calculate new bounds using the same approach as for new citations
                     const summary = rangeToSummary({ start, end }, docIntelligence);
                     const newBounds = summaryToBounds(summary, true);
-                    
+
                     // Update the bounds and excerpt in the state
                     if (newBounds && newBounds.length > 0) {
                       state.ux.currentBounds = newBounds;
@@ -773,13 +735,13 @@ const stateAtom = atom<State, [Action], void>(
 
                   console.assert(!isAsyncing);
                   const { currentBounds, selectedExcerpt } = state.ux;
-                  const { citationIndex } = state.ux;
-                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
-                  
+
+                  const citation = getCitation(state as LoadedState)!;
+
                   // Update both the bounds and excerpt from the resize state
                   citation.bounds = currentBounds;
                   citation.excerpt = selectedExcerpt;
-                  
+
                   // Get updated citation highlights
                   const citationHighlights = citationHighlightsFor(citation);
 
@@ -790,7 +752,7 @@ const stateAtom = atom<State, [Action], void>(
                     largeAnswerPanel: state.ux.largeAnswerPanel,
                     documentId: state.ux.documentId,
                     pageNumber: state.ux.pageNumber,
-                    citationIndex,
+                    citationId: citation.citationId,
                     citationHighlights
                   };
 
@@ -805,7 +767,7 @@ const stateAtom = atom<State, [Action], void>(
                     onError: {
                       type: "errorUpdateBounds",
                       questionIndex: state.ux.questionIndex,
-                      citationIndex,
+                      citationId: citation.citationId,
                     },
                   });
                   break;
@@ -820,9 +782,9 @@ const stateAtom = atom<State, [Action], void>(
 
                   // We simply discard the currentBounds and transition back to viewing mode
                   // No need to modify the original citation since we never changed it
-                  const { citationIndex } = state.ux;
-                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
-                  
+
+                  const citation = getCitation(state as LoadedState)!;
+
                   // Get citation highlights from the unchanged citation
                   const citationHighlights = citationHighlightsFor(citation);
 
@@ -833,7 +795,7 @@ const stateAtom = atom<State, [Action], void>(
                     largeAnswerPanel: state.ux.largeAnswerPanel,
                     documentId: state.ux.documentId,
                     pageNumber: state.ux.pageNumber,
-                    citationIndex,
+                    citationId: citation.citationId,
                     citationHighlights
                   };
                   break;
@@ -841,7 +803,7 @@ const stateAtom = atom<State, [Action], void>(
 
                 case "errorUpdateBounds": {
                   state.ux.questionIndex = action.questionIndex;
-                  selectCitation(action.citationIndex);
+                  selectCitation(action.citationId);
                   break;
                 }
 
@@ -1013,12 +975,12 @@ const stateAtom = atom<State, [Action], void>(
                     citationId,
                     bounds,
                     excerpt,
-                    review: Review.Unreviewed,
+                    review: Review.Approved,
                     userAdded: true,
                   };
 
                   // Add the citation
-                  const newCitationIndex = questions[state.ux.questionIndex].citations.push(newCitation) - 1;
+                  questions[state.ux.questionIndex].citations.push(newCitation);
 
                   // Get citation highlights
                   const citationHighlights = citationHighlightsFor(newCitation);
@@ -1030,7 +992,7 @@ const stateAtom = atom<State, [Action], void>(
                     mode: ApplicationMode.ViewingCitation,
                     documentId: state.ux.documentId,
                     pageNumber: state.ux.pageNumber,
-                    citationIndex: newCitationIndex,
+                    citationId: newCitation.citationId,
                     citationHighlights
                   };
 
@@ -1061,6 +1023,47 @@ const stateAtom = atom<State, [Action], void>(
                     console.warn("Can only delete citation when in ViewingCitation mode");
                     return;
                   }
+
+                  const { documentId, pageNumber } = state.ux;
+
+                  // Get the citation from the current context
+                  const citation = getCitation(state as LoadedState)!;
+
+                  // Find the citation's index in the array
+                  const citations = questions[state.ux.questionIndex].citations;
+                  const citationIndex = citations.findIndex(c => c.citationId === citation.citationId);
+
+                  if (citationIndex === -1) {
+                    console.warn(`Cannot delete citation: citation with ID ${citation.citationId} not found`);
+                    return;
+                  }
+
+                  // Remove the citation from the array
+                  citations.splice(citationIndex, 1);
+
+                  // If there are still citations, try to select another one
+                  if (citations.length > 0) {
+                    // Find the next citation on the same document page if possible
+                    const nextCitation = findNextUnreviewedCitation(citations, documentId, pageNumber);
+                    if (nextCitation) {
+                      // Select the next unreviewed citation
+                      selectCitation(nextCitation.citationId);
+                      return;
+                    }
+                  }
+
+                  // If no citation to select, go back to document viewing mode
+                  state.ux = {
+                    mode: ApplicationMode.ViewingDocument,
+                    questionIndex: state.ux.questionIndex,
+                    documentId,
+                    pageNumber,
+                    largeAnswerPanel: state.ux.largeAnswerPanel
+                  };
+
+                  // TODO: Implement server-side deletion when API supports it
+                  // Currently there's no event type for deleting citations
+
                   return;
                 }
 
@@ -1142,8 +1145,15 @@ const stateAtom = atom<State, [Action], void>(
                 }
 
                 case "enterViewingCitationMode": {
-                  const { citationIndex } = action;
-                  const citation = questions[state.ux.questionIndex].citations[citationIndex];
+                  const { citationId } = action;
+
+                  const citation = getCitation(state as LoadedState, citationId);
+
+                  if (!citation) {
+                    console.error(`Cannot enter ViewingCitationMode: citation with ID ${citationId} not found`);
+                    return state;
+                  }
+
                   const citationHighlights = citationHighlightsFor(citation);
 
                   if (citationHighlights.length === 0) {
@@ -1159,7 +1169,7 @@ const stateAtom = atom<State, [Action], void>(
                       mode: ApplicationMode.ViewingCitation,
                       documentId: citation.documentId,
                       pageNumber: citationHighlights[0].pageNumber,
-                      citationIndex,
+                      citationId,
                       citationHighlights
                     }
                   };
