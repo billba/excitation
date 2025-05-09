@@ -879,23 +879,29 @@ const stateAtom = atom<State, [Action], void>(
                 // making changes *within* the state, so we do it at the top of the function
 
                 case "setSelectionStart": {
-                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
-                    return;
-                  }
+                  if (!hasDocumentContext(state.ux)) {
+                      console.error("Cannot enter SelectingNewCitationMode without document context");
+                      return state;
+                    }
 
-                  state.ux.start = action.start;
-                  const point = action.start;
                   const page = state.ux.pageNumber;
 
                   const summary = rangeToSummary(
-                    { start: { page, point }, end: { page, point } },
+                    { start: { page, point: action.start }, end: { page, point: action.end } },
                     docFromId[state.ux.documentId].di
                   );
 
-                  state.ux.excerpt = summary.excerpt;
-                  state.ux.bounds = summaryToBounds(summary, true);
-                  state.ux.isSelecting = true;
-                  state.ux.hoverBounds = undefined;
+                  state.ux = {
+                    mode: ApplicationMode.SelectingNewCitation,
+                    questionIndex: state.ux.questionIndex,
+                    largeAnswerPanel: state.ux.largeAnswerPanel,
+                    documentId: state.ux.documentId,
+                    pageNumber: state.ux.pageNumber,
+                    excerpt: summary.excerpt,
+                    bounds: summaryToBounds(summary, true),
+                    start: action.start,
+                  }
+
                   break;
                 }
 
@@ -905,7 +911,7 @@ const stateAtom = atom<State, [Action], void>(
                     return;
                   }
 
-                  const start = state.ux.isSelecting ? state.ux.start : action.end;
+                  const start = state.ux.start;
                   const page = state.ux.pageNumber;
 
                   const summary = rangeToSummary(
@@ -915,81 +921,49 @@ const stateAtom = atom<State, [Action], void>(
 
                   const bounds = summaryToBounds(summary, true);
 
-                  if (state.ux.isSelecting) {
-                    if (!boundsAreEqual(bounds, state.ux.bounds)) {
-                      state.ux.bounds = bounds;
-                      state.ux.excerpt = summary.excerpt;
-                    }
-                  } else {
-                    if (state.ux.hoverBounds === undefined || !boundsAreEqual(bounds, state.ux.hoverBounds)) {
-                      state.ux.hoverBounds = bounds;
-                    }
+                  if (!boundsAreEqual(bounds, state.ux.bounds)) {
+                    state.ux.bounds = bounds;
+                    state.ux.excerpt = summary.excerpt;
                   }
-                  break;
-                }
-
-                case "endSelectionHover": {
-                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
-                    return;
-                  }
-
-                  state.ux.hoverBounds = undefined;
                   break;
                 }
 
                 case "endSelection": {
-                  // Can only end selection in SelectingNewCitation mode
-                  if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
-                    return;
-                  }
-
-                  state.ux.isSelecting = false;
-                  break;
-                }
-
-                case "confirmSelection": {
                   // Can only confirm selection when in SelectingNewCitation mode
                   if (state.ux.mode !== ApplicationMode.SelectingNewCitation) {
                     console.warn("Can only confirm selection when in SelectingNewCitation mode");
                     return;
                   }
 
-                  console.assert(!state.ux.isSelecting);
-
                   const { bounds, excerpt } = state.ux;
-                  // If no excerpt was found, we can't create a citation
+
                   if (!excerpt || !bounds) {
                     console.warn("No valid excerpt found from user selection");
                     return;
                   }
 
-                  // Create citation ID
                   const citationId = createCitationId(
                     metadata.formId,
                     "client"
                   );
 
-                  // Create the new citation
                   const newCitation: Citation = {
                     documentId: state.ux.documentId,
                     citationId,
                     bounds,
                     excerpt,
-                    review: Review.Approved,
+                    review: Review.Unreviewed,
                     userAdded: true,
                   };
 
-                  // Add the citation
                   questions[state.ux.questionIndex].citations.push(newCitation);
 
-                  // Get citation highlights
                   const citationHighlights = citationHighlightsFor(newCitation);
 
-                  // Create a new state object for ViewingCitation mode
                   state.ux = {
+                    mode: ApplicationMode.ViewingCitation,
                     questionIndex: state.ux.questionIndex,
                     largeAnswerPanel: state.ux.largeAnswerPanel,
-                    mode: ApplicationMode.ViewingCitation,
                     documentId: state.ux.documentId,
                     pageNumber: state.ux.pageNumber,
                     citationId: newCitation.citationId,
@@ -1186,27 +1160,6 @@ const stateAtom = atom<State, [Action], void>(
                     ux: {
                       ...state.ux,
                       mode: ApplicationMode.EditingCitation
-                    }
-                  };
-                }
-
-                case "enterSelectingNewCitationMode": {
-                  // Check if we have document context using the helper function
-                  if (!hasDocumentContext(state.ux)) {
-                    console.error("Cannot enter SelectingNewCitationMode without document context");
-                    return state;
-                  }
-
-                  // Now TypeScript knows these properties exist after the check
-                  return {
-                    ...state,
-                    ux: {
-                      mode: ApplicationMode.SelectingNewCitation,
-                      questionIndex: state.ux.questionIndex,
-                      largeAnswerPanel: state.ux.largeAnswerPanel,
-                      documentId: state.ux.documentId,
-                      pageNumber: state.ux.pageNumber,
-                      isSelecting: false,
                     }
                   };
                 }

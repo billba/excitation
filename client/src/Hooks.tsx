@@ -17,7 +17,7 @@ export const HoverableIcon = ({
 }: Props) => (
   <div
     className={`icon-container hoverable ${classes}`}
-    onClick={onClick}
+    onMouseDown={onClick}
   >
     {MaskIcon && <MaskIcon className="icon floating background" />}
     <DefaultIcon className={`icon default ${MaskIcon ? "floating" : ""}`} />

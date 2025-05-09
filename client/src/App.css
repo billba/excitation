@@ -512,6 +512,25 @@ h1 {
   }
 }
 
+.select-highlight-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 999;
+  
+  /* Path that covers the entire citation area to capture hover events */
+  .citation-area-highlight {
+    pointer-events: auto;
+  }
+  
+  /* The visible outline stroke */
+  .citation-path-highlight {
+    pointer-events: none;
+  }
+}
+
+
 #viewer-citation-highlight {
   position: absolute;
   display: grid;
@@ -641,6 +660,10 @@ h1 {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+.showtextselection {
+  cursor: text;
 }
 
 .selectable {

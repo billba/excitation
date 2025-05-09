@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef, useState, MouseEvent } from "react";
 import { Document, Page } from "react-pdf";
 import polygonClipping from "polygon-clipping";
 import { Point } from "./di";
@@ -31,6 +31,15 @@ interface PageCallback {
   width: number;
 }
 
+const currentPoint = (e: MouseEvent, elem: HTMLDivElement) => {
+  const rect = elem.getBoundingClientRect();
+
+  return {
+    x: (e.clientX - rect.left) / multiple,
+    y: (e.clientY - rect.top) / multiple,
+  } as Point;
+}
+
 export function Viewer() {
   const [state, dispatch] = useAppState();
   const { ux } = state as LoadedState;
@@ -38,57 +47,50 @@ export function Viewer() {
   const pageNumber = getPageNumber(ux);
   const docFromId = useDocFromId();
   const viewerRef = useRef<HTMLDivElement>(null);
+  const [mouseDown, setMouseDown] = useState<Point>();
 
   const mode = ux.mode;
+  const viewerElem = viewerRef.current;
+  const isReady = viewerElem !== null && documentId !== undefined;
 
-  useEffect(() => {
-    const viewerElem = viewerRef.current;
+  const handleMouseDown = useCallback((e: MouseEvent) => {
+    if (!isReady) return;
 
-    if (!viewerElem || mode !== ApplicationMode.SelectingNewCitation) return;
+    // // Check if the event target is part of a citation control
+    // if ((e.target as HTMLElement).closest('.citation-control, .icon-container')) {
+    //   // Skip handling if the click is on a citation control
+    //   console.log("mouseDown on citation control - ignoring");
+    //   return;
+    // }
 
-    const handleMouseDown = (e: MouseEvent) => {
-      const rect = viewerElem.getBoundingClientRect();
-      const startPoint: Point = {
-        x: (e.clientX - rect.left) / multiple,
-        y: (e.clientY - rect.top) / multiple,
-      };
-
-      dispatch({
-        type: "setSelectionStart", start: startPoint,
-      });
+    setMouseDown(currentPoint(e, viewerElem));
+    if (mode === ApplicationMode.ViewingCitation) {
+      dispatch({ type: "selectCitation" });
     }
+  }, [isReady, viewerElem, mode, dispatch]);
 
-    const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
+    if (mode === ApplicationMode.SelectingNewCitation) {
       dispatch({ type: "endSelection" });
+    } else {
+      setMouseDown(undefined);
     }
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = viewerElem.getBoundingClientRect();
-
-      dispatch({
-        type: "setSelectionEnd", end: {
-          x: (e.clientX - rect.left) / multiple,
-          y: (e.clientY - rect.top) / multiple,
-        }
-      });
-    }
-
-    const handleMouseLeave = () => {
-      dispatch({ type: "endSelectionHover" });
-    }
-
-    viewerElem.addEventListener("mousedown", handleMouseDown);
-    viewerElem.addEventListener("mouseup", handleMouseUp);
-    viewerElem.addEventListener("mousemove", handleMouseMove);
-    viewerElem.addEventListener("mouseleave", handleMouseLeave);
-
-    return () => {
-      viewerElem.removeEventListener("mousedown", handleMouseDown);
-      viewerElem.removeEventListener("mouseup", handleMouseUp);
-      viewerElem.removeEventListener("mousemove", handleMouseMove);
-      viewerElem.removeEventListener("mouseleave", handleMouseLeave);
-    };
   }, [mode, dispatch]);
+
+  const tolerance = 0.1;
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isReady) return;
+
+    const point = currentPoint(e, viewerElem);
+
+    if (mode === ApplicationMode.ViewingDocument && mouseDown && (Math.abs(mouseDown.x - point.x) > tolerance || Math.abs(mouseDown.y - point.y) > tolerance)) {
+      setMouseDown(undefined);
+      dispatch({ type: "setSelectionStart", start: mouseDown, end: point });
+    } else if (mode === ApplicationMode.SelectingNewCitation) {
+      dispatch({ type: "setSelectionEnd", end: point, });
+    }
+  }, [isReady, viewerElem, mode, mouseDown, dispatch]);
 
   const onDocumentLoadSuccess = useCallback(() => { }, []);
 
@@ -107,7 +109,11 @@ export function Viewer() {
     console.log("pdf", docFromId[documentId].pdfUrl);
 
   return (
-    <div ref={viewerRef} id="viewer-viewport" className="unselectable">
+    <div ref={viewerRef} id="viewer-viewport" className="unselectable showtextselection"
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
+    >
       {documentId == undefined ? (
         <div>
           <p>You can select a document in the sidebar.</p>
@@ -146,12 +152,12 @@ interface HighlightSvgProps {
   width: number;
   height: number;
   color: string;
-  strokeDasharray?: string;
+  className?: string;
 }
 
-const HighlightSvg = ({ polygons, width, height, color, strokeDasharray }: HighlightSvgProps) => {
+const HighlightSvg = ({ polygons, width, height, color, className }: HighlightSvgProps) => {
 
-  strokeDasharray = strokeDasharray || "none";
+  className = className || "highlight-svg";
 
   const rectsForUnion: [number, number][][][] = polygons.map((poly) => {
     const x1 = poly[0];
@@ -188,7 +194,7 @@ const HighlightSvg = ({ polygons, width, height, color, strokeDasharray }: Highl
 
   return (
     <svg
-      className="highlight-svg"
+      className={className}
       style={{
         width,
         height,
@@ -215,7 +221,6 @@ const HighlightSvg = ({ polygons, width, height, color, strokeDasharray }: Highl
             fill="none"
             stroke={color}
             strokeWidth={2}
-            strokeDasharray={strokeDasharray}
             className="citation-path-highlight"
             pointerEvents="none"
           />
@@ -231,10 +236,9 @@ const AddSelection = () => {
 
   if (ux.mode !== ApplicationMode.SelectingNewCitation) return null;
 
-  const { pageNumber, bounds, hoverBounds } = ux;
+  const { pageNumber, bounds } = ux;
 
   let highlightSvg: JSX.Element;
-  let hoverSvg: JSX.Element;
 
   if (bounds === undefined || bounds.length === 0) {
     highlightSvg = (<></>);
@@ -243,17 +247,7 @@ const AddSelection = () => {
       .filter((bounds) => bounds.pageNumber === pageNumber)
       .map(({ polygon }) => polygon);
 
-    highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} strokeDasharray="4 2" />;
-  }
-
-  if (hoverBounds === undefined || hoverBounds.length === 0) {
-    hoverSvg = (<></>);
-  } else {
-    const polygons = hoverBounds
-      .filter((bounds) => bounds.pageNumber === pageNumber)
-      .map(({ polygon }) => polygon);
-
-    hoverSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color="red" strokeDasharray="4 2" />;
+    highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} className={"select-highlight-svg"} />;
   }
 
   return (
@@ -265,7 +259,6 @@ const AddSelection = () => {
       }}
     >
       {highlightSvg}
-      {hoverSvg}
     </div>
   )
 }

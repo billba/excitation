@@ -3,7 +3,7 @@ import {
   ReactNode,
   useMemo,
 } from "react";
-import { LoadedState, ApplicationMode, Citation } from "./Types";
+import { LoadedState, Citation } from "./Types";
 import { CitationUX } from "./Citation";
 import { getDocumentId, hasCitationContext } from "./StateUtils";
 import {
@@ -201,65 +201,6 @@ export function Sidebar() {
           )}
           <div id="answer">
             <div className="answer-section">
-              {isAsyncing ? (
-                " "
-              ) : ux.mode === ApplicationMode.SelectingNewCitation ? (
-                <div className="selection-controls">
-                  <span>Selection in progress: </span>
-                  <button
-                    className="action confirm"
-                    onClick={dispatchHandler({ type: "confirmSelection" })}
-                    disabled={ux.isSelecting || ux.bounds === undefined}
-                  >
-                    add citation
-                  </button>
-                  &nbsp;
-                  <button
-                    className="action cancel"
-                    onClick={dispatchHandler({ type: "cancelSelection" })}
-                  >
-                    cancel
-                  </button>
-                </div>
-              ) : ux.mode === ApplicationMode.ResizingCitation ? (
-                <div className="resize-controls">
-                  <span>Resize in progress: </span>
-                  <button
-                    className="action confirm"
-                    onClick={dispatchHandler({ type: "completeResize" })}
-                  >
-                    confirm resize
-                  </button>
-                  &nbsp;
-                  <button
-                    className="action cancel"
-                    onClick={dispatchHandler({ type: "cancelResize" })}
-                  >
-                    cancel
-                  </button>
-                </div>
-              ) : ux.mode === ApplicationMode.ViewingCitation ? (
-                <>
-                  &nbsp;
-                  <button
-                    className="action"
-                    onClick={dispatchHandler({ type: "enterResizingCitationMode" })}
-                  >
-                    resize citation
-                  </button>
-                  <br />
-                  <button className="action" onClick={dispatchHandler({ type: "enterSelectingNewCitationMode" })}>
-                    select new citation
-                  </button>
-                </>
-              ) : (
-                <>
-                  &nbsp;
-                  <button className="action" onClick={dispatchHandler({ type: "enterSelectingNewCitationMode" })}>
-                    select new citation
-                  </button>
-                </>
-              )}
             </div>
           </div>
           <br />

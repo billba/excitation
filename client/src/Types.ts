@@ -135,6 +135,7 @@ export type Action =
   | {
     type: "setSelectionStart";
     start: Point;
+    end: Point;
   }
   | {
     type: "setSelectionEnd";
@@ -317,11 +318,9 @@ export interface EditingCitationModeState extends BaseCitationModeState {
 // Selecting a new citation area - now a dedicated mode for text selection
 export interface SelectingNewCitationModeState extends BaseDocumentModeState {
   mode: ApplicationMode.SelectingNewCitation;
-  isSelecting: boolean;
   start: Point;
   excerpt?: string;
   bounds?: Bounds[];
-  hoverBounds?: Bounds[];
 }
 
 // Resizing an existing citation
