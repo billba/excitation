@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef, useState, MouseEvent } from "react";
 import { Document, Page } from "react-pdf";
 import polygonClipping from "polygon-clipping";
 import { Point } from "./di";
@@ -10,13 +10,16 @@ import {
   DismissCircleRegular,
   MoreCircleRegular,
   MoreCircleFilled,
+  CircleFilled,
+  SubtractCircleFilled,
+  SubtractCircleRegular,
 } from "@fluentui/react-icons";
 
 import { useDocFromId, useAppState, useAppStateValue } from "./State";
 import { useDispatchHandler } from "./Hooks";
 import { HoverableIcon } from "./Hooks.tsx";
 import { LoadedState, Review, ApplicationMode } from "./Types";
-import { getDocumentId, getPageNumber } from "./StateUtils";
+import { getDocumentId, getPageNumber, getCitation } from "./StateUtils";
 
 const colors = ["#00acdc", "#00ac00", "#f07070"];
 const multiple = 72;
@@ -28,6 +31,15 @@ interface PageCallback {
   width: number;
 }
 
+const currentPoint = (e: MouseEvent, elem: HTMLDivElement) => {
+  const rect = elem.getBoundingClientRect();
+
+  return {
+    x: (e.clientX - rect.left) / multiple,
+    y: (e.clientY - rect.top) / multiple,
+  } as Point;
+}
+
 export function Viewer() {
   const [state, dispatch] = useAppState();
   const { ux } = state as LoadedState;
@@ -35,57 +47,50 @@ export function Viewer() {
   const pageNumber = getPageNumber(ux);
   const docFromId = useDocFromId();
   const viewerRef = useRef<HTMLDivElement>(null);
+  const [mouseDown, setMouseDown] = useState<Point>();
 
   const mode = ux.mode;
-  
-  useEffect(() => {
-    const viewerElem = viewerRef.current;
+  const viewerElem = viewerRef.current;
+  const isReady = viewerElem !== null && documentId !== undefined;
 
-    if (!viewerElem || mode !== ApplicationMode.SelectingNewCitation) return;
+  const handleMouseDown = useCallback((e: MouseEvent) => {
+    if (!isReady) return;
 
-    const handleMouseDown = (e: MouseEvent) => {
-      const rect = viewerElem.getBoundingClientRect();
-      const startPoint: Point = {
-        x: (e.clientX - rect.left) / multiple,
-        y: (e.clientY - rect.top) / multiple,
-      };
+    // // Check if the event target is part of a citation control
+    // if ((e.target as HTMLElement).closest('.citation-control, .icon-container')) {
+    //   // Skip handling if the click is on a citation control
+    //   console.log("mouseDown on citation control - ignoring");
+    //   return;
+    // }
 
-      dispatch({
-        type: "setSelectionStart", start: startPoint,
-      });
+    setMouseDown(currentPoint(e, viewerElem));
+    if (mode === ApplicationMode.ViewingCitation) {
+      dispatch({ type: "selectCitation" });
     }
+  }, [isReady, viewerElem, mode, dispatch]);
 
-    const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
+    if (mode === ApplicationMode.SelectingNewCitation) {
       dispatch({ type: "endSelection" });
+    } else {
+      setMouseDown(undefined);
     }
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const rect = viewerElem.getBoundingClientRect();
-
-      dispatch({
-        type: "setSelectionEnd", end: {
-          x: (e.clientX - rect.left) / multiple,
-          y: (e.clientY - rect.top) / multiple,
-        }
-      });
-    }
-
-    const handleMouseLeave = () => {
-      dispatch({ type: "endSelectionHover" });
-    }
-
-    viewerElem.addEventListener("mousedown", handleMouseDown);
-    viewerElem.addEventListener("mouseup", handleMouseUp);
-    viewerElem.addEventListener("mousemove", handleMouseMove);
-    viewerElem.addEventListener("mouseleave", handleMouseLeave);
-
-    return () => {
-      viewerElem.removeEventListener("mousedown", handleMouseDown);
-      viewerElem.removeEventListener("mouseup", handleMouseUp);
-      viewerElem.removeEventListener("mousemove", handleMouseMove);
-      viewerElem.removeEventListener("mouseleave", handleMouseLeave);
-    };
   }, [mode, dispatch]);
+
+  const tolerance = 0.1;
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isReady) return;
+
+    const point = currentPoint(e, viewerElem);
+
+    if (mode === ApplicationMode.ViewingDocument && mouseDown && (Math.abs(mouseDown.x - point.x) > tolerance || Math.abs(mouseDown.y - point.y) > tolerance)) {
+      setMouseDown(undefined);
+      dispatch({ type: "setSelectionStart", start: mouseDown, end: point });
+    } else if (mode === ApplicationMode.SelectingNewCitation) {
+      dispatch({ type: "setSelectionEnd", end: point, });
+    }
+  }, [isReady, viewerElem, mode, mouseDown, dispatch]);
 
   const onDocumentLoadSuccess = useCallback(() => { }, []);
 
@@ -104,7 +109,11 @@ export function Viewer() {
     console.log("pdf", docFromId[documentId].pdfUrl);
 
   return (
-    <div ref={viewerRef} id="viewer-viewport" className="unselectable">
+    <div ref={viewerRef} id="viewer-viewport" className="unselectable showtextselection"
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
+      onMouseMove={handleMouseMove}
+    >
       {documentId == undefined ? (
         <div>
           <p>You can select a document in the sidebar.</p>
@@ -143,9 +152,12 @@ interface HighlightSvgProps {
   width: number;
   height: number;
   color: string;
+  className?: string;
 }
 
-const HighlightSvg = ({ polygons, width, height, color }: HighlightSvgProps) => {
+const HighlightSvg = ({ polygons, width, height, color, className }: HighlightSvgProps) => {
+
+  className = className || "highlight-svg";
 
   const rectsForUnion: [number, number][][][] = polygons.map((poly) => {
     const x1 = poly[0];
@@ -182,7 +194,7 @@ const HighlightSvg = ({ polygons, width, height, color }: HighlightSvgProps) => 
 
   return (
     <svg
-      className="highlight-svg"
+      className={className}
       style={{
         width,
         height,
@@ -224,10 +236,9 @@ const AddSelection = () => {
 
   if (ux.mode !== ApplicationMode.SelectingNewCitation) return null;
 
-  const { pageNumber, bounds, hoverBounds } = ux;
+  const { pageNumber, bounds } = ux;
 
   let highlightSvg: JSX.Element;
-  let hoverSvg: JSX.Element;
 
   if (bounds === undefined || bounds.length === 0) {
     highlightSvg = (<></>);
@@ -236,17 +247,7 @@ const AddSelection = () => {
       .filter((bounds) => bounds.pageNumber === pageNumber)
       .map(({ polygon }) => polygon);
 
-    highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
-  }
-
-  if (hoverBounds === undefined || hoverBounds.length === 0) {
-    hoverSvg = (<></>);
-  } else {
-    const polygons = hoverBounds
-      .filter((bounds) => bounds.pageNumber === pageNumber)
-      .map(({ polygon }) => polygon);
-
-    hoverSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} />;
+    highlightSvg = <HighlightSvg polygons={polygons} width={viewer.width} height={viewer.height} color={colors[Review.Unreviewed]} className={"select-highlight-svg"} />;
   }
 
   return (
@@ -258,24 +259,23 @@ const AddSelection = () => {
       }}
     >
       {highlightSvg}
-      {hoverSvg}
     </div>
   )
 }
 
 const ViewerCitations = () => {
   const { dispatchUnlessAsyncing } = useDispatchHandler();
-  const { ux, questions, viewer } = useAppStateValue() as LoadedState;
-  const { questionIndex } = ux;
+  const state = useAppStateValue() as LoadedState;
+  const { ux, viewer } = state;
 
   // In ViewingCitation mode, these properties are directly on the ux object
   if (ux.mode !== ApplicationMode.ViewingCitation) return null;
 
   // We only access these properties after confirming we're in ViewingCitation mode
-  const { citationIndex, citationHighlights, pageNumber } = ux;
+  const { citationHighlights, pageNumber } = ux;
 
-  const citation = questions[questionIndex].citations[citationIndex];
-  const { review } = citation;
+  const citation = getCitation(state)!;
+  const { review, userAdded, citationId } = citation;
   const color = colors[review || 0];
 
   // Get the highlight for current page - use strict equality for comparing page numbers
@@ -309,17 +309,17 @@ const ViewerCitations = () => {
     dispatchUnlessAsyncing({
       type: "reviewCitation",
       review,
-      citationIndex,
+      citationId,
     });
 
   const Approved = () => (
     <HoverableIcon
       DefaultIcon={CheckmarkCircleFilled}
       HoverIcon={CheckmarkCircleRegular}
+      MaskIcon={CircleFilled}
       key="approved"
       classes="approved on"
       onClick={reviewCitation(Review.Unreviewed)}
-      floating={true}
     />
   );
 
@@ -327,10 +327,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={DismissCircleFilled}
       HoverIcon={DismissCircleRegular}
+      MaskIcon={CircleFilled}
       key="rejected"
       classes="rejected on"
       onClick={reviewCitation(Review.Unreviewed)}
-      floating={true}
     />
   );
 
@@ -338,10 +338,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={CheckmarkCircleRegular}
       HoverIcon={CheckmarkCircleFilled}
+      MaskIcon={CircleFilled}
       key="approve"
       classes="approved off citation-control"
       onClick={reviewCitation(Review.Approved)}
-      floating={true}
     />
   );
 
@@ -349,10 +349,21 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={DismissCircleRegular}
       HoverIcon={DismissCircleFilled}
+      MaskIcon={CircleFilled}
       key="reject"
       classes="rejected off citation-control"
       onClick={reviewCitation(Review.Rejected)}
-      floating={true}
+    />
+  );
+
+  const Delete = () => (
+    <HoverableIcon
+      DefaultIcon={SubtractCircleRegular}
+      HoverIcon={SubtractCircleFilled}
+      MaskIcon={CircleFilled}
+      key="delete"
+      classes="rejected off citation-control"
+      onClick={dispatchUnlessAsyncing({ type: "deleteCitation" })}
     />
   );
 
@@ -365,10 +376,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={MoreCircleRegular}
       HoverIcon={MoreCircleFilled}
+      MaskIcon={CircleFilled}
       key="prev"
       classes="prev"
       onClick={dispatchUnlessAsyncing({ type: "prevPage" })}
-      floating={true}
     />
   );
 
@@ -376,10 +387,10 @@ const ViewerCitations = () => {
     <HoverableIcon
       DefaultIcon={MoreCircleRegular}
       HoverIcon={MoreCircleFilled}
+      MaskIcon={CircleFilled}
       key="next"
       classes="next"
       onClick={dispatchUnlessAsyncing({ type: "nextPage" })}
-      floating={true}
     />
   );
 
@@ -401,7 +412,7 @@ const ViewerCitations = () => {
         {citationPrev ? <Prev /> : <div />}
         {review === Review.Unreviewed ? (
           <>
-            <Approve /> <Reject />
+            <Approve /> {userAdded ? <Delete /> : <Reject />}
           </>
         ) : review === Review.Approved ? (
           <Approved />

@@ -27,7 +27,7 @@ export type Action =
   }
   | {
     type: "selectCitation";
-    citationIndex?: number;
+    citationId?: string;
     reviewCitation?: true;
   }
   | {
@@ -57,10 +57,6 @@ export type Action =
     height: number;
   }
   | {
-    type: "emptyTextLayer";
-    isTextLayerEmpty: boolean;
-  }
-  | {
     type: "addSelection";
   }
   | {
@@ -69,13 +65,13 @@ export type Action =
   }
   | {
     type: "reviewCitation";
-    citationIndex: number;
+    citationId: string;
     review: Review;
   }
   | {
     type: "errorReviewCitation";
     questionIndex: number;
-    citationIndex: number;
+    citationId: string;
   }
   | {
     type: "startEditExcerpt";
@@ -101,6 +97,11 @@ export type Action =
     questionIndex: number;
   }
   | {
+    type: "errorUpdateBounds";
+    questionIndex: number;
+    citationId: string;
+  }
+  | {
     type: "startEditExcerpt";
   }
   | {
@@ -113,7 +114,7 @@ export type Action =
   | {
     type: "errorUpdateExcerpt";
     questionIndex: number;
-    citationIndex: number;
+    citationId: string;
   }
   | {
     type: "asyncLoading";
@@ -134,6 +135,7 @@ export type Action =
   | {
     type: "setSelectionStart";
     start: Point;
+    end: Point;
   }
   | {
     type: "setSelectionEnd";
@@ -160,9 +162,8 @@ export type Action =
   }
   | {
     type: "enterViewingCitationMode";
-    citationIndex: number;
-    // documentId, pageNumber, and citationHighlights can be derived 
-    // from the citationIndex and current state
+    citationId: string;
+   
   }
   | {
     type: "enterEditingCitationMode";
@@ -182,7 +183,6 @@ export type Action =
   | {
     type: "updateResizeDrag";
     currentPointerPosition: { x: number, y: number };
-    currentBounds: Bounds[];
   }
   | {
     type: "stopResizeDrag";
@@ -195,6 +195,9 @@ export type Action =
   }
   | {
     type: "confirmSelection";
+  }
+  | {
+    type: "deleteCitation";
   }
   | {
     type: "cancelSelection";
@@ -298,7 +301,7 @@ export interface ViewingDocumentModeState extends BaseDocumentModeState {
 
 // Base citation state shared by citation-related modes
 export interface BaseCitationModeState extends BaseDocumentModeState {
-  citationIndex: number;
+  citationId: string;
   citationHighlights: CitationHighlight[];
 }
 
@@ -315,20 +318,17 @@ export interface EditingCitationModeState extends BaseCitationModeState {
 // Selecting a new citation area - now a dedicated mode for text selection
 export interface SelectingNewCitationModeState extends BaseDocumentModeState {
   mode: ApplicationMode.SelectingNewCitation;
-  isSelecting: boolean;
   start: Point;
   excerpt?: string;
   bounds?: Bounds[];
-  hoverBounds?: Bounds[];
 }
 
 // Resizing an existing citation
 export interface ResizingCitationModeState extends BaseCitationModeState {
   mode: ApplicationMode.ResizingCitation;
   activeHandle?: ResizeHandle;     // Currently selected handle (optional - none selected initially)
-  previousBounds: Bounds[];        // Previous bounds before any resizing
   currentBounds: Bounds[];         // Current bounds as user is dragging
-  currentPointerPosition?: { x: number, y: number }; // Current pointer position during drag (replaces isDragging)
+  currentPointerPosition?: { x: number, y: number }; // Current pointer position during drag
   selectedExcerpt: string;         // The currently selected excerpt text
 }
 
@@ -363,6 +363,7 @@ export interface Citation {
   review: Review;
   citationId: string;
   bounds?: Bounds[];
+  userAdded?: true;
 }
 
 export interface Question {
@@ -399,7 +400,6 @@ export type LoadedState = {
   asyncState: AsyncState;
   viewer: ViewerState;
   docs: FormDocument[];
-  isTextLayerEmpty?: boolean;
 } & Form;
 
 export type State =
